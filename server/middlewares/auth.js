@@ -1,14 +1,12 @@
 import User from "../models/user.js";
-import {
-  ForbiddenError,
-  UnauthorizedError,
-} from "../utils/errors.js";
+import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
 import { verifyToken } from "../utils/jwt.js";
 
 export const isAuthorized = async (req, res, next) => {
   if (!req.headers.cookie) throw new UnauthorizedError("please login!");
   const token = req.headers.cookie.slice(6);
   const decoded = await verifyToken(token);
+  console.log("expired at");
   const user = await User.findById(decoded.id, { password: 0 });
   if (!user) throw new UnauthorizedError("invalid user");
   req.user = {
@@ -17,7 +15,6 @@ export const isAuthorized = async (req, res, next) => {
   };
   next();
 };
-
 
 export const isAdmin = (req, res, next) => {
   console.log(req.user);
@@ -28,7 +25,3 @@ export const isAdmin = (req, res, next) => {
   // Deny access if the user is not an admin
   throw new ForbiddenError("You are not allowed to access this route");
 };
-
-
-
-

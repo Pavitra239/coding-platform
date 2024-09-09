@@ -7,13 +7,22 @@ import cookieParser from "cookie-parser";
 import notFoundHandler from "./controllers/not-found.js";
 import errorHandler from "./controllers/error.js";
 import authRoutes from "./routes/auth.js";
+import contestRoutes from "./routes/contests.js";
+import cors from "cors";
 
 
 const app = express();
+app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 app.use(express.json());
+const corsOptions = {
+  origin:'http://localhost:5173',
+  credentials:true
+}
+app.use(cors(corsOptions));
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/contests", contestRoutes); // Use contest routes
 app.all("*", notFoundHandler);
 app.use(errorHandler);
 
