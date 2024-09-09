@@ -6,6 +6,7 @@ import {
   NotFoundError,
 
 } from "../utils/errors.js";
+import jwt from "jsonwebtoken"
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -14,25 +15,34 @@ export const login = async (req, res) => {
   if (!isValidPassword) throw new BadRequestError("ID & Password not found");
 
   const token = await createToken({ id: user._id });
-  // console.log("Generated JWT Token:", token);
 
-  const oneDay = 1000 * 60 * 60 * 24;
-  res.cookie("token", token, {
-    httpOnly: true,
-    expires: new Date(Date.now() + oneDay),
-  });
-  res.status(StatusCodes.OK).json({ status: "success", msg: "logged in!" });
+  const oneDay = 1000 * 24 * 60 * 60; // 1 day in milliseconds
+  return res
+      .status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // secure flag for production
+        expires: new Date(Date.now() + oneDay), // 1 day expiration
+      })
+      .json({
+        message: `Welcome back ${user.username}`,
+        user,
+        success: true,
+      });
 };
+
 
 export const register = async (req, res) => {
   const isFirstUser = (await User.countDocuments()) === 0;
   if (isFirstUser) req.body.role = 'admin';
+  console.log(req.body);
   const user = await User.create(req.body);
-  const token = await createToken({ id: user._id,role: user.role });
-  // await verficationEmail(user.email, token);
-  res
-    .status(StatusCodes.CREATED)
-    .json({ status: "success", msg: "registered!" });
+  console.log(user);
+  
+  return res.status(201).json({
+    message: "Account created successfully.",
+    success: true,
+  });
 };
 
 export const verifyEmail = async (req, res) => {
@@ -53,4 +63,36 @@ export const logout = async (req, res) => {
   res
     .status(StatusCodes.OK)
     .json({ status: "success", msg: "User logged out" });
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    // console.log("token " + token);
+
+    if (!token) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        success: false,
+      });
+    }
+
+    const decoded = jwt.verify(token, "ChauhanRutvik");
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      user,
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 };
