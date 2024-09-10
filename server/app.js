@@ -8,6 +8,7 @@ import notFoundHandler from "./controllers/not-found.js";
 import errorHandler from "./controllers/error.js";
 import authRoutes from "./routes/auth.js";
 import contestRoutes from "./routes/contests.js";
+import problemRoutes from './routes/problemRoutes.js'; // Problem routes
 import cors from "cors";
 
 
@@ -23,6 +24,7 @@ app.use(cors(corsOptions));
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/contests", contestRoutes); // Use contest routes
+app.use('/api/v1/problems', problemRoutes); // Use problem routes
 app.all("*", notFoundHandler);
 app.use(errorHandler);
 

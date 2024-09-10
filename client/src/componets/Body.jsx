@@ -5,6 +5,7 @@ import Browse from './Browse';
 import Student from './Student';
 import MakeContest from './MakeContest';
 import CreateContest from './CreateContest';
+import CreateProblem from './CreateProblem';
 
 
 const Body = () => {
@@ -29,6 +30,10 @@ const Body = () => {
         {
             path: "/create-contest",
             element: <CreateContest />
+        },
+        {
+            path: "/create-problem",
+            element: <CreateProblem />
         },
         
     ])

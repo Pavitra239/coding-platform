@@ -41,6 +41,10 @@ const MakeContest = () => {
     navigate("/create-contest");
   };
 
+  const handleCreateProblem = () => {
+    navigate("/create-problem");
+  }
+
   const handleEditQuiz = (code) => {
     navigate(`/edit-quiz/${code}`);
   };
@@ -79,7 +83,7 @@ const MakeContest = () => {
           onClick={handleAddQuiz}
           className="bg-blue-500 text-white font-semibold py-2 px-4 mt-5 rounded-lg hover:bg-blue-600 transition mb-4 w-full sm:w-auto"
         >
-          Add Quiz
+          Add Contest
         </button>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {quizzes.map((quiz, index) => (
@@ -136,7 +140,16 @@ const MakeContest = () => {
             </div>
           ))}
         </div>
-      </div>
+
+
+        <button
+          onClick={handleCreateProblem}
+          className="bg-red-500 text-white font-semibold py-2 px-4 mt-5 rounded-lg hover:bg-red-600 transition mb-4 w-full sm:w-auto"
+        >
+          Add Problem
+        </button>   
+
+      </div>    
       {/* Toaster Container */}
       <ToastContainer />
     </div>
