@@ -7,6 +7,7 @@
     "setup-client": "cd client && npm i",
     "setup-server": "cd server && npm i",
     "setup-project": "npm i && npm run setup-client && npm run setup-server",
+    "build": "cd client && npm run build && cd .. && robocopy \"client\\dist\" \"server\\public\" /mir",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
     "dev": "concurrently --kill-others-on-fail \" npm run server\" \" npm run client\""
