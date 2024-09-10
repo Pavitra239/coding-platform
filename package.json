@@ -1,0 +1,16 @@
+{
+  "name": "coding-platform",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup-client": "cd client && npm i",
+    "setup-server": "cd server && npm i",
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently --kill-others-on-fail \" npm run server\" \" npm run client\""
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
