@@ -156,7 +156,7 @@ const Header = () => {
             onClick={toggleHandler}
             className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
           >
-            {toggle ? "Home" : "Make Quiz"}
+            {toggle ? "Home" : "Make Contest"}
           </button>
         </div>
       )}
@@ -218,7 +218,7 @@ const Header = () => {
             onClick={toggleHandler}
             className="block w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-2"
           >
-            {toggle ? "Home" : "Make Quiz"}
+            {toggle ? "Home" : "Make Contest"}
           </button>
         </div>
       )}

@@ -152,7 +152,7 @@ const Login = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @media (max-width: 768px) {
           .min-h-screen {
             padding-top: 40px; /* Space between header and form */

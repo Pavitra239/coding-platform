@@ -22,7 +22,9 @@ const problemSchema = new Schema({
     required: [true, 'Creator is required'],
   },
   tags: [{ type: String }],
-  score: { type: Number }, // Add this if needed
+  score: { type: Number },
+}, {
+  timestamps: true
 });
 
 export default mongoose.model('Problem', problemSchema);
