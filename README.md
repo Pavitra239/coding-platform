@@ -12,6 +12,12 @@ npm run setup-client
 npm run setup-client
 ```
 
+## Setup entire project
+
+```
+npm run setup-project
+```
+
 ## Run only server
 
 ```

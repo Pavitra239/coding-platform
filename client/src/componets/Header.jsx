@@ -20,11 +20,11 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State to toggle menu visibility
   const [isScreenSmall, setIsScreenSmall] = useState(false); // State for screen size
 
-    useEffect(() => {
-      if(authStatus == false){
-        navigate("/");
-      }
-    }, [authStatus]);
+  useEffect(() => {
+    if (authStatus == false) {
+      navigate("/");
+    }
+  }, [authStatus]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -41,19 +41,19 @@ const Header = () => {
 
   const logoutHandler = async () => {
     try {
-      await axiosInstance.get(`auth/logout`, { withCredentials: true });
+      await axios.get(`http://localhost:3100/api/v1/auth/logout`, { withCredentials: true });
       
       // Clear user data from Redux store
       dispatch(setUser(null));
-      
+
       // Clear auth token or user data from local storage (if applicable)
       localStorage.removeItem("authToken"); // or any key you use to store the token
-  
+
       // Perform logout action in Redux
       dispatch(logout());
-  
+
       toast.success("Logged out successfully");
-  
+
       // Navigate to login page
       navigate("/");
     } catch (error) {
@@ -61,7 +61,7 @@ const Header = () => {
       toast.error("Failed to log out. Please try again.");
     }
   };
-  
+
   const toggleHandler = () => {
     dispatch(setToggle());
     if (!toggle) {
@@ -153,9 +153,7 @@ const Header = () => {
           </Link>
           <div className="flex items-center space-x-2">
             <IoIosArrowDropdown size="24px" color="white" />
-            <h1 className="text-lg font-medium text-white">
-              {user?.username}
-            </h1>
+            <h1 className="text-lg font-medium text-white">{user?.username}</h1>
           </div>
           <button
             onClick={logoutHandler}
