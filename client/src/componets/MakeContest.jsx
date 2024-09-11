@@ -41,9 +41,9 @@ const MakeContest = () => {
     navigate("/create-contest");
   };
 
-  const handleCreateProblem = () => {
-    navigate("/create-problem");
-  }
+  // const handleCreateProblem = () => {
+  //   navigate("/create-problem");
+  // }
 
   const handleEditQuiz = (code) => {
     navigate(`/edit-quiz/${code}`);
@@ -142,12 +142,12 @@ const MakeContest = () => {
         </div>
 
 
-        <button
+        {/* <button
           onClick={handleCreateProblem}
           className="bg-red-500 text-white font-semibold py-2 px-4 mt-5 rounded-lg hover:bg-red-600 transition mb-4 w-full sm:w-auto"
         >
           Add Problem
-        </button>   
+        </button>    */}
 
       </div>    
       {/* Toaster Container */}

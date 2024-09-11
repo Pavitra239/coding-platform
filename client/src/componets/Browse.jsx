@@ -31,16 +31,16 @@ const Browse = () => {
         <div className="flex flex-col justify-center items-center px-4 lg:px-20 pt-20 md:pt-[14%] min-h-[70vh]">
           <div className="w-full lg:w-1/2 bg-white text-black p-8 lg:p-16 rounded-lg shadow-lg bg-opacity-80">
             <h2 className="text-2xl lg:text-4xl font-bold mb-4 lg:mb-8">
-              Quiz Time!
+              Coding Time!
             </h2>
             <p className="mb-5">
-              Test your movie knowledge with our quick quiz. Ready to challenge yourself?
+              Test your Coding knowledge with our Coding Contest. Ready to challenge yourself?
             </p>
             <button
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
               onClick={handleJoinQuizClick}
             >
-              Join Quiz
+              Join Contest
             </button>
           </div>
         </div>
@@ -73,13 +73,13 @@ const Browse = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handleJoinQuiz}
+                  // onClick={handleJoinQuiz}
                   className={`px-4 py-2 lg:px-6 lg:py-3 bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transition duration-300 ${
                     isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-600"
                   }`}
                   disabled={isLoading}
                 >
-                  {isLoading ? "Joining..." : "Join Quiz"}
+                  {isLoading ? "Joining..." : "Join Contest"}
                 </button>
               </div>
             </div>

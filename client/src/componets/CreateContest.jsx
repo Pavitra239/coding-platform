@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
 
 const MakeContest = () => {
   const [contest, setContest] = useState({
@@ -19,7 +20,7 @@ const MakeContest = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('http://localhost:3100/api/v1/contest/create', contest); // Adjust the endpoint as per your backend routes
+      const response = await axiosInstance.post('contest/create', contest); // Adjust the endpoint as per your backend routes
       console.log('Contest created:', response.data);
     } catch (error) {
       console.error('Error creating contest:', error);
