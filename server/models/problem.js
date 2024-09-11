@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 import { DIFFICULTY } from '../utils/constants.js'; // Ensure this path is correct
+
 const { Schema } = mongoose;
+
+const sampleSchema = new Schema({
+  input: { type: String, required: [true, 'Sample input is required'] },
+  output: { type: String, required: [true, 'Sample output is required'] }
+});
 
 const problemSchema = new Schema({
   title: { type: String, required: [true, 'Title is required'] },
@@ -13,16 +19,15 @@ const problemSchema = new Schema({
   },
   inputFormat: { type: String, required: [true, 'Input format is required'] },
   outputFormat: { type: String, required: [true, 'Output format is required'] },
-  sample_input: { type: String, required: [true, 'Sample input is required'] },
-  sample_output: { type: String, required: [true, 'Sample output is required'] },
+  sampleIO: [sampleSchema], // Array of sample input/output pairs
   constraints: { type: String },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Creator is required'],
   },
-  tags: [{ type: String }],
-  score: { type: Number },
+  tags: [{ type: String }], // Array of tags
+  score: { type: Number, default: 0 }, // Score field
 }, {
   timestamps: true
 });

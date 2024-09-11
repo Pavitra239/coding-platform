@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setLoading, setUser } from "../redux/userSlice";
 import Header from "./Header";
+import axiosInstance from '../utils/axiosInstance';
 
 const Login = () => {
   const user = useSelector((store) => store.app.user);
@@ -51,9 +52,9 @@ const Login = () => {
 
     try {
       const url = isLogin
-        ? `http://localhost:3100/api/v1/auth/login`
-        : `http://localhost:3100/api/v1/auth/register`;
-      const res = await axios.post(url, user, {
+        ? `auth/login`
+        : `auth/register`;
+      const res = await axiosInstance.post(url, user, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
@@ -62,6 +63,7 @@ const Login = () => {
         toast.success(res.data.message);
         if (isLogin) {
           const loggedInUser = res.data.user;
+          console.log(res.data.token);
           localStorage.setItem("UserToken", res.data.token);
 
           dispatch(setUser(loggedInUser));

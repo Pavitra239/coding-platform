@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { setToggle } from "../redux/movieSlice";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai"; // Menu icons for toggle
 import { logout, setUser } from "../redux/userSlice";
+import axiosInstance from '../utils/axiosInstance';
 
 const Header = () => {
   const user = useSelector((store) => store.app.user);
@@ -40,7 +41,7 @@ const Header = () => {
 
   const logoutHandler = async () => {
     try {
-      await axios.get(`http://localhost:3100/api/v1/auth/logout`, { withCredentials: true });
+      await axiosInstance.get(`auth/logout`, { withCredentials: true });
       
       // Clear user data from Redux store
       dispatch(setUser(null));
@@ -64,9 +65,9 @@ const Header = () => {
   const toggleHandler = () => {
     dispatch(setToggle());
     if (!toggle) {
-      navigate("/make-contest");
-    } else {
       navigate("/browse");
+    } else {
+      navigate("/make-contest");
     }
   };
 
@@ -81,7 +82,7 @@ const Header = () => {
           textShadow: "2px 2px 8px rgba(0, 0, 0, 0.9)",
         }}
       >
-        Quizify
+        Codify
       </h1>
 
       {/* Menu Button for Small Screens (<= 900px) */}
@@ -140,6 +141,16 @@ const Header = () => {
           >
             Support
           </Link>
+          <Link
+            to="/make-problem"
+            className={`text-lg font-semibold transition duration-300 ${
+              isActive("/make-problem")
+                ? "text-blue-400"
+                : "text-white hover:text-blue-300"
+            }`}
+          >
+            Problem
+          </Link>
           <div className="flex items-center space-x-2">
             <IoIosArrowDropdown size="24px" color="white" />
             <h1 className="text-lg font-medium text-white">
@@ -156,7 +167,7 @@ const Header = () => {
             onClick={toggleHandler}
             className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
           >
-            {toggle ? "Home" : "Make Contest"}
+            {toggle ? "Make Contest" : "Home"}
           </button>
         </div>
       )}

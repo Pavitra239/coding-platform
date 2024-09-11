@@ -10,7 +10,6 @@ export const createToken = async (payload) => {
 
 export const verifyToken = async (token) => {
   return await jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-    console.log("verify error found");
     if (err) throw new BadRequestError(err.msg);
     return decoded;
   });

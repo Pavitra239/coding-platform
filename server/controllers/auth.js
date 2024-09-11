@@ -28,6 +28,7 @@ export const login = async (req, res) => {
         message: `Welcome back ${user.username}`,
         user,
         success: true,
+        token
       });
 };
 
