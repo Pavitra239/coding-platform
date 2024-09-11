@@ -41,7 +41,7 @@ const Header = () => {
 
   const logoutHandler = async () => {
     try {
-      await axios.get(`http://localhost:3100/api/v1/auth/logout`, { withCredentials: true });
+      await axiosInstance.get(`auth/logout`, { withCredentials: true });
       
       // Clear user data from Redux store
       dispatch(setUser(null));
