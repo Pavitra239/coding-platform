@@ -1,12 +1,11 @@
-import React, { useState } from "react";
-import axios from "axios";
-import ConfirmationModal from "./ConfirmationModal"; // Import the modal component
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "./Header";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import axiosInstance from '../utils/axiosInstance';
+import { useNavigate, useParams } from "react-router-dom";
+import axiosInstance from "../utils/axiosInstance"; // Custom axios instance for API calls
+import ConfirmationModal from "./ConfirmationModal"; // Import the modal component
 
 const DIFFICULTY = {
   EASY: "easy",
@@ -14,31 +13,60 @@ const DIFFICULTY = {
   HARD: "hard",
 };
 
-const CreateProblem = () => {
-  const navigate = useNavigate(); // Use navigate hook
-  const [isModalOpen, setIsModalOpen] = useState(false); // State to handle modal visibility
+const ProblemForm = () => {
+  const navigate = useNavigate();
+  const { id } = useParams(); // Get the problem ID from the URL
   const user = useSelector((state) => state.app.user); // Get the logged-in user
+  
+  // Initial state for problem data
   const [problemData, setProblemData] = useState({
     title: "",
     description: "",
-    difficulty: DIFFICULTY.EASY, // Default to easy
+    difficulty: DIFFICULTY.EASY,
     inputFormat: "",
     outputFormat: "",
-    sampleIO: [{ input: "", output: "" }], // Initialize with one pair
+    sampleIO: [{ input: "", output: "" }],
     constraints: "",
     tags: "",
     score: 0,
   });
 
+  const [isEditing, setIsEditing] = useState(false); // Check if we're in edit mode
   const [errors, setErrors] = useState({});
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState(""); // New state to store modal message
+  const [isModalOpenInternal, setIsModalOpenInternal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  // Fetch problem if editing
+  useEffect(() => {
+    if (id) {
+      setIsEditing(true); // We're editing an existing problem
+      const fetchProblem = async () => {
+        const token = localStorage.getItem("UserToken");
+        try {
+          const response = await axiosInstance.get(`/problems/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          });
+          setProblemData(response.data); // Populate form with fetched data
+        } catch (error) {
+          toast.error("Failed to load problem data");
+          console.error(error);
+        }
+      };
+      fetchProblem();
+    } else {
+      setIsEditing(false); // We're creating a new problem
+    }
+  }, [id]);
 
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProblemData({ ...problemData, [name]: value });
-    setErrors({ ...errors, [name]: false }); // Clear error on change
+    setErrors({ ...errors, [name]: false });
   };
 
   // Handle dynamic sample input/output change
@@ -70,17 +98,16 @@ const CreateProblem = () => {
     if (!problemData.description) newErrors.description = true;
     if (!problemData.inputFormat) newErrors.inputFormat = true;
     if (!problemData.outputFormat) newErrors.outputFormat = true;
-    if (
-      problemData.sampleIO.some((sample) => !sample.input || !sample.output)
-    ) {
+    if (problemData.sampleIO.some((sample) => !sample.input || !sample.output)) {
       newErrors.sampleIO = true;
     }
     if (!problemData.constraints) newErrors.constraints = true;
+    if (!problemData.tags) newErrors.tags = true;
     if (!problemData.score) newErrors.score = true;
     return newErrors;
   };
 
-  // Handle form submission
+  // Handle form submission for both create and edit
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validateForm();
@@ -89,57 +116,63 @@ const CreateProblem = () => {
       toast.error("Please fill in all required fields!");
       return;
     }
-    setShowModal(true); // Show confirmation modal
+    setIsModalOpenInternal(true); // Show confirmation modal
   };
 
-  // Confirm submission
+  
   const confirmSubmit = async () => {
     const token = localStorage.getItem("UserToken");
-
+    const actionType = isEditing ? "edit" : "create";
+    const apiMethod = actionType === "edit" ? axiosInstance.put : axiosInstance.post;
+    const apiEndpoint = actionType === "edit" ? `/problems/${id}` : "/problems";
+  
+    // Only split and update tags if the user has made changes to the tags field
+    const tags =
+      typeof problemData.tags === "string" && problemData.tags.trim() !== ""
+        ? problemData.tags.split(",").map((tag) => tag.trim())
+        : problemData.tags; // Keep the original tags if unchanged
+  
     try {
-      const response = await axiosInstance.post(
-        `problems`,
+      const response = await apiMethod(
+        apiEndpoint,
         {
           ...problemData,
-          tags: problemData.tags.split(",").map((tag) => tag.trim()), // Split tags by commas
-          createdBy: user._id, // Attach user ID
+          tags, // Use the processed tags
+          createdBy: user._id,
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Add token if needed
+            Authorization: `Bearer ${token}`,
           },
-          withCredentials: true, // Allow cookies to be sent
+          withCredentials: true,
         }
       );
-
-      if (response.status === 201) {
-        // Show success message in the modal
-        setModalMessage("Problem created successfully!");
+  
+      if (response.status === 200 || response.status === 201) {
+        toast.success(
+          actionType === "edit"
+            ? "Problem updated successfully!"
+            : "Problem created successfully!"
+        );
         setTimeout(() => {
-          setShowModal(false); // Close modal after 2 seconds
-          navigate("/make-problem"); // Redirect after closing the modal
-        }, 2000); // 2 second delay before redirect
-
-        setProblemData({
-          title: "",
-          description: "",
-          difficulty: DIFFICULTY.EASY,
-          inputFormat: "",
-          outputFormat: "",
-          sampleIO: [{ input: "", output: "" }], // Reset to one pair
-          constraints: "",
-          tags: "",
-          score: 0,
-        }); // Reset form
+          setIsModalOpenInternal(false);
+          navigate("/make-problem");
+        }, 1000); // Redirect after 1 second
       }
     } catch (error) {
-      setModalMessage("Failed to create problem. Please try again.");
+      toast.error(
+        actionType === "edit"
+          ? "Failed to update problem. Please try again."
+          : "Failed to create problem. Please try again."
+      );
       setTimeout(() => {
-        setShowModal(false); // Close modal after 2 seconds
-      }, 2000); // 2 second delay
+        setIsModalOpenInternal(false);
+      }, 2000);
       console.error(error);
     }
   };
+
+  
 
   const handleBackClick = () => {
     setIsModalOpen(true); // Open the modal when the "Back" button is clicked
@@ -153,32 +186,34 @@ const CreateProblem = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false); // Close the modal without navigating
   };
+  
+  
+  
 
   return (
     <>
-      <div className="relative min-h-screen bg-gray-900 text-white">
+      <div className="relative min-h-screen bg-gray-800 text-white">
         <Header />
+       
+      
         <div className="container mx-auto p-[5%] bg-gray-800 text-white rounded-lg shadow-lg">
           <h1 className="text-4xl font-bold mt-10 mb-6 text-center">
-            Create New Problem
+            {isEditing ? "Edit Problem" : "Create Problem"}
           </h1>
-          {/* <button
-            onClick={() => navigate(-1)}
-            className="mt-4 mb-4 md:mt-0 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Back
-          </button> */}
+
           <button
             onClick={handleBackClick}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mb-4"
           >
             Back
           </button>
+          
           <ConfirmationModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onConfirm={handleConfirmBack}
         />
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>
@@ -195,8 +230,9 @@ const CreateProblem = () => {
               />
             </div>
 
-            {/* Description */}
-            <div>
+            {/* Similar fields for Description, Difficulty, Input/Output Format, Sample IO, Constraints, Tags, and Score */}
+             {/* Description */}
+             <div>
               <label className="block text-lg font-medium mb-2">
                 Description
               </label>
@@ -340,7 +376,9 @@ const CreateProblem = () => {
                 name="tags"
                 value={problemData.tags}
                 onChange={handleChange}
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full p-3 bg-gray-700 border ${
+                 errors.tags ? "border-red-500" : "border-gray-600"}
+                border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder="Comma-separated tags (e.g., arrays, sorting)"
               />
             </div>
@@ -359,12 +397,12 @@ const CreateProblem = () => {
               />
             </div>
 
-            <div className="flex justify-center mt-8">
+            <div className="text-center">
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-200"
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
-                Submit Problem
+                {isEditing ? "Update Problem" : "Create Problem"}
               </button>
             </div>
           </form>
@@ -372,35 +410,34 @@ const CreateProblem = () => {
       </div>
 
       {/* Confirmation Modal */}
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-8 w-96 text-center">
-            <h2 className="text-xl font-bold mb-4">Confirm Submission</h2>
-            <p>
-              {modalMessage || "Are you sure you want to submit this problem?"}
-            </p>
-            {!modalMessage && (
-              <div className="mt-6 flex justify-around">
-                <button
-                  onClick={confirmSubmit}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition duration-200"
-                >
-                  No
-                </button>
-              </div>
-            )}
+      <div
+        className={`${
+          isModalOpenInternal ? "block" : "hidden"
+        } fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex items-center justify-center z-50`}
+      >
+        <div className="bg-white p-8 rounded-lg shadow-lg text-gray-900 text-center">
+          <p className="text-2xl font-bold mb-4">Confirmation</p>
+          <p>{modalMessage || "Are you sure you want to proceed?"}</p>
+          <div className="flex justify-center gap-4 mt-6">
+            <button
+              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              onClick={() => setIsModalOpenInternal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              onClick={confirmSubmit}
+            >
+              Confirm
+            </button>
           </div>
         </div>
-      )}
+      </div>
+
       <ToastContainer />
     </>
   );
 };
 
-export default CreateProblem;
+export default ProblemForm;

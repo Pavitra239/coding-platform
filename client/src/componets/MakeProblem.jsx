@@ -9,96 +9,291 @@ import "../CSS/Quiz.css";
 const MakeProblem = () => {
   const navigate = useNavigate();
   const [problems, setProblems] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [difficultyFilter, setDifficultyFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [problemToDelete, setProblemToDelete] = useState(null);
+
+  const [sortConfig, setSortConfig] = useState({
+    key: "createdAt",
+    direction: "desc",
+  });
 
   const handleCreateProblem = () => {
-    navigate("/create-problem");
-  }
+    navigate("/problem-form");
+  };
 
-  const fetchProblems = async (page) => {
+  const handleEditProblem = (problemId) => {
+    navigate(`/problem-form/${problemId}`);
+  };
+
+  const handleDeleteProblem = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axiosInstance.get(`/problems?page=${page}&limit=10`, {
+      await axiosInstance.delete(`/problems/${problemToDelete}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         withCredentials: true,
       });
-
-      const { problems: newProblems, currentPage, totalPages } = response.data;
-      console.log(response.data)
-      setProblems((prevProblems) => [...prevProblems, ...newProblems]);
-      setCurrentPage(currentPage);
-      setTotalPages(totalPages);
-      setHasMore(currentPage < totalPages);
+      toast.success("Problem deleted successfully!");
+      setShowDeleteModal(false); // Hide the confirmation modal
+      setProblemToDelete(null); // Reset the problem to delete
+      fetchProblems(); // Refresh the problem list
     } catch (error) {
+      toast.error("Error deleting problem!");
+      console.error("Error deleting problem:", error);
+    }
+  };
+
+  const handleDeleteConfirmation = (problemId) => {
+    setProblemToDelete(problemId); // Set the ID of the problem to delete
+    setShowDeleteModal(true); // Show the confirmation modal
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false); // Hide the confirmation modal
+    setProblemToDelete(null); // Reset the problem to delete
+  };
+
+  const fetchProblems = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await axiosInstance.get(
+        `/problems`, // No page or limit parameters
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      const { problems: allProblems } = response.data;
+      setProblems(allProblems);
+    } catch (error) {
+      toast.error("Error fetching problems!");
       console.error("Error fetching problems:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch problems on initial load and when currentPage changes
   useEffect(() => {
-    fetchProblems(currentPage);
-  }, [currentPage]);
+    fetchProblems();
+  }, []);
 
-  // Handle infinite scroll
-  const handleScroll = () => {
-    if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.scrollHeight - 100 && hasMore && !loading) {
-      setCurrentPage((prevPage) => prevPage + 1);
-    }
+  const handleDifficultyFilterChange = (event) => {
+    setDifficultyFilter(event.target.value);
   };
 
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [hasMore, loading]);
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const sortedProblems = React.useMemo(() => {
+    let sortableProblems = [...problems];
+    if (sortConfig !== null) {
+      sortableProblems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableProblems;
+  }, [problems, sortConfig]);
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredProblems = sortedProblems
+    .filter((problem) =>
+      difficultyFilter === "All"
+        ? true
+        : problem.difficulty.toLowerCase() === difficultyFilter.toLowerCase()
+    )
+    .filter((problem) =>
+      problem.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
-      <div className="container mx-auto p-4 mb-6">
+      <div className="container mx-auto p-4">
         <button
           onClick={handleCreateProblem}
-          className="bg-red-500 text-white font-semibold py-2 px-4 mt-20 rounded-lg hover:bg-red-600 transition mb-4 w-full sm:w-auto"
+          className="bg-red-500 text-white font-semibold text-lg py-2 px-4 mt-20 rounded-lg hover:bg-red-600 transition mb-4 w-full sm:w-auto"
         >
           Add Problem
-        </button>   
-      </div>    
-
-      <div className="space-y-6 p-5">
-  {problems.map((problem) => (
-    <div
-      key={problem._id}
-      className="bg-gray-800 text-white shadow-lg rounded-lg p-6 hover:bg-gray-700 transition duration-300 ease-in-out"
-    >
-      <h2 className="text-3xl font-bold">{problem.title}</h2>
-      <p className="mt-4 text-gray-300">{problem.description}</p>
-      <div className="mt-4">
-        <span className="text-sm font-medium text-gray-400">Difficulty: </span>
-        <span className={`text-sm ${problem.difficulty === 'Easy' ? 'text-green-500' : problem.difficulty === 'Medium' ? 'text-yellow-500' : 'text-red-500'}`}>
-          {problem.difficulty}
-        </span>
+        </button>
       </div>
-      <div className="mt-2">
-        <span className="text-sm font-medium text-gray-400">Tags: </span>
-        <span className="text-sm text-gray-300">{problem.tags.join(', ')}</span>
-      </div>
-    </div>
-  ))}
-</div>
 
+      <div className="overflow-x-auto p-5">
+        <h1 className="text-3xl font-bold text-white mb-10 text-center">
+          Problem List
+        </h1>
+
+        <div className="mb-10 flex flex-col gap-4">
+          <label htmlFor="difficulty-filter" className="mr-2 text-lg">
+            Filter by Difficulty:
+          </label>
+          <select
+            id="difficulty-filter"
+            value={difficultyFilter}
+            onChange={handleDifficultyFilterChange}
+            className="bg-gray-800 text-white py-2 px-4 rounded mb-5 text-lg"
+          >
+            <option value="All">All</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+
+          <label htmlFor="search-box" className="text-lg">Search Problems:</label>
+          <input
+            id="search-box"
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search by title..."
+            className="bg-gray-800 text-white py-2 px-4 rounded text-lg"
+          />
+        </div>
+
+        <table className="min-w-full text-lg text-left text-gray-500">
+          <thead className="bg-gray-900 text-gray-400">
+            <tr>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("index")}
+              >
+                #
+              </th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("title")}
+              >
+                Title
+              </th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("difficulty")}
+              >
+                Difficulty
+              </th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("createdAt")}
+              >
+                Created Date
+              </th>
+              <th className="py-3 px-6 text-lg cursor-pointer"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProblems.length > 0 ? (
+              filteredProblems.map((problem, index) => (
+                <tr
+                  key={problem._id}
+                  className={`${
+                    index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
+                  }`}
+                >
+                  <td className="py-3 px-6">{index + 1}</td>
+                  <td
+                    className="py-3 px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
+                    onClick={() => navigate(`/problems/${problem._id}`)}
+                    title={problem.title}
+                  >
+                    {problem.title}
+                  </td>
+
+                  <td
+                    className={`py-3 px-6 ${
+                      problem.difficulty === "easy"
+                        ? "text-green-500"
+                        : problem.difficulty === "medium"
+                        ? "text-yellow-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {problem.difficulty.charAt(0).toUpperCase() +
+                      problem.difficulty.slice(1)}
+                  </td>
+                  <td className="py-3 px-6 text-gray-300">
+                    {new Date(problem.createdAt).toLocaleString()}
+                  </td>
+
+                  <td className="py-3 px-6 text-gray-300 flex gap-2">
+                    <button
+                      onClick={() => handleEditProblem(problem._id)}
+                      className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteConfirmation(problem._id)}
+                      className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="py-3 px-6 text-center text-gray-300">
+                  No problems found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {loading && (
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center items-center">
           <div className="loader"></div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-gray-800 p-8 rounded-lg">
+            <h3 className="text-white text-xl font-bold mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-300 mb-4">
+              Are you sure you want to delete this problem? This action cannot be
+              undone.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={cancelDelete}
+                className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition mr-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteProblem}
+                className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
