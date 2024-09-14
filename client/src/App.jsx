@@ -1,3 +1,4 @@
+// App.js
 import React, { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import AuthService from "./Auth/auth";
@@ -30,10 +31,6 @@ function App() {
 
     checkAuth();
   }, [dispatch]);
-
-  // if (isAuthenticated === null) {
-  //   return <div>Loading...</div>;
-  // }
 
   return (
     <div>

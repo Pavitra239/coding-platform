@@ -2,7 +2,7 @@ import Problem from '../models/problem.js';
 
 // Create problem
 export const createProblem = async (req, res) => {
-  const { title, description, difficulty, inputFormat, outputFormat, sampleIO, constraints, tags, createdBy } = req.body;
+  const { title, description, difficulty, inputFormat, outputFormat, sampleIO, constraints, tags, createdBy,score } = req.body;
   console.log(req.body);
 
   try {
@@ -15,40 +15,34 @@ export const createProblem = async (req, res) => {
       sampleIO, // Expecting an array of {input, output} pairs
       constraints,
       tags,
+      score,
       createdBy: req.user?._id || createdBy, // Use req.user._id if available, otherwise fall back to req.body.createdBy for testing
     });
 
     const createdProblem = await problem.save();
     res.status(201).json(createdProblem);
   } catch (error) {
+    console.log(error + "error");
     res.status(400).json({ message: error.message });
   }
 };
 
+
+// Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    // Fetch all problems without pagination
+    const problems = await Problem.find({}).sort({ createdAt: -1 });
+    const totalProblems = problems.length; // Get total problem count
 
-    // Fetch problems with pagination and sorting by creation time (newest first)
-    const problems = await Problem.find({})
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
-
-    const totalProblems = await Problem.countDocuments();
-
-    res.json({
-      problems,
-      currentPage: page,
-      totalPages: Math.ceil(totalProblems / limit),
-      totalProblems,
-    });
+    res.json({ problems, totalProblems });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
 
 
 // Get problem by ID
