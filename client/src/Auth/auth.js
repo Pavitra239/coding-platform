@@ -13,7 +13,7 @@ class Auth {
         const data = await response.json();
   
         if (response.ok) {
-          console.log(data)
+          // console.log(data)
           return { data, authStatus: true };
         } else {
           return { authStatus: false };

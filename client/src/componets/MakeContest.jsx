@@ -12,38 +12,12 @@ const MakeContest = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.app.user);
 
-  // useEffect(() => {
-  //   const fetchQuizzes = async () => {
-  //     try {
-  //       const response = await axios.get(`http://localhost:8080/api/v1/user/quiz`, {
-  //         params: { userId: user._id },
-  //       });
-  //       if (response.data.success) {
-  //         // Sort quizzes by the newest first
-  //         const sortedQuizzes = response.data.quizzes.sort(
-  //           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  //         );
-  //         setQuizzes(sortedQuizzes);
-  //       } else {
-  //         console.error("Failed to fetch quizzes:", response.data.message);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching quizzes:", error);
-  //     }
-  //   };
 
-  //   if (user) {
-  //     fetchQuizzes(); // Fetch quizzes only if the user is available
-  //   }
-  // }, [user]);
 
   const handleAddQuiz = () => {
     navigate("/create-contest");
   };
 
-  // const handleCreateProblem = () => {
-  //   navigate("/create-problem");
-  // }
 
   const handleEditQuiz = (code) => {
     navigate(`/edit-quiz/${code}`);
