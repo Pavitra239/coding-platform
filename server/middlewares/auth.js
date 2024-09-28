@@ -3,7 +3,7 @@ import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
 import { verifyToken } from "../utils/jwt.js";
 
 export const isAuthorized = async (req, res, next) => {
-  console.log("give asnwer" + req.headers.cookie);
+  
   if (!req.headers.cookie) throw new UnauthorizedError("please login!");
   const token = req.headers.cookie.slice(6);
   const decoded = await verifyToken(token);

@@ -12,7 +12,7 @@ import axiosInstance from '../utils/axiosInstance';
 const Header = () => {
   const user = useSelector((store) => store.app.user);
   const authStatus = useSelector((store) => store.app.authStatus);
-  console.log("this is auth", authStatus);
+  // console.log("this is auth", authStatus);
   const toggle = useSelector((store) => store.movie.toggle);
   const dispatch = useDispatch();
   const navigate = useNavigate();

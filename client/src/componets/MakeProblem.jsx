@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from 'react-hot-toast';
 import "../CSS/Quiz.css";
 
 const MakeProblem = () => {
@@ -297,7 +296,6 @@ const MakeProblem = () => {
         </div>
       )}
 
-      <ToastContainer />
     </div>
   );
 };

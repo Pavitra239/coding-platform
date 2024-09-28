@@ -17,7 +17,7 @@ function App() {
         setIsAuthenticated(authStatus.authStatus);
         if (authStatus.authStatus) {
           dispatch(setUser(authStatus.data.user));
-          console.log(authStatus.data.user);
+          // console.log(authStatus.data.user);
           console.log("User is authenticated");
         } else {
           dispatch(logout());
