@@ -1,19 +1,4 @@
-
-  @media (max-width: 661px) {
-    .Toastify__toast-container {
-      width: 100%; /* Ensure toast container width fits well */
-      max-width: 100%; /* Ensure toast container does not exceed screen width */
-      overflow: hidden; /* Prevent overflow */
-    }
-    
-    .Toastify__toast {
-      font-size: 0.9rem; /* Reduce font size for smaller screens */
-      white-space: nowrap; /* Prevent text from wrapping */
-      overflow: hidden; /* Hide overflow text */
-      text-overflow: ellipsis; /* Add ellipsis for overflow text */
-    }
-  }
-  
+ 
   .loader {
     border: 8px solid rgba(255, 255, 255, 0.3);
     border-top: 8px solid #ffffff;

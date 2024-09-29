@@ -10,6 +10,8 @@ const contestSchema = new Schema({
     required: [true, 'Creator is required'],
   },
   problems: [{ type: Schema.Types.ObjectId, ref: 'Problem' }],
+}, {
+  timestamps: true // This adds createdAt and updatedAt fields automatically
 });
 
 export default mongoose.model('Contest', contestSchema);
