@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import Header from "./Header";
+import Header from "../Header";
 import { useNavigate, useParams } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance"; // Custom axios instance for API calls
-import ConfirmationModal from "./ConfirmationModal"; // Import the modal component
+import axiosInstance from "../../utils/axiosInstance"; // Custom axios instance for API calls
+import ConfirmationModal from "../ConfirmationModal"; // Import the modal component
 
 const DIFFICULTY = {
   EASY: "easy",
@@ -16,7 +16,7 @@ const ProblemForm = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get the problem ID from the URL
   const user = useSelector((state) => state.app.user); // Get the logged-in user
-  
+
   // Initial state for problem data
   const [problemData, setProblemData] = useState({
     title: "",
@@ -28,6 +28,8 @@ const ProblemForm = () => {
     constraints: "",
     tags: "",
     score: 0,
+    testCases: [{ input: "", output: "" }],
+
   });
 
   const [isEditing, setIsEditing] = useState(false); // Check if we're in edit mode
@@ -97,8 +99,15 @@ const ProblemForm = () => {
     if (!problemData.description) newErrors.description = true;
     if (!problemData.inputFormat) newErrors.inputFormat = true;
     if (!problemData.outputFormat) newErrors.outputFormat = true;
-    if (problemData.sampleIO.some((sample) => !sample.input || !sample.output)) {
+    if (
+      problemData.sampleIO.some((sample) => !sample.input || !sample.output)
+    ) {
       newErrors.sampleIO = true;
+    }
+    if (
+      problemData.testCases.some((sample) => !sample.input || !sample.output)
+    ) {
+      newErrors.testCases = true;
     }
     if (!problemData.constraints) newErrors.constraints = true;
     if (!problemData.tags) newErrors.tags = true;
@@ -106,6 +115,25 @@ const ProblemForm = () => {
     return newErrors;
   };
 
+  // Handle dynamic test cases change
+  const handleTestCaseChange = (index, e) => {
+    const { name, value } = e.target;
+    const newTestCases = [...problemData.testCases];
+    newTestCases[index][name] = value;
+    setProblemData({ ...problemData, testCases: newTestCases });
+  };
+  
+  const addTestCase = () => {
+    setProblemData({
+      ...problemData,
+      testCases: [...problemData.testCases, { input: "", output: "" }],
+    });
+  };
+  // Remove a test case
+  const removeTestCase = (index) => {
+    const newTestCases = problemData.testCases.filter((_, i) => i !== index);
+    setProblemData({ ...problemData, testCases: newTestCases });
+  };
   // Handle form submission for both create and edit
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -118,19 +146,19 @@ const ProblemForm = () => {
     setIsModalOpenInternal(true); // Show confirmation modal
   };
 
-  
   const confirmSubmit = async () => {
     const token = localStorage.getItem("UserToken");
     const actionType = isEditing ? "edit" : "create";
-    const apiMethod = actionType === "edit" ? axiosInstance.put : axiosInstance.post;
+    const apiMethod =
+      actionType === "edit" ? axiosInstance.put : axiosInstance.post;
     const apiEndpoint = actionType === "edit" ? `/problems/${id}` : "/problems";
-  
+
     // Only split and update tags if the user has made changes to the tags field
     const tags =
       typeof problemData.tags === "string" && problemData.tags.trim() !== ""
         ? problemData.tags.split(",").map((tag) => tag.trim())
         : problemData.tags; // Keep the original tags if unchanged
-  
+
     try {
       const response = await apiMethod(
         apiEndpoint,
@@ -146,7 +174,7 @@ const ProblemForm = () => {
           withCredentials: true,
         }
       );
-  
+
       if (response.status === 200 || response.status === 201) {
         toast.success(
           actionType === "edit"
@@ -171,12 +199,10 @@ const ProblemForm = () => {
     }
   };
 
-  
-
   const handleBackClick = () => {
     setIsModalOpen(true); // Open the modal when the "Back" button is clicked
   };
-  
+
   const handleConfirmBack = () => {
     setIsModalOpen(false); // Close the modal
     toast.success("Back to the previous page");
@@ -186,16 +212,12 @@ const ProblemForm = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false); // Close the modal without navigating
   };
-  
-  
-  
 
   return (
     <>
       <div className="relative min-h-screen bg-gray-900 text-white">
         <Header />
-       
-      
+
         <div className="container mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
           <h1 className="text-4xl font-bold mt-10 mb-6 text-center">
             {isEditing ? "Edit Problem" : "Create Problem"}
@@ -207,12 +229,12 @@ const ProblemForm = () => {
           >
             Back
           </button>
-          
+
           <ConfirmationModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onConfirm={handleConfirmBack}
-        />
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onConfirm={handleConfirmBack}
+          />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
@@ -231,8 +253,8 @@ const ProblemForm = () => {
             </div>
 
             {/* Similar fields for Description, Difficulty, Input/Output Format, Sample IO, Constraints, Tags, and Score */}
-             {/* Description */}
-             <div>
+            {/* Description */}
+            <div>
               <label className="block text-lg font-medium mb-2">
                 Description
               </label>
@@ -244,8 +266,7 @@ const ProblemForm = () => {
                   errors.description ? "border-red-500" : "border-gray-700"
                 } `}
                 placeholder="Describe the problem"
-                rows="5"
-                
+                rows="6"
               />
             </div>
 
@@ -318,6 +339,7 @@ const ProblemForm = () => {
                     className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
                       errors.sampleIO ? "border-red-500" : "border-gray-700"
                     }`}
+                    rows={3}
                   />
                   <textarea
                     type="text"
@@ -328,6 +350,7 @@ const ProblemForm = () => {
                     className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
                       errors.sampleIO ? "border-red-500" : "border-gray-700"
                     }`}
+                    rows={3}
                   />
 
                   {/* Disable Remove button if only one sample exists */}
@@ -365,7 +388,7 @@ const ProblemForm = () => {
                   errors.constraints ? "border-red-500" : "border-gray-700"
                 }`}
                 placeholder="Specify the problem constraints"
-                rows={3}
+                rows={4}
               />
             </div>
 
@@ -378,7 +401,8 @@ const ProblemForm = () => {
                 value={problemData.tags}
                 onChange={handleChange}
                 className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
-                 errors.tags ? "border-red-500" : "border-gray-700"}
+                  errors.tags ? "border-red-500" : "border-gray-700"
+                }
                 `}
                 placeholder="Comma-separated tags (e.g., arrays, sorting)"
               />
@@ -396,6 +420,69 @@ const ProblemForm = () => {
                 placeholder="Score for the problem"
                 min={0}
               />
+            </div>
+
+            <div>
+              <label className="block text-lg font-medium mb-2">
+                Test Cases
+              </label>
+              {problemData.testCases.map((testCase, index) => (
+                <div key={index} className="space-y-2 mb-4">
+                  <textarea
+                    name="input"
+                    type="text"
+                    value={testCase.input}
+                    onChange={(e) => handleTestCaseChange(index, e)}
+                    className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                      errors.testCases ? "border-red-500" : "border-gray-700"
+                    }`}
+                    placeholder={`Test Case ${index + 1} Input`}
+                    rows={3}
+                  />
+                  <textarea
+                    name="output"
+                    value={testCase.output}
+                    onChange={(e) => handleTestCaseChange(index, e)}
+                    className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                      errors.testCases ? "border-red-500" : "border-gray-700"
+                    }`}
+                    placeholder={`Test Case ${index + 1} Expected Output`}
+                    rows={3}
+                  />
+                  {
+                    // Disable Remove button if only one test case exists
+                    problemData.testCases.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTestCase(index)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                      >
+                        Remove Test Case
+                      </button>
+                    )
+                  }
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addTestCase}
+                className="text-blue-500 mt-2 mb-2"
+              >
+                + Add More
+              </button>
+
+              <div className="bg-gray-100 border border-gray-300 rounded-md p-4 my-4">
+      <h4 className="text-lg font-semibold text-gray-800 mb-2">Important Note:</h4>
+      <p className="text-gray-700 leading-relaxed">
+        As an admin, when you create a problem, please ensure that the input and output examples are accurate. 
+        These examples are crucial for testing the submitted code to determine its correctness.
+      </p>
+    </div>
+
+
+
+      
+              
             </div>
 
             <div className="text-center">
@@ -435,7 +522,6 @@ const ProblemForm = () => {
           </div>
         </div>
       </div>
-
     </>
   );
 };

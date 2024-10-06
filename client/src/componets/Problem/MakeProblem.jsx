@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Header from "./Header";
+import Header from "../Header";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 import toast from 'react-hot-toast';
-import "../CSS/Quiz.css";
+import "../../CSS/Quiz.css";
 
 const MakeProblem = () => {
   const navigate = useNavigate();

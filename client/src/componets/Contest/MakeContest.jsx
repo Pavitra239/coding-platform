@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Header from "./Header";
+import Header from "../Header";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
-import "../CSS/Quiz.css";
+import "../../CSS/Quiz.css";
 
 const MakeContest = () => {
   const navigate = useNavigate();
@@ -110,6 +110,7 @@ const MakeContest = () => {
 
   const handleSort = (key) => {
     let direction = "asc";
+    console.log("key", key);
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
@@ -171,7 +172,14 @@ const MakeContest = () => {
               >
                 Created Date
               </th>
+              <th
+                className="cursor-pointer text-lg"
+                onClick={() => handleSort("createdAt")}
+              >
+              Status
+              </th>
               <th className="py-3 px-6 text-lg cursor-pointer"></th>
+              
             </tr>
           </thead>
           <tbody>
@@ -194,6 +202,9 @@ const MakeContest = () => {
                   <td className="py-3 px-6 text-gray-300">
                     {new Date(contest.createdAt).toLocaleString()}
                   </td>
+                  <td className="text-white">
+                    {contest.status}
+                  </td>
                   <td className="py-3 px-6 text-gray-300 flex gap-2">
                     <button
                       onClick={() => handleEditContest(contest._id)}
@@ -208,6 +219,7 @@ const MakeContest = () => {
                       Delete
                     </button>
                   </td>
+                  
                 </tr>
               ))
             ) : (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../utils/axiosInstance";
-import Header from "./Header";
-import ConfirmationModal from "./ConfirmationModal";
+import axiosInstance from "../../utils/axiosInstance";
+import Header from "../Header";
+import ConfirmationModal from "../ConfirmationModal";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -17,6 +17,8 @@ const CreateContest = () => {
     description: "",
     problems: [], // Store selected problem IDs
     created_by: user._id, // User ID
+    start_time: "", // Start time of the contest
+    end_time: "", // End time of the contest
   });
 
   const [problems, setProblems] = useState([]); // All problems
@@ -25,6 +27,8 @@ const CreateContest = () => {
     name: false,
     description: false,
     problems: false,
+    start_time: false,
+    end_time: false,
   });
 
   // Fetch all problems on component mount
@@ -36,6 +40,8 @@ const CreateContest = () => {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         });
+
+        
         let { problems: allProblems } = response.data;
 
         // Sort problems by latest
@@ -45,12 +51,26 @@ const CreateContest = () => {
 
         setProblems(allProblems);
       } catch (error) {
+        toast.error("Error fetching problems.");
         console.error("Error fetching problems:", error);
       }
     };
 
     fetchProblems();
   }, []);
+
+  // Utility function to format ISO date to yyyy-MM-ddThh:mm
+const formatDateTimeLocal = (isoString) => {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 
   // Fetch contest data if editing
   useEffect(() => {
@@ -68,7 +88,9 @@ const CreateContest = () => {
             name: contestData.name,
             description: contestData.description,
             problems: contestData.problems.map((problem) => problem._id),
-            userId: contestData.userId,
+            created_by: contestData.created_by,
+            start_time: formatDateTimeLocal(contestData.start_time),
+            end_time: formatDateTimeLocal(contestData.end_time),
           });
         } catch (error) {
           console.error("Error fetching contest data:", error);
@@ -117,6 +139,8 @@ const CreateContest = () => {
       name: contest.name.trim() === "",
       description: contest.description.trim() === "",
       problems: contest.problems.length === 0,
+      start_time: contest.start_time.trim() === "",
+      end_time: contest.end_time.trim() === "",
     };
 
     setIsInvalid(invalidFields);
@@ -124,7 +148,9 @@ const CreateContest = () => {
     if (
       invalidFields.name ||
       invalidFields.description ||
-      invalidFields.problems
+      invalidFields.problems ||
+      invalidFields.start_time ||
+      invalidFields.end_time
     ) {
       toast.error("Please fill in all required fields.");
       return;
@@ -141,7 +167,7 @@ const CreateContest = () => {
           },
           withCredentials: true,
         });
-        
+
         toast.success("Contest updated successfully!");
       } else {
         // Create new contest
@@ -199,6 +225,11 @@ const CreateContest = () => {
         >
           Back
         </button>
+        <ConfirmationModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onConfirm={handleConfirmBack}
+          />
 
         {/* Contest Form */}
         <form onSubmit={handleSubmit}>
@@ -213,9 +244,8 @@ const CreateContest = () => {
               name="name"
               value={contest.name}
               onChange={handleChange}
-              className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isInvalid.name
-                  ? "border-red-500" : "  border-gray-700"
+              className={`w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isInvalid.name ? "border-red-500" : "border-gray-700"
               }`}
               placeholder="Enter contest title"
             />
@@ -223,10 +253,7 @@ const CreateContest = () => {
 
           {/* Description */}
           <div className="mb-4">
-            <label
-              className="block text-lg font-medium mb-2"
-              htmlFor="description"
-            >
+            <label className="block text-lg font-medium mb-2" htmlFor="description">
               Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -234,105 +261,87 @@ const CreateContest = () => {
               name="description"
               value={contest.description}
               onChange={handleChange}
-              className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isInvalid.description
-                  ? "border-red-500" : "  border-gray-700"
+              className={`w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isInvalid.description ? "border-red-500" : "border-gray-700"
               }`}
               rows={5}
               placeholder="Enter contest description"
             />
           </div>
 
-          {/* Selected Problems */}
+          {/* Start Time */}
           <div className="mb-4">
-            {contest.problems.length > 0 ? (
-              <div>
-                <h3 className="text-lg font-bold mb-2">Selected Problems:</h3>
-                <div className="p-4 rounded-lg">
-                  {contest.problems.map((problemId) => {
-                    const problem = problems.find((p) => p._id === problemId);
-                    return (
-                      problem && (
-                        <div
-                          key={problem._id}
-                          className="flex justify-between items-center p-4 mb-2 border border-gray-800 rounded-lg"
-                        >
-                          <span className="font-semibold capitalize">
-                            {problem.title}
-                          </span>
-                          <span className="text-sm">
-                            <span className="mr-5">
-                              {new Date(problem.createdAt).toLocaleDateString()}{" "}
-                              <span className="capitalize">
-                              | {problem.difficulty}
-                              </span>
-                            </span>
-                            <button
-                              type="button"
-                              className="px-2 py-2 bg-red-500 rounded-lg text-white hover:bg-red-600"
-                              onClick={() => handleProblemSelect(problemId)}
-                            >
-                              Remove
-                            </button>
-                          </span>
-                        </div>
-                      )
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <p
-                className={`text-red-500 ${
-                  isInvalid.problems ? "block" : "hidden"
-                }`}
-              >
-                Please select at least one problem.
-              </p>
-            )}
-          </div>
-
-          {/* Problem Search */}
-          <div className="mb-4">
-            <label className="block text-lg font-medium mb-2">
-              Add Problems <span className="text-red-500">*</span>
+            <label className="block text-lg font-medium mb-2" htmlFor="start_time">
+              Start Time <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              className={`w-full p-4  bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
-              placeholder="Search problems"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              type="datetime-local"
+              id="start_time"
+              name="start_time"
+              value={contest.start_time}
+              onChange={handleChange}
+              className={`w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isInvalid.start_time ? "border-red-500" : "border-gray-700"
+              }`}
             />
           </div>
 
-          {/* Problem List */}
-          <div className="max-h-[350px] overflow-y-auto">
-            {displayedProblems.map((problem) => (
-              <div
-                key={problem._id}
-                className={`flex justify-between items-center p-5 mb-2 border border-gray-800 rounded-lg cursor-pointer ${
-                  contest.problems.includes(problem._id)
-                    ? "bg-blue-500"
-                    : "bg-gray-800"
-                }`}
-                onClick={() => handleProblemSelect(problem._id)}
-              >
-                <span className="font-semibold capitalize">
-                  {problem.title}
-                </span>
-                <span className="text-sm">
-                  {new Date(problem.createdAt).toLocaleDateString()} |{" "}
-                  {problem.difficulty}
-                </span>
-              </div>
-            ))}
+          {/* End Time */}
+          <div className="mb-4">
+            <label className="block text-lg font-medium mb-2" htmlFor="end_time">
+              End Time <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="datetime-local"
+              id="end_time"
+              name="end_time"
+              value={contest.end_time}
+              onChange={handleChange}
+              className={`w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isInvalid.end_time ? "border-red-500" : "border-gray-700"
+              }`}
+            />
           </div>
 
-          {/* Submit Button */}
+          {/* Problems */}
+          <div className="mb-4">
+            <label className="block text-lg font-medium mb-2">
+              Select Problems <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Search Problems"
+              className="w-full p-4 bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <ul className="rounded-lg p-4 max-h-64 overflow-y-auto">
+              {displayedProblems.map((problem) => (
+                <li key={problem._id} className="mb-2 p-2">
+                  <label className="flex items-center p-4 border border-gray-700 rounded-lg">
+                    <input
+                      type="checkbox"
+                      className="mr-10 cursor-pointer"
+                      checked={contest.problems.includes(problem._id)}
+                      onChange={() => handleProblemSelect(problem._id)}
+                      
+                    />
+                    <span className="text-lg capitalize cursor-pointer"
+                    onClick={() => navigate(`/problems/${problem._id}`)} >
+                    {problem.title}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            {isInvalid.problems && (
+              <p className="text-red-500 text-sm">Please select at least one problem.</p>
+            )}
+          </div>
+
           <button
             type="submit"
-            className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 mt-5"
+            className="w-full py-4 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-600 transition-all duration-300"
           >
             {isEditMode ? "Update Contest" : "Create Contest"}
           </button>
@@ -340,13 +349,13 @@ const CreateContest = () => {
       </div>
 
       {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onConfirm={handleConfirmBack}
-        title="Go Back?"
-        message="Are you sure you want to leave? All unsaved data will be lost."
-      />
+      {isModalOpen && (
+        <ConfirmationModal
+          message="Are you sure you want to go back? All unsaved changes will be lost."
+          onConfirm={handleConfirmBack}
+          onCancel={handleCloseModal}
+        />
+      )}
     </div>
   );
 };

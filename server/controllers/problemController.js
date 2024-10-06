@@ -2,7 +2,7 @@ import Problem from '../models/problem.js';
 
 // Create problem
 export const createProblem = async (req, res) => {
-  const { title, description, difficulty, inputFormat, outputFormat, sampleIO, constraints, tags, createdBy,score } = req.body;
+  const { title, description, difficulty, inputFormat, outputFormat, sampleIO, testCases, constraints, tags, createdBy, score } = req.body;
   console.log(req.body);
 
   try {
@@ -12,7 +12,8 @@ export const createProblem = async (req, res) => {
       difficulty,
       inputFormat,
       outputFormat,
-      sampleIO, // Expecting an array of {input, output} pairs
+      sampleIO, // Expecting an array of { input, output } pairs for samples
+      testCases, // Expecting an array of { input, output, timeLimit, memoryLimit } pairs for test cases
       constraints,
       tags,
       score,
@@ -22,11 +23,10 @@ export const createProblem = async (req, res) => {
     const createdProblem = await problem.save();
     res.status(201).json(createdProblem);
   } catch (error) {
-    console.log(error + "error");
+    console.log(error + " error");
     res.status(400).json({ message: error.message });
   }
 };
-
 
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
@@ -35,7 +35,7 @@ export const getProblems = async (req, res) => {
     const problems = await Problem.find({}).sort({ createdAt: -1 });
     const totalProblems = problems.length; // Get total problem count
 
-    res.json({ problems, totalProblems });
+    res.json({ problems, totalProblems,succes:true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -71,11 +71,21 @@ export const updateProblem = async (req, res) => {
 
     const updates = req.body;
 
-    // If samples are provided, ensure they are correctly formatted as an array of objects
+    // If sampleIO is provided, ensure it's correctly formatted as an array of objects
     if (updates.sampleIO) {
       problem.sampleIO = updates.sampleIO.map(sample => ({
         input: sample.input,
         output: sample.output,
+      }));
+    }
+
+    // If testCases are provided, ensure they are correctly formatted as an array of objects
+    if (updates.testCases) {
+      problem.testCases = updates.testCases.map(testCase => ({
+        input: testCase.input,
+        output: testCase.output,
+        timeLimit: testCase.timeLimit || 1, // Set default values for time and memory limits if not provided
+        memoryLimit: testCase.memoryLimit || 256,
       }));
     }
 

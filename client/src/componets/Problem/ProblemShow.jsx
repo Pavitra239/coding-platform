@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance";
-import "../CSS/ProblemShow.css";
+import axiosInstance from "../../utils/axiosInstance";
+import "../../CSS/ProblemShow.css";
 import Submission from "./Submission";
 import Solution from "./Solution";
 import Statement from "./Statement";
