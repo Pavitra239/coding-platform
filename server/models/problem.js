@@ -8,6 +8,13 @@ const sampleSchema = new Schema({
   output: { type: String, required: [true, 'Sample output is required'] }
 });
 
+const testCaseSchema = new Schema({
+  input: { type: String, required: [true, 'Test case input is required'] },
+  output: { type: String, required: [true, 'Test case output is required'] },
+  timeLimit: { type: Number, default: 1 }, // In seconds, optional
+  memoryLimit: { type: Number, default: 256 }, // In MB, optional
+});
+
 const problemSchema = new Schema({
   title: { type: String, required: [true, 'Title is required'] },
   description: { type: String, required: [true, 'Description is required'] },
@@ -20,6 +27,7 @@ const problemSchema = new Schema({
   inputFormat: { type: String, required: [true, 'Input format is required'] },
   outputFormat: { type: String, required: [true, 'Output format is required'] },
   sampleIO: [sampleSchema], // Array of sample input/output pairs
+  testCases: [testCaseSchema], // Array of actual test cases for evaluation
   constraints: { type: String },
   createdBy: {
     type: Schema.Types.ObjectId,

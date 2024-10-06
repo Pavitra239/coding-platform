@@ -12,7 +12,7 @@ class Auth {
   
         const data = await response.json();
   
-        if (response.ok) {
+        if (data.success) {
           // console.log(data)
           return { data, authStatus: true };
         } else {

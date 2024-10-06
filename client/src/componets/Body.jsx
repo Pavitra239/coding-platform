@@ -4,11 +4,11 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from './Login';
 import Browse from './Browse';
 import Student from './Student';
-import MakeContest from './MakeContest';
-import CreateContest from './CreateContest';
-import MakeProblem from './MakeProblem';
-import ProblemForm from './ProblemForm';
-import ProblemShow from './ProblemShow';
+import MakeContest from './Contest/MakeContest';
+import CreateContest from './Contest/CreateContest';
+import MakeProblem from './Problem/MakeProblem';
+import ProblemForm from './Problem/ProblemForm';
+import ProblemShow from './Problem/ProblemShow';
 import NotFoundError from './NotFoundError';
 
 const Body = () => {
