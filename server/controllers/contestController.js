@@ -26,6 +26,7 @@ export const createContest = async (req, res) => {
 
 export const getContestById = async (req, res) => {
   const { id } = req.params;
+  console.log(id);
   
   try {
     const contest = await Contest.findById(id).populate('created_by').populate('problems');
@@ -33,7 +34,7 @@ export const getContestById = async (req, res) => {
     if (!contest) {
       return res.status(404).json({ error: 'Contest not found' });
     }
-
+    console.log(contest);
     res.status(200).json(contest);
   } catch (error) {
     console.log(error);
