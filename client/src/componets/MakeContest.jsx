@@ -23,7 +23,7 @@ const MakeContest = () => {
   };
 
   const handleEditContest = (contestId) => {
-    navigate(`/edit-contest/${contestId}`);
+    navigate(`/create-contest/${contestId}`);
   };
 
   const handleDeleteContest = async () => {
@@ -66,8 +66,7 @@ const MakeContest = () => {
         withCredentials: true,
       });
   
-      // Log the entire response to understand the structure
-      console.log("Fetched data:", response.data);
+   
   
       // Adjust how contests are set based on the actual data structure
       if (Array.isArray(response.data)) {
@@ -128,7 +127,7 @@ const MakeContest = () => {
       <div className="container mx-auto p-4">
         <button
           onClick={handleAddContest}
-          className="bg-blue-500 text-white font-semibold py-2 px-4 mt-20 rounded-lg hover:bg-blue-600 transition mb-4 w-full sm:w-auto"
+          className="bg-blue-500 text-white text-lg font-semibold py-2 px-4 mt-20 rounded-lg hover:bg-blue-600 transition mb-4 w-full sm:w-auto"
         >
           Add Contest
         </button>

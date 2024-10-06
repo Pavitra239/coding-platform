@@ -223,9 +223,9 @@ const ProblemForm = () => {
                 name="title"
                 value={problemData.title}
                 onChange={handleChange}
-                className={`w-full p-3 bg-gray-700 border ${
-                  errors.title ? "border-red-500" : "border-gray-600"
-                } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                  errors.title ? "border-red-500" : "border-gray-700"
+                }`}
                 placeholder="Enter problem title"
               />
             </div>
@@ -240,11 +240,12 @@ const ProblemForm = () => {
                 name="description"
                 value={problemData.description}
                 onChange={handleChange}
-                className={`w-full p-3 bg-gray-700 border ${
-                  errors.description ? "border-red-500" : "border-gray-600"
-                } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                  errors.description ? "border-red-500" : "border-gray-700"
+                } `}
                 placeholder="Describe the problem"
                 rows="5"
+                
               />
             </div>
 
@@ -257,7 +258,7 @@ const ProblemForm = () => {
                 name="difficulty"
                 value={problemData.difficulty}
                 onChange={handleChange}
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-4  bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 "
               >
                 <option value={DIFFICULTY.EASY}>Easy</option>
                 <option value={DIFFICULTY.MEDIUM}>Medium</option>
@@ -275,11 +276,11 @@ const ProblemForm = () => {
                 name="inputFormat"
                 value={problemData.inputFormat}
                 onChange={handleChange}
-                className={`w-full p-3 bg-gray-700 border ${
-                  errors.inputFormat ? "border-red-500" : "border-gray-600"
-                } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                  errors.inputFormat ? "border-red-500" : "border-gray-700"
+                }`}
                 placeholder="Specify the input format"
-                rows={3}
+                rows={4}
               />
             </div>
 
@@ -293,11 +294,11 @@ const ProblemForm = () => {
                 name="outputFormat"
                 value={problemData.outputFormat}
                 onChange={handleChange}
-                className={`w-full p-3 bg-gray-700 border ${
+                className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
                   errors.outputFormat ? "border-red-500" : "border-gray-600"
-                } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                }`}
                 placeholder="Specify the output format"
-                rows={3}
+                rows={4}
               />
             </div>
 
@@ -314,9 +315,9 @@ const ProblemForm = () => {
                     value={sample.input}
                     onChange={(e) => handleSampleChange(index, e)}
                     placeholder="Sample Input"
-                    className={`w-full p-2 bg-gray-700 border ${
-                      errors.sampleIO ? "border-red-500" : "border-gray-600"
-                    } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                      errors.sampleIO ? "border-red-500" : "border-gray-700"
+                    }`}
                   />
                   <textarea
                     type="text"
@@ -324,9 +325,9 @@ const ProblemForm = () => {
                     value={sample.output}
                     onChange={(e) => handleSampleChange(index, e)}
                     placeholder="Sample Output"
-                    className={`w-full p-2 bg-gray-700 border ${
-                      errors.sampleIO ? "border-red-500" : "border-gray-600"
-                    } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                      errors.sampleIO ? "border-red-500" : "border-gray-700"
+                    }`}
                   />
 
                   {/* Disable Remove button if only one sample exists */}
@@ -360,9 +361,9 @@ const ProblemForm = () => {
                 name="constraints"
                 value={problemData.constraints}
                 onChange={handleChange}
-                className={`w-full p-3 bg-gray-700 border ${
-                  errors.constraints ? "border-red-500" : "border-gray-600"
-                } rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                  errors.constraints ? "border-red-500" : "border-gray-700"
+                }`}
                 placeholder="Specify the problem constraints"
                 rows={3}
               />
@@ -376,9 +377,9 @@ const ProblemForm = () => {
                 name="tags"
                 value={problemData.tags}
                 onChange={handleChange}
-                className={`w-full p-3 bg-gray-700 border ${
-                 errors.tags ? "border-red-500" : "border-gray-600"}
-                border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                 errors.tags ? "border-red-500" : "border-gray-700"}
+                `}
                 placeholder="Comma-separated tags (e.g., arrays, sorting)"
               />
             </div>
@@ -391,7 +392,7 @@ const ProblemForm = () => {
                 name="score"
                 value={problemData.score}
                 onChange={handleChange}
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-4  bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 "
                 placeholder="Score for the problem"
                 min={0}
               />

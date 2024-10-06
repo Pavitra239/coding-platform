@@ -3,21 +3,23 @@ import axiosInstance from "../utils/axiosInstance";
 import Header from "./Header";
 import ConfirmationModal from "./ConfirmationModal";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const MakeContest = () => {
+const CreateContest = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Get contest ID from URL params
   const user = useSelector((store) => store.app.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // Track if we're editing
   const [contest, setContest] = useState({
     name: "",
     description: "",
-    problems: [], // Initialize as an array to store selected problem IDs
-    created_by: user._id, // Store the user ID
+    problems: [], // Store selected problem IDs
+    created_by: user._id, // User ID
   });
 
-  const [problems, setProblems] = useState([]); // To store all problems
+  const [problems, setProblems] = useState([]); // All problems
   const [searchTerm, setSearchTerm] = useState(""); // Search term for filtering
   const [isInvalid, setIsInvalid] = useState({
     name: false,
@@ -36,7 +38,7 @@ const MakeContest = () => {
         });
         let { problems: allProblems } = response.data;
 
-        // Sort problems by latest (assuming `createdAt` exists)
+        // Sort problems by latest
         allProblems = allProblems.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
@@ -49,6 +51,33 @@ const MakeContest = () => {
 
     fetchProblems();
   }, []);
+
+  // Fetch contest data if editing
+  useEffect(() => {
+    if (id) {
+      setIsEditMode(true); // We are in edit mode
+      const fetchContest = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const response = await axiosInstance.get(`/contests/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+          });
+          const contestData = response.data;
+          setContest({
+            name: contestData.name,
+            description: contestData.description,
+            problems: contestData.problems.map((problem) => problem._id),
+            userId: contestData.userId,
+          });
+        } catch (error) {
+          console.error("Error fetching contest data:", error);
+        }
+      };
+
+      fetchContest();
+    }
+  }, [id]);
 
   // Handle form field changes
   const handleChange = (e) => {
@@ -63,16 +92,16 @@ const MakeContest = () => {
   // Handle problem selection
   const handleProblemSelect = (problemId) => {
     setContest((prevContest) => {
-      const isSelected = prevContest.problems.includes(problemId); // Check if the ID is already in the array
+      const isSelected = prevContest.problems.includes(problemId);
       if (isSelected) {
         return {
           ...prevContest,
-          problems: prevContest.problems.filter((id) => id !== problemId), // Remove the problem ID
+          problems: prevContest.problems.filter((id) => id !== problemId),
         };
       } else {
         return {
           ...prevContest,
-          problems: [...prevContest.problems, problemId], // Add the problem ID
+          problems: [...prevContest.problems, problemId],
         };
       }
     });
@@ -92,23 +121,43 @@ const MakeContest = () => {
 
     setIsInvalid(invalidFields);
 
-    // If any field is invalid, do not submit
-    if (invalidFields.name || invalidFields.description || invalidFields.problems) {
+    if (
+      invalidFields.name ||
+      invalidFields.description ||
+      invalidFields.problems
+    ) {
       toast.error("Please fill in all required fields.");
       return;
     }
 
     try {
-      const response = await axiosInstance.post("/contests/create", contest, {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      });
-      toast.success("Contest created successfully!");
+      const token = localStorage.getItem("token");
+      if (isEditMode) {
+        // Update existing contest
+        await axiosInstance.put(`/contests/${id}`, contest, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        });
+        
+        toast.success("Contest updated successfully!");
+      } else {
+        // Create new contest
+        await axiosInstance.post("/contests/create", contest, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        });
+        toast.success("Contest created successfully!");
+      }
       navigate("/make-contest");
     } catch (error) {
-      console.log(error.response.data);
-      toast.error("Error creating contest.");
-      console.error("Error creating contest:", error);
+      toast.error("Error creating/updating contest.");
+      console.error("Error creating/updating contest:", error);
     }
   };
 
@@ -119,7 +168,6 @@ const MakeContest = () => {
 
   const handleConfirmBack = () => {
     setIsModalOpen(false);
-    toast.success("Back to the previous page");
     navigate(-1);
   };
 
@@ -141,7 +189,7 @@ const MakeContest = () => {
       <Header />
       <div className="container mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
         <h1 className="text-4xl font-bold mt-10 mb-6 text-center">
-          Create Contest
+          {isEditMode ? "Edit Contest" : "Create Contest"}
         </h1>
 
         {/* Back Button */}
@@ -152,8 +200,9 @@ const MakeContest = () => {
           Back
         </button>
 
-        {/* Contest Creation Form */}
+        {/* Contest Form */}
         <form onSubmit={handleSubmit}>
+          {/* Contest Name */}
           <div className="mb-4">
             <label className="block text-lg font-medium mb-2" htmlFor="name">
               Contest Name <span className="text-red-500">*</span>
@@ -164,15 +213,20 @@ const MakeContest = () => {
               name="name"
               value={contest.name}
               onChange={handleChange}
-              className={`w-full p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isInvalid.name ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"
+              className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isInvalid.name
+                  ? "border-red-500" : "  border-gray-700"
               }`}
               placeholder="Enter contest title"
             />
           </div>
 
+          {/* Description */}
           <div className="mb-4">
-            <label className="block text-lg font-medium mb-2" htmlFor="description">
+            <label
+              className="block text-lg font-medium mb-2"
+              htmlFor="description"
+            >
               Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -180,8 +234,9 @@ const MakeContest = () => {
               name="description"
               value={contest.description}
               onChange={handleChange}
-              className={`w-full p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isInvalid.description ? "border-2 border-red-500 bg-gray-700" : "bg-gray-700"
+              className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              isInvalid.description
+                  ? "border-red-500" : "  border-gray-700"
               }`}
               rows={5}
               placeholder="Enter contest description"
@@ -200,16 +255,21 @@ const MakeContest = () => {
                       problem && (
                         <div
                           key={problem._id}
-                          className="flex justify-between items-center p-3 mb-2 bg-gray-700 rounded-lg"
+                          className="flex justify-between items-center p-4 mb-2 border border-gray-800 rounded-lg"
                         >
-                          <span className="font-semibold capitalize">{problem.title}</span>
+                          <span className="font-semibold capitalize">
+                            {problem.title}
+                          </span>
                           <span className="text-sm">
                             <span className="mr-5">
-                              {new Date(problem.createdAt).toLocaleDateString()} |{" "}
-                              {problem.difficulty}
+                              {new Date(problem.createdAt).toLocaleDateString()}{" "}
+                              <span className="capitalize">
+                              | {problem.difficulty}
+                              </span>
                             </span>
                             <button
-                              className="px-2 py-1 bg-red-500 rounded-lg text-white hover:bg-red-600"
+                              type="button"
+                              className="px-2 py-2 bg-red-500 rounded-lg text-white hover:bg-red-600"
                               onClick={() => handleProblemSelect(problemId)}
                             >
                               Remove
@@ -222,58 +282,59 @@ const MakeContest = () => {
                 </div>
               </div>
             ) : (
-              <p className={`text-red-500 ${isInvalid.problems ? "block" : "hidden"}`}>
+              <p
+                className={`text-red-500 ${
+                  isInvalid.problems ? "block" : "hidden"
+                }`}
+              >
                 Please select at least one problem.
               </p>
             )}
           </div>
 
+          {/* Problem Search */}
           <div className="mb-4">
-            <label className="block text-lg mb-2 font-medium" htmlFor="search">
-              Search Problems
+            <label className="block text-lg font-medium mb-2">
+              Add Problems <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              id="search"
+              className={`w-full p-4  bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              placeholder="Search problems"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search for a problem..."
-              className="w-full p-3 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-5"
             />
-
-            {/* Scrollable box for problems */}
-            <div className="max-h-64 overflow-y-scroll border border-gray-800 p-2 rounded-lg bg-gray-900 custom-scrollbar">
-              {displayedProblems.length > 0 ? (
-                displayedProblems.map((problem) => (
-                  <div
-                    key={problem._id}
-                    className={`flex justify-between items-center p-3 cursor-pointer rounded-lg mb-2 ${
-                      contest.problems.includes(problem._id)
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-900 text-gray-300"
-                    } hover:bg-gray-500 hover:text-white`}
-                    onClick={() => handleProblemSelect(problem._id)}
-                  >
-                    <span className="font-semibold capitalize">
-                      {problem.title}
-                    </span>
-                    <span className="text-sm">
-                      {new Date(problem.createdAt).toLocaleDateString()} |{" "}
-                      {problem.difficulty}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-gray-300">No problems found</p>
-              )}
-            </div>
           </div>
 
+          {/* Problem List */}
+          <div className="max-h-[350px] overflow-y-auto">
+            {displayedProblems.map((problem) => (
+              <div
+                key={problem._id}
+                className={`flex justify-between items-center p-5 mb-2 border border-gray-800 rounded-lg cursor-pointer ${
+                  contest.problems.includes(problem._id)
+                    ? "bg-blue-500"
+                    : "bg-gray-800"
+                }`}
+                onClick={() => handleProblemSelect(problem._id)}
+              >
+                <span className="font-semibold capitalize">
+                  {problem.title}
+                </span>
+                <span className="text-sm">
+                  {new Date(problem.createdAt).toLocaleDateString()} |{" "}
+                  {problem.difficulty}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Submit Button */}
           <button
             type="submit"
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 mt-5"
           >
-            Create Contest
+            {isEditMode ? "Update Contest" : "Create Contest"}
           </button>
         </form>
       </div>
@@ -283,9 +344,11 @@ const MakeContest = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onConfirm={handleConfirmBack}
+        title="Go Back?"
+        message="Are you sure you want to leave? All unsaved data will be lost."
       />
     </div>
   );
 };
 
-export default MakeContest;
+export default CreateContest;

@@ -9,6 +9,7 @@ import CreateContest from './CreateContest';
 import MakeProblem from './MakeProblem';
 import ProblemForm from './ProblemForm';
 import ProblemShow from './ProblemShow';
+import NotFoundError from './NotFoundError';
 
 const Body = () => {
   const appRouter = createBrowserRouter([
@@ -18,9 +19,11 @@ const Body = () => {
     { path: "/make-contest", element: <MakeContest /> },
     { path: "/make-problem", element: <MakeProblem /> },
     { path: "/create-contest", element: <CreateContest /> },
+    { path: "/create-contest/:id", element: <CreateContest /> },
     { path: "/problem-form", element: <ProblemForm /> },
     { path: "/problem-form/:id", element: <ProblemForm /> },
-    { path: "/problems/:id", element: <ProblemShow /> }
+    { path: "/problems/:id", element: <ProblemShow /> },
+    {path: "*",element: <NotFoundError/>}
   ]);
 
   return (

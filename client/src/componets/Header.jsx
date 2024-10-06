@@ -217,6 +217,16 @@ const Header = () => {
           >
             Support
           </Link>
+          <Link
+            to="/make-problem"
+            className={`text-lg font-semibold transition duration-300 ${
+              isActive("/make-problem")
+                ? "text-blue-400"
+                : "text-white hover:text-blue-300"
+            }`}
+          >
+            Problem
+          </Link>
           <button
             onClick={logoutHandler}
             className="block w-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold rounded-lg shadow-lg hover:bg-red-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-4"
