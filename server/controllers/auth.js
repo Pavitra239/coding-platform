@@ -1,45 +1,44 @@
 import User from "../models/user.js";
 import { StatusCodes } from "http-status-codes";
 import { createToken, verifyToken } from "../utils/jwt.js";
-import {
-  BadRequestError,
-  NotFoundError,
-
-} from "../utils/errors.js";
-import jwt from "jsonwebtoken"
+import { BadRequestError, NotFoundError } from "../utils/errors.js";
+import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-  const isValidPassword = await user.comparePassword(password);
+  if (!user) {
+    throw new BadRequestError("User not found");
+  }
+  console.log("USer: ", user, "Email: ", email, "Password: ", password);
+  const isValidPassword = await user.comparePassword(password, user.password);
   if (!isValidPassword) throw new BadRequestError("ID & Password not found");
 
   const token = await createToken({ id: user._id });
 
   const oneDay = 1000 * 24 * 60 * 60; // 1 day in milliseconds
   return res
-      .status(200)
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // secure flag for production
-        expires: new Date(Date.now() + oneDay), // 1 day expiration
-      })
-      .json({
-        message: `Welcome back ${user.username}`,
-        user,
-        success: true,
-        token
-      });
+    .status(200)
+    .cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // secure flag for production
+      expires: new Date(Date.now() + oneDay), // 1 day expiration
+    })
+    .json({
+      message: `Welcome back ${user.username}`,
+      user,
+      success: true,
+      token,
+    });
 };
-
 
 export const register = async (req, res) => {
   const isFirstUser = (await User.countDocuments()) === 0;
-  if (isFirstUser) req.body.role = 'admin';
+  if (isFirstUser) req.body.role = "admin";
   console.log(req.body);
   const user = await User.create(req.body);
   console.log(user);
-  
+
   return res.status(201).json({
     message: "Account created successfully.",
     success: true,
@@ -94,11 +93,11 @@ export const getCurrentUser = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log("error found")
+    console.log("error found");
     console.error(error);
     res.status(500).json({
       message: "Internal Server Error",
       success: false,
-    })
+    });
   }
 };
