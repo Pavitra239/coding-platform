@@ -3,7 +3,7 @@ import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
 import { verifyToken } from "../utils/jwt.js";
 
 export const isAuthorized = async (req, res, next) => {
-  
+  console.log("hello")
   if (!req.headers.cookie) throw new UnauthorizedError("please login!");
   const token = req.headers.cookie.slice(6);
   const decoded = await verifyToken(token);
@@ -13,6 +13,7 @@ export const isAuthorized = async (req, res, next) => {
     id: user._id,
     isAdmin: user.role,
   };
+  console.log("hello")
   next();
 };
 

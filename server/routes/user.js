@@ -2,7 +2,7 @@ import express from "express";
 import {
   getUsers,
   getUser,
-  editUser,
+  updateUser,
   deleteUser,
   createUser,
 } from "../controllers/user.js";
@@ -24,7 +24,7 @@ router.get("/:id", getUser);
 router.post("/", isAdmin, registerInputValidator, createUser);
 
 // Edit a user (Only Admins can edit users)
-router.put("/:id", isAdmin, registerInputValidator, editUser);
+router.put("/update", updateUser);
 
 // Delete a user (Only Admins can delete users)
 router.delete("/:id", isAdmin, deleteUser);
