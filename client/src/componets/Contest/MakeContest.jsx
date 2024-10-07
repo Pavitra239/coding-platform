@@ -34,7 +34,7 @@ const MakeContest = () => {
           Authorization: `Bearer ${token}`,
         },
         withCredentials: true,
-      });
+      }); 
       toast.success("Contest deleted successfully!");
       setShowDeleteModal(false);
       setContestToDelete(null);
@@ -125,7 +125,7 @@ const MakeContest = () => {
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
-      <div className="container mx-auto p-4">
+      <div className="mx-auto p-4">
         <button
           onClick={handleAddContest}
           className="bg-blue-500 text-white text-lg font-semibold py-2 px-4 mt-20 rounded-lg hover:bg-blue-600 transition mb-4 w-full sm:w-auto"
@@ -174,7 +174,6 @@ const MakeContest = () => {
               </th>
               <th
                 className="cursor-pointer text-lg"
-                onClick={() => handleSort("createdAt")}
               >
               Status
               </th>
@@ -195,7 +194,7 @@ const MakeContest = () => {
                   <td
                     className="py-3 capitalize px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
                     onClick={() => navigate(`/contests/${contest._id}`)}
-                    title={contest.title}
+                    title={contest.name}
                   >
                     {contest.name}
                   </td>
@@ -203,7 +202,7 @@ const MakeContest = () => {
                     {new Date(contest.createdAt).toLocaleString()}
                   </td>
                   <td className="text-white">
-                    {contest.status}
+                    {contest.status }
                   </td>
                   <td className="py-3 px-6 text-gray-300 flex gap-2">
                     <button

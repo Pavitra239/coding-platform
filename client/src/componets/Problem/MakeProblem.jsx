@@ -129,7 +129,7 @@ const MakeProblem = () => {
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
-      <div className="container mx-auto p-4">
+      <div className="mx-auto p-4">
         <button
           onClick={handleCreateProblem}
           className="bg-red-500 text-white font-semibold text-lg py-2 px-4 mt-20 rounded-lg hover:bg-red-600 transition mb-4 w-full sm:w-auto"
@@ -211,7 +211,7 @@ const MakeProblem = () => {
                 >
                   <td className="py-3 px-6">{index + 1}</td>
                   <td
-                    className="py-3 px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
+                    className="capitalize py-3 px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
                     onClick={() => navigate(`/problems/${problem._id}`)}
                     title={problem.title}
                   >
