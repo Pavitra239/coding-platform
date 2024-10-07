@@ -213,7 +213,7 @@ const formatDateTimeLocal = (isoString) => {
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
-      <div className="container mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
+      <div className="mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
         <h1 className="text-4xl font-bold mt-10 mb-6 text-center">
           {isEditMode ? "Edit Contest" : "Create Contest"}
         </h1>
