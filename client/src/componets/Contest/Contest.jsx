@@ -5,10 +5,9 @@ import Header from "../Header";
 import { toast } from "react-hot-toast";
 
 const Contest = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [contest, setContest] = useState(null);
   const [timeLeft, setTimeLeft] = useState("");
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth); // Initialize screen width
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [isContestUpcoming, setIsContestUpcoming] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
@@ -28,18 +27,18 @@ const Contest = () => {
 
           const startTime = new Date(contestData.start_time).getTime();
           const endTime = new Date(contestData.end_time).getTime();
-          const currentTime = new Date().getTime(); // Define currentTime here
+          const currentTime = new Date().getTime();
 
           // Calculate initial time difference
           if (currentTime < startTime) {
-            setTimeLeft(startTime - currentTime); // Time left until contest starts
-            setIsContestUpcoming(true); // Contest is upcoming
+            setTimeLeft(startTime - currentTime);
+            setIsContestUpcoming(true);
           } else if (currentTime >= startTime && currentTime <= endTime) {
-            setTimeLeft(endTime - currentTime); // Time left until contest ends
+            setTimeLeft(endTime - currentTime);
             setIsContestUpcoming(false);
           } else {
-            setTimeLeft(0); // Contest has ended
-            setIsContestUpcoming(false); // Contest has ended
+            setTimeLeft(0);
+            setIsContestUpcoming(false);
           }
         } catch (error) {
           console.error("Error fetching contest data:", error);
@@ -49,24 +48,20 @@ const Contest = () => {
 
     fetchContest();
 
-    // Update contest data every 1 minute (60000 milliseconds)
     const contestInterval = setInterval(fetchContest, 60000);
-
-    return () => clearInterval(contestInterval); // Cleanup interval on component unmount
+    return () => clearInterval(contestInterval);
   }, [id]);
 
-  // Countdown timer logic
   useEffect(() => {
     const countdownInterval = setInterval(() => {
       if (timeLeft > 0) {
         setTimeLeft((prevTime) => prevTime - 1000);
       }
-    }, 1000); // Update every second
+    }, 1000);
 
-    return () => clearInterval(countdownInterval); // Cleanup on component unmount
+    return () => clearInterval(countdownInterval);
   }, [timeLeft]);
 
-  // Update screen width on resize
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -77,15 +72,25 @@ const Contest = () => {
     navigate(`/problems/${problemId}`);
   };
 
-  // Convert milliseconds to readable time format (hh:mm:ss)
-  const formatTime = (time) => {
-    if (time <= 0) return "Contest ended";
+  // Helper to determine contest status
+  const getContestStatus = () => {
+    if (timeLeft <= 0 && contest) {
+      const endTime = new Date(contest.end_time).getTime();
+      return new Date().getTime() > endTime ? "ended" : "ongoing";
+    }
+    return isContestUpcoming ? "upcoming" : "ongoing";
+  };
 
-    const hours = Math.floor(time / (1000 * 60 * 60));
+  // Format time into days, hours, minutes, and seconds
+  const formatTime = (time) => {
+    if (time <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+    const days = Math.floor(time / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((time % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((time % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((time % (1000 * 60)) / 1000);
 
-    return `${hours}h ${minutes}m ${seconds}s`;
+    return { days, hours, minutes, seconds };
   };
 
   return (
@@ -95,14 +100,16 @@ const Contest = () => {
         <div className="mx-auto p-4 pt-20 text-white">
           {contest ? (
             <>
-              <div className="mb-12 flex justify-center items-center p-6 bg-gray-800 rounded-lg shadow-lg w-full"
-              style={{boxShadow : "1px 1px 5px white"}}>
-                <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white text-center tracking-wide">
+              <div
+                className="mb-12 flex justify-center items-center p-6 bg-gray-800 rounded-lg shadow-lg w-full"
+                style={{ boxShadow: "1px 1px 5px white" }}
+              >
+                <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white text-center tracking-wide capitalize">
                   {contest.name}
                 </h1>
               </div>
 
-              <div className="flex justify-between items-start w-full   md:mt-0 mb-4">
+              <div className="flex justify-between items-start w-full mb-4">
                 <div className="flex justify-center">
                   <button
                     className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-300 ease-in-out border border-blue-500"
@@ -115,20 +122,38 @@ const Contest = () => {
                   </button>
                 </div>
 
-                <div>
-                  <h2 className="text-lg font-semibold">Time Status</h2>
-                  <p className="text-2xl font-bold">{formatTime(timeLeft)}</p>
+                <div className="flex flex-col items-center mb-8">
+                  <h2 className="text-lg font-semibold text-gray-600 mb-4">
+                    {getContestStatus() === "upcoming" && "Starts in"}
+                    {getContestStatus() === "ongoing" && "Time Left"}
+                    {getContestStatus() === "ended" && ""}
+                  </h2>
+                  {getContestStatus() !== "ended" && (
+                    <div className="flex gap-4">
+                      {Object.entries(formatTime(timeLeft)).map(
+                        ([unit, value]) => (
+                          <div
+                            key={unit}
+                            className="flex flex-col items-center bg-white text-gray-800 rounded-lg shadow-lg p-4 w-16"
+                          >
+                            <p className="text-2xl font-bold">{value}</p>
+                            <p className="text-xs text-gray-500">{unit}</p>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="bg-gray-800 p-6 rounded-lg mb-8">
+              <div className="p-6 rounded-lg mb-8">
                 <h2 className="text-lg font-semibold mb-2">Description</h2>
-                <p className="border text-justify whitespace-pre-wrap border-gray-700 bg-gray-900 p-4 rounded-lg">
+                <p className="border text-justify whitespace-pre-wrap border-gray-700 bg-gray-900 p-4 rounded-lg capitalize">
                   {contest.description}
                 </p>
               </div>
 
-              {!isContestUpcoming ? (
+              {getContestStatus() !== "upcoming"  && (
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Problems:</h2>
                   <div className="p-4">
@@ -182,7 +207,7 @@ const Contest = () => {
                     ))}
                   </div>
                 </div>
-              ) : null}
+              )}
             </>
           ) : (
             <p>Loading contest data...</p>
