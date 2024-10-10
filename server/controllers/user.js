@@ -44,6 +44,7 @@ export const updateUser = async (req, res) => {
       linkedIn,
       name,
       bio,
+      email
     } = req.body;
 
     console.log(req.body);
@@ -80,6 +81,7 @@ export const updateUser = async (req, res) => {
     // Update only the allowed fields
     user.username = fullName;
     user.profile.name = name;
+    user.email = email;
     user.profile = Object.assign(user.profile, {
       bio: bio,
       gender: gender,
@@ -100,6 +102,7 @@ export const updateUser = async (req, res) => {
       user: {
         username: user.username,
         profile: user.profile,
+        email: user.email,
       },
       success: true,
     });

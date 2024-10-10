@@ -12,7 +12,7 @@ export const login = async (req, res) => {
   }
   console.log("USer: ", user, "Email: ", email, "Password: ", password);
   const isValidPassword = await user.comparePassword(password, user.password);
-  if (!isValidPassword) throw new BadRequestError("ID & Password not found");
+  if (!isValidPassword)  throw new BadRequestError("ID & Password not found");
 
   const token = await createToken({ id: user._id });
 
