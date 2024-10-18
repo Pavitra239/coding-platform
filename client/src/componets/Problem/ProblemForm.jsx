@@ -29,7 +29,6 @@ const ProblemForm = () => {
     tags: "",
     score: 0,
     testCases: [{ input: "", output: "" }],
-
   });
 
   const [isEditing, setIsEditing] = useState(false); // Check if we're in edit mode
@@ -45,12 +44,7 @@ const ProblemForm = () => {
       const fetchProblem = async () => {
         const token = localStorage.getItem("UserToken");
         try {
-          const response = await axiosInstance.get(`/problems/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            withCredentials: true,
-          });
+          const response = await axiosInstance.get(`/problems/${id}`);
           setProblemData(response.data); // Populate form with fetched data
         } catch (error) {
           toast.error("Failed to load problem data");
@@ -166,12 +160,6 @@ const ProblemForm = () => {
           ...problemData,
           tags, // Use the processed tags
           createdBy: user._id,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
         }
       );
 

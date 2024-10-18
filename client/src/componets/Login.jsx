@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -54,10 +53,7 @@ const Login = () => {
       const url = isLogin
         ? `auth/login`
         : `auth/register`;
-      const res = await axiosInstance.post(url, user, {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      });
+      const res = await axiosInstance.post(url, user);
 
       if (res.data.success) {
         toast.success(res.data.message);

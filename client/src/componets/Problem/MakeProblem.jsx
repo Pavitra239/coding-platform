@@ -30,12 +30,7 @@ const MakeProblem = () => {
   const handleDeleteProblem = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axiosInstance.delete(`/problems/${problemToDelete}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      });
+      await axiosInstance.delete(`/problems/${problemToDelete}`);
       toast.success("Problem deleted successfully!");
       setShowDeleteModal(false); // Hide the confirmation modal
       setProblemToDelete(null); // Reset the problem to delete
@@ -61,13 +56,7 @@ const MakeProblem = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axiosInstance.get(
-        `/problems`, // No page or limit parameters
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
+        `/problems`
       );
 
       const { problems: allProblems } = response.data;

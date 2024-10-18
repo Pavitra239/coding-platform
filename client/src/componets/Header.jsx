@@ -1,27 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { IoIosArrowDropdown } from "react-icons/io";
 import { useSelector, useDispatch } from "react-redux";
-import axios from "axios";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { setToggle } from "../redux/movieSlice";
-import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai"; // Menu icons for toggle
 import { logout, setUser } from "../redux/userSlice";
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from "../utils/axiosInstance";
+import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 
 const Header = () => {
   const user = useSelector((store) => store.app.user);
   const authStatus = useSelector((store) => store.app.authStatus);
-  // console.log("this is auth", authStatus);
-  const toggle = useSelector((store) => store.movie.toggle);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State to toggle menu visibility
-  const [isScreenSmall, setIsScreenSmall] = useState(false); // State for screen size
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScreenSmall, setIsScreenSmall] = useState(false);
+  const [isOnMakeContest, setIsOnMakeContest] = useState(false); // Track whether on 'Make Contest'
 
   useEffect(() => {
-    if (authStatus == false) {
+    if (authStatus === false) {
       navigate("/");
     }
   }, [authStatus]);
@@ -31,30 +28,28 @@ const Header = () => {
       setIsScreenSmall(window.innerWidth <= 900);
     };
 
-    handleResize(); // Initial check
-    window.addEventListener("resize", handleResize); // Update on resize
+    handleResize();
+    window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
 
+  // Track if user is on 'Make Contest' or 'Home'
+  useEffect(() => {
+    setIsOnMakeContest(location.pathname === "/make-contest");
+  }, [location]);
+
   const logoutHandler = async () => {
     try {
-      await axiosInstance.get(`auth/logout`, { withCredentials: true });
-      
-      // Clear user data from Redux store
+      await axiosInstance.get(`auth/logout`);
+
       dispatch(setUser(null));
-
-      // Clear auth token or user data from local storage (if applicable)
-      localStorage.removeItem("authToken"); // or any key you use to store the token
-
-      // Perform logout action in Redux
+      localStorage.removeItem("authToken");
       dispatch(logout());
 
       toast.success("Logged out successfully");
-
-      // Navigate to login page
       navigate("/");
     } catch (error) {
       console.log(error);
@@ -62,12 +57,11 @@ const Header = () => {
     }
   };
 
-  const toggleHandler = () => {
-    dispatch(setToggle());
-    if (!toggle) {
-      navigate("/make-contest");
+  const toggleMakeContest = () => {
+    if (isOnMakeContest) {
+      navigate("/browse"); // Navigate to Home page
     } else {
-      navigate("/browse");  
+      navigate("/make-contest"); // Navigate to Make Contest page
     }
   };
 
@@ -75,7 +69,6 @@ const Header = () => {
 
   return (
     <div className="z-10 w-full flex items-center justify-between px-4 md:px-6 bg-gradient-to-b bg-black bg-opacity-50 backdrop-blur-md py-2 fixed">
-      {/* Logo */}
       <h1
         className="text-3xl md:text-5xl font-bold text-white"
         style={{
@@ -85,7 +78,7 @@ const Header = () => {
         Codify
       </h1>
 
-      {/* Menu Button for Small Screens (<= 900px) */}
+      {/* Menu Button for Small Screens */}
       {isScreenSmall && user && (
         <div>
           <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -141,6 +134,7 @@ const Header = () => {
           >
             Support
           </Link>
+
           <Link
             to="/make-problem"
             className={`text-lg font-semibold transition duration-300 ${
@@ -151,6 +145,9 @@ const Header = () => {
           >
             Problem
           </Link>
+
+          {/* Toggle Button for Make Contest/Home */}
+
           <div className="flex items-center space-x-2">
             <IoIosArrowDropdown size="24px" color="white" />
             <h1 className="text-lg font-medium text-white">{user?.username}</h1>
@@ -161,11 +158,12 @@ const Header = () => {
           >
             Logout
           </button>
+
           <button
-            onClick={toggleHandler}
-            className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
+            onClick={toggleMakeContest}
+            className="bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
           >
-            {toggle ? "Home" : "Make Contest "}
+            {isOnMakeContest ? "Home" : "Make Contest"}
           </button>
         </div>
       )}
@@ -227,17 +225,23 @@ const Header = () => {
           >
             Problem
           </Link>
+
           <button
             onClick={logoutHandler}
             className="block w-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold rounded-lg shadow-lg hover:bg-red-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-4"
           >
             Logout
           </button>
+
+          {/* Toggle Button for Small Screens */}
           <button
-            onClick={toggleHandler}
-            className="block w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-2"
+            onClick={() => {
+              setIsMenuOpen(false);
+              toggleMakeContest();
+            }}
+            className="block w-full bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-4"
           >
-            {toggle ? "Home" : "Make Contest"}
+            {isOnMakeContest ? "Home" : "Make Contest"}
           </button>
         </div>
       )}

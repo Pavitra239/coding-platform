@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, {useState} from "react";
 import Header from "./Header";
 
 const Browse = () => {
-  const user = useSelector((store) => store.app.user);
-  const navigate = useNavigate();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [isLoading, setIsLoading] = useState(false); // New loading state
@@ -29,7 +24,7 @@ const Browse = () => {
         <Header />
         {/* Center content both vertically and horizontally */}
         <div className="flex flex-col justify-center items-center px-4 lg:px-20 pt-20 md:pt-[14%] min-h-[70vh]">
-          <div className="w-full lg:w-1/2 bg-white text-black p-8 lg:p-16 rounded-lg shadow-lg bg-opacity-80">
+          <div className="w-full  bg-white text-black p-8 lg:p-16 rounded-lg shadow-lg bg-opacity-80">
             <h2 className="text-2xl lg:text-4xl font-bold mb-4 lg:mb-8">
               Coding Time!
             </h2>

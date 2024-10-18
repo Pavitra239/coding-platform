@@ -1,19 +1,14 @@
+import axiosInstance from "../utils/axiosInstance";
+
 class Auth {
   
     getCurrentUser = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3100/api/v1/auth/get-current-user",
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        const response = await axiosInstance.get("auth/get-current-user");
   
-        const data = await response.json();
+        const data = response.data;
   
         if (data.success) {
-          // console.log(data)
           return { data, authStatus: true };
         } else {
           return { authStatus: false };

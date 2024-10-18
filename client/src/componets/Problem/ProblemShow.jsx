@@ -28,12 +28,7 @@ const ProblemShow = () => {
     const fetchProblem = async () => {
       const token = localStorage.getItem("UserToken");
       try {
-        const response = await axiosInstance.get(`/problems/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        });
+        const response = await axiosInstance.get(`/problems/${id}`);
         setProblem(response.data);
       } catch (error) {
         console.error("Failed to load problem data", error);
