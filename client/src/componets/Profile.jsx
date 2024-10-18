@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import Header from "./Header";
 import toast from "react-hot-toast";
 import ProfileLeft from "./ProfileLeft";
 import ProfileRight from "./ProfileRight";
 import SubmissionPage from "./SubmissionPage"; // Assume this is your SubmissionPage component
+import axiosInstance from "../utils/axiosInstance";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -26,9 +26,8 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3100/api/v1/auth/get-current-user",
-          { withCredentials: true }
+        const response = await axiosInstance.get(
+          "auth/get-current-user",
         );
         console.log(response.data)
         setUser(response.data.user);
@@ -63,10 +62,9 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(
-        "http://localhost:3100/api/v1/user/update",
+      const response = await axiosInstance.put(
+        "user/update",
         formData,
-        { withCredentials: true }
       );
       if (response.data.success) {
         toast.success("Profile updated successfully");

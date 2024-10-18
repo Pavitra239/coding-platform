@@ -17,11 +17,8 @@ const Contest = () => {
     const fetchContest = async () => {
       if (id) {
         try {
-          const token = localStorage.getItem("token");
-          const response = await axiosInstance.get(`/contests/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
-          });
+          
+          const response = await axiosInstance.get(`/contests/${id}`);
           const contestData = response.data;
           setContest(contestData);
 

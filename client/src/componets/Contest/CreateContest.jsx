@@ -36,10 +36,7 @@ const CreateContest = () => {
     const fetchProblems = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axiosInstance.get("/problems", {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        });
+        const response = await axiosInstance.get("/problems");
 
         
         let { problems: allProblems } = response.data;
@@ -79,10 +76,7 @@ const formatDateTimeLocal = (isoString) => {
       const fetchContest = async () => {
         try {
           const token = localStorage.getItem("token");
-          const response = await axiosInstance.get(`/contests/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
-          });
+          const response = await axiosInstance.get(`/contests/${id}`);
           const contestData = response.data;
           setContest({
             name: contestData.name,
@@ -160,24 +154,12 @@ const formatDateTimeLocal = (isoString) => {
       const token = localStorage.getItem("token");
       if (isEditMode) {
         // Update existing contest
-        await axiosInstance.put(`/contests/${id}`, contest, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        });
+        await axiosInstance.put(`/contests/${id}`, contest);
 
         toast.success("Contest updated successfully!");
       } else {
         // Create new contest
-        await axiosInstance.post("/contests/create", contest, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        });
+        await axiosInstance.post("/contests/create", contest);
         toast.success("Contest created successfully!");
       }
       navigate("/make-contest");

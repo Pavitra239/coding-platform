@@ -29,12 +29,7 @@ const MakeContest = () => {
   const handleDeleteContest = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axiosInstance.delete(`/contests/${contestToDelete}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      }); 
+      await axiosInstance.delete(`/contests/${contestToDelete}`); 
       toast.success("Contest deleted successfully!");
       setShowDeleteModal(false);
       setContestToDelete(null);
@@ -59,12 +54,7 @@ const MakeContest = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axiosInstance.get("/contests", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      });
+      const response = await axiosInstance.get("/contests");
   
    
   

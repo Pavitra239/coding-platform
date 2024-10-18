@@ -4,7 +4,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from 'redux';
 import userReducer from "./userSlice";
-import movieReducer from "./movieSlice";
+
 
 // Persist configuration
 const persistConfig = {
@@ -15,7 +15,6 @@ const persistConfig = {
 // Combine reducers
 const rootReducer = combineReducers({
   app: userReducer,
-  movie: movieReducer,
 });
 
 // Create persisted reducer
