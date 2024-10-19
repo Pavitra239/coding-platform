@@ -15,7 +15,7 @@ const Header = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScreenSmall, setIsScreenSmall] = useState(false);
-  const [isOnMakeContest, setIsOnMakeContest] = useState(false); // Track whether on 'Make Contest'
+  const [isOnMakeContest, setIsOnMakeContest] = useState(false);
 
   useEffect(() => {
     if (authStatus === false) {
@@ -36,7 +36,6 @@ const Header = () => {
     };
   }, []);
 
-  // Track if user is on 'Make Contest' or 'Home'
   useEffect(() => {
     setIsOnMakeContest(location.pathname === "/make-contest");
   }, [location]);
@@ -59,13 +58,16 @@ const Header = () => {
 
   const toggleMakeContest = () => {
     if (isOnMakeContest) {
-      navigate("/browse"); // Navigate to Home page
+      navigate("/browse");
     } else {
-      navigate("/make-contest"); // Navigate to Make Contest page
+      navigate("/make-contest");
     }
   };
 
   const isActive = (path) => location.pathname === path;
+
+  // Determine button text based on user role
+  const makeContestButtonText = user?.role === "student" ? "Contest" : "Make Contest";
 
   return (
     <div className="z-10 w-full flex items-center justify-between px-4 md:px-6 bg-gradient-to-b bg-black bg-opacity-50 backdrop-blur-md py-2 fixed">
@@ -78,7 +80,6 @@ const Header = () => {
         Codify
       </h1>
 
-      {/* Menu Button for Small Screens */}
       {isScreenSmall && user && (
         <div>
           <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -91,7 +92,6 @@ const Header = () => {
         </div>
       )}
 
-      {/* Desktop Menu */}
       {!isScreenSmall && user && (
         <div className="hidden md:flex items-center space-x-4 flex-wrap">
           <Link
@@ -134,7 +134,6 @@ const Header = () => {
           >
             Support
           </Link>
-
           <Link
             to="/make-problem"
             className={`text-lg font-semibold transition duration-300 ${
@@ -145,8 +144,6 @@ const Header = () => {
           >
             Problem
           </Link>
-
-          {/* Toggle Button for Make Contest/Home */}
 
           <div className="flex items-center space-x-2">
             <IoIosArrowDropdown size="24px" color="white" />
@@ -163,12 +160,11 @@ const Header = () => {
             onClick={toggleMakeContest}
             className="bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
           >
-            {isOnMakeContest ? "Home" : "Make Contest"}
+            {isOnMakeContest ? "Home" : makeContestButtonText}
           </button>
         </div>
       )}
 
-      {/* Dropdown Menu for Small Screens */}
       {isScreenSmall && isMenuOpen && user && (
         <div className="absolute top-12 right-4 w-48 bg-gray-800 text-white rounded-lg shadow-lg p-4">
           <Link
@@ -217,11 +213,12 @@ const Header = () => {
           </Link>
           <Link
             to="/make-problem"
-            className={`text-lg font-semibold transition duration-300 ${
+            className={`block mb-2 font-semibold transition duration-300 ${
               isActive("/make-problem")
                 ? "text-blue-400"
                 : "text-white hover:text-blue-300"
             }`}
+            onClick={() => setIsMenuOpen(false)}
           >
             Problem
           </Link>
@@ -233,7 +230,6 @@ const Header = () => {
             Logout
           </button>
 
-          {/* Toggle Button for Small Screens */}
           <button
             onClick={() => {
               setIsMenuOpen(false);
@@ -241,7 +237,7 @@ const Header = () => {
             }}
             className="block w-full bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-4"
           >
-            {isOnMakeContest ? "Home" : "Make Contest"}
+            {isOnMakeContest ? "Home" : makeContestButtonText}
           </button>
         </div>
       )}

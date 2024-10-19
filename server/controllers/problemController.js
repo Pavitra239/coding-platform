@@ -31,9 +31,8 @@ export const createProblem = async (req, res) => {
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
   try {
-    // Fetch all problems without pagination
     const problems = await Problem.find({}).sort({ createdAt: -1 });
-    const totalProblems = problems.length; // Get total problem count
+    const totalProblems = problems.length; 
 
     res.json({ problems, totalProblems,succes:true });
   } catch (error) {

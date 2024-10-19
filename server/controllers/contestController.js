@@ -149,7 +149,6 @@ export const getContestById = async (req, res) => {
 export const getAllContests = async (req, res) => {
   try {
     const contests = await Contest.find()
-      .populate('created_by')  // Populate created_by field
       .populate('problems');    // Populate problems field
 
     // Update status for each contest based on current time

@@ -11,6 +11,8 @@ import contestRoutes from "./routes/contests.js";
 import problemRoutes from "./routes/problemRoutes.js"; // Problem routes
 import user from './routes/user.js'
 import cors from "cors";
+import compileRoutes from "./routes/compileRoutes.js"; // Import the compile routes
+
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +29,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/contests", contestRoutes); // Use contest routes
 app.use("/api/v1/problems", problemRoutes); // Use problem routes
 app.use("/api/v1/user", user);
+app.use("/api/v1/compile", compileRoutes);
 
 app.all("*", notFoundHandler);
 app.use(errorHandler);

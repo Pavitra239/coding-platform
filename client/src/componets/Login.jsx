@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setLoading, setUser } from "../redux/userSlice";
 import Header from "./Header";
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from "../utils/axiosInstance";
 
 const Login = () => {
   const user = useSelector((store) => store.app.user);
@@ -24,13 +24,7 @@ const Login = () => {
 
   useEffect(() => {
     if (authStatus) {
-      if (user.role === "admin") {
-        navigate("/browse");
-      } else if (user.role === "student") {
-        navigate("/student");
-      } else {
-        navigate("/");
-      }
+      navigate("/browse");
     } else {
       navigate("/");
     }
@@ -50,9 +44,7 @@ const Login = () => {
         };
 
     try {
-      const url = isLogin
-        ? `auth/login`
-        : `auth/register`;
+      const url = isLogin ? `auth/login` : `auth/register`;
       const res = await axiosInstance.post(url, user);
 
       if (res.data.success) {
@@ -64,13 +56,7 @@ const Login = () => {
 
           dispatch(setUser(loggedInUser));
 
-          if (loggedInUser.role === "admin") {
-            navigate("/browse");
-          } else if (loggedInUser.role === "student") {
-            navigate("/student");
-          } else {
-            navigate("/");
-          }
+          navigate("/browse");
         } else {
           setIsLogin(true);
         }
