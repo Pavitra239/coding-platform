@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import Header from "../Header";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 import "../../CSS/Quiz.css";
+import { useSelector } from "react-redux";
 
 const MakeProblem = () => {
+  const user = useSelector((store) => store.app.user);
   const navigate = useNavigate();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,11 +15,19 @@ const MakeProblem = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [problemToDelete, setProblemToDelete] = useState(null);
+  const [userRole, setUserRole] = useState(null); // State for storing user role
 
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
     direction: "desc",
   });
+
+  useEffect(() => {
+    // Assuming the user's role is stored in local storage
+    const role = user.role;
+    setUserRole(role);
+    fetchProblems();
+  }, []);
 
   const handleCreateProblem = () => {
     navigate("/problem-form");
@@ -29,12 +39,11 @@ const MakeProblem = () => {
 
   const handleDeleteProblem = async () => {
     try {
-      const token = localStorage.getItem("token");
       await axiosInstance.delete(`/problems/${problemToDelete}`);
       toast.success("Problem deleted successfully!");
-      setShowDeleteModal(false); // Hide the confirmation modal
-      setProblemToDelete(null); // Reset the problem to delete
-      fetchProblems(); // Refresh the problem list
+      setShowDeleteModal(false);
+      setProblemToDelete(null);
+      fetchProblems();
     } catch (error) {
       toast.error("Error deleting problem!");
       console.error("Error deleting problem:", error);
@@ -42,23 +51,19 @@ const MakeProblem = () => {
   };
 
   const handleDeleteConfirmation = (problemId) => {
-    setProblemToDelete(problemId); // Set the ID of the problem to delete
-    setShowDeleteModal(true); // Show the confirmation modal
+    setProblemToDelete(problemId);
+    setShowDeleteModal(true);
   };
 
   const cancelDelete = () => {
-    setShowDeleteModal(false); // Hide the confirmation modal
-    setProblemToDelete(null); // Reset the problem to delete
+    setShowDeleteModal(false);
+    setProblemToDelete(null);
   };
 
   const fetchProblems = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axiosInstance.get(
-        `/problems`
-      );
-
+      const response = await axiosInstance.get(`/problems`);
       const { problems: allProblems } = response.data;
       setProblems(allProblems);
     } catch (error) {
@@ -68,10 +73,6 @@ const MakeProblem = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchProblems();
-  }, []);
 
   const handleDifficultyFilterChange = (event) => {
     setDifficultyFilter(event.target.value);
@@ -119,15 +120,18 @@ const MakeProblem = () => {
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
       <div className="mx-auto p-4">
-        <button
-          onClick={handleCreateProblem}
-          className="bg-red-500 text-white font-semibold text-lg py-2 px-4 mt-20 rounded-lg hover:bg-red-600 transition mb-4 w-full sm:w-auto"
-        >
-          Add Problem
-        </button>
+        {/* Show the Add Problem button only if the user is not a student */}
+        {userRole !== "student" && (
+          <button
+            onClick={handleCreateProblem}
+            className="bg-red-500 text-white font-semibold text-lg py-2 px-4 mt-20 rounded-lg hover:bg-red-600 transition  w-full sm:w-auto"
+          >
+            Add Problem
+          </button>
+        )}
       </div>
 
-      <div className="overflow-x-auto p-5">
+      <div className="overflow-x-auto p-5 mt-5">
         <h1 className="text-3xl font-bold text-white mb-10 text-center">
           Problem List
         </h1>
@@ -162,42 +166,17 @@ const MakeProblem = () => {
         <table className="min-w-full text-lg text-left text-gray-500">
           <thead className="bg-gray-900 text-gray-400">
             <tr>
-              <th
-                className="py-3 px-6 cursor-pointer text-lg"
-                onClick={() => handleSort("index")}
-              >
-                #
-              </th>
-              <th
-                className="py-3 px-6 cursor-pointer text-lg"
-                onClick={() => handleSort("title")}
-              >
-                Title
-              </th>
-              <th
-                className="py-3 px-6 cursor-pointer text-lg"
-                onClick={() => handleSort("difficulty")}
-              >
-                Difficulty
-              </th>
-              <th
-                className="py-3 px-6 cursor-pointer text-lg"
-                onClick={() => handleSort("createdAt")}
-              >
-                Created Date
-              </th>
+              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("index")}>#</th>
+              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("title")}>Title</th>
+              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("difficulty")}>Difficulty</th>
+              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("createdAt")}>Created Date</th>
               <th className="py-3 px-6 text-lg cursor-pointer"></th>
             </tr>
           </thead>
           <tbody>
             {filteredProblems.length > 0 ? (
               filteredProblems.map((problem, index) => (
-                <tr
-                  key={problem._id}
-                  className={`${
-                    index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
-                  }`}
-                >
+                <tr key={problem._id} className={`${index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}`}>
                   <td className="py-3 px-6">{index + 1}</td>
                   <td
                     className="capitalize py-3 px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
@@ -206,44 +185,36 @@ const MakeProblem = () => {
                   >
                     {problem.title}
                   </td>
-
                   <td
-                    className={`py-3 px-6 ${
-                      problem.difficulty === "easy"
-                        ? "text-green-500"
-                        : problem.difficulty === "medium"
-                        ? "text-yellow-500"
-                        : "text-red-500"
-                    }`}
+                    className={`py-3 px-6 ${problem.difficulty === "easy" ? "text-green-500" : problem.difficulty === "medium" ? "text-yellow-500" : "text-red-500"}`}
                   >
-                    {problem.difficulty.charAt(0).toUpperCase() +
-                      problem.difficulty.slice(1)}
+                    {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
                   </td>
-                  <td className="py-3 px-6 text-gray-300">
-                    {new Date(problem.createdAt).toLocaleString()}
-                  </td>
-
+                  <td className="py-3 px-6 text-gray-300">{new Date(problem.createdAt).toLocaleString()}</td>
                   <td className="py-3 px-6 text-gray-300 flex gap-2">
-                    <button
-                      onClick={() => handleEditProblem(problem._id)}
-                      className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConfirmation(problem._id)}
-                      className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
-                    >
-                      Delete
-                    </button>
+                    {/* Show Edit and Delete buttons only if the user is not a student */}
+                    {userRole !== "student" && (
+                      <>
+                        <button
+                          onClick={() => handleEditProblem(problem._id)}
+                          className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteConfirmation(problem._id)}
+                          className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="py-3 px-6 text-center text-gray-300">
-                  No problems found
-                </td>
+                <td colSpan="4" className="py-3 px-6 text-center text-gray-300">No problems found</td>
               </tr>
             )}
           </tbody>
@@ -252,39 +223,35 @@ const MakeProblem = () => {
 
       {loading && (
         <div className="flex justify-center items-center">
-          <div className="loader"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-gray-800 p-8 rounded-lg">
-            <h3 className="text-white text-xl font-bold mb-4">
-              Confirm Deletion
-            </h3>
+        <div className="fixed top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black bg-opacity-50">
+          <div className="bg-gray-900 p-8 rounded-lg">
+            <h2 className="text-white text-xl mb-4">Confirm Delete</h2>
             <p className="text-gray-300 mb-4">
-              Are you sure you want to delete this problem? This action cannot be
-              undone.
+              Are you sure you want to delete this problem? This action cannot be undone.
             </p>
-            <div className="flex justify-end">
-              <button
-                onClick={cancelDelete}
-                className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition mr-2"
-              >
-                Cancel
-              </button>
+            <div className="flex gap-4">
               <button
                 onClick={handleDeleteProblem}
-                className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition"
+                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
               >
                 Delete
+              </button>
+              <button
+                onClick={cancelDelete}
+                className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition"
+              >
+                Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

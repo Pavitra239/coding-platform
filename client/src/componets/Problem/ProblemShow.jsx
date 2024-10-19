@@ -5,6 +5,7 @@ import "../../CSS/ProblemShow.css";
 import Submission from "./Submission";
 import Solution from "./Solution";
 import Statement from "./Statement";
+import CodeEditor from "./CodeEditor";
 
 const ProblemShow = () => {
   const { id } = useParams();
@@ -26,9 +27,9 @@ const ProblemShow = () => {
 
   useEffect(() => {
     const fetchProblem = async () => {
-      const token = localStorage.getItem("UserToken");
       try {
         const response = await axiosInstance.get(`/problems/${id}`);
+        // console.log(response.data);
         setProblem(response.data);
       } catch (error) {
         console.error("Failed to load problem data", error);
@@ -141,43 +142,13 @@ const ProblemShow = () => {
       ></div>
 
       {/* Right Column: Code Editor */}
-      <div className="code-editor bg-gray-900 p-6">
-        <div className="flex justify-between mt-[8%] items-center mb-4">
-          <span className="text-lg"></span>
-          <span className="bg-blue-500 px-3 text-white py-2 rounded-lg shadow-md">
-            Score: {problem.score}
-          </span>
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="language"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Select Language:
-          </label>
-          <select
-            id="language"
-            className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 text-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
-            <option value="java">Java</option>
-            <option value="python">Python</option>
-            <option value="cpp">C++</option>
-          </select>
-        </div>
-
-        <textarea
-          className="w-full h-72 p-4 bg-gray-800 border border-gray-700 text-gray-300 rounded-lg shadow-sm resize-none"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        ></textarea>
-
-        <button className="mt-4 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-200">
-          Submit Code
-        </button>
-      </div>
+      <CodeEditor
+        language={language}
+        setLanguage={setLanguage}
+        code={code}
+        setCode={setCode}
+        problem={problem}
+      />
     </div>
   );
 };

@@ -11,7 +11,7 @@ import ProblemForm from './Problem/ProblemForm';
 import ProblemShow from './Problem/ProblemShow';
 import NotFoundError from './NotFoundError';
 import Contest from './Contest/Contest';
-import Profile from './Profile';
+import Profile from './Profile/Profile';
 
 const Body = () => {
   const appRouter = createBrowserRouter([

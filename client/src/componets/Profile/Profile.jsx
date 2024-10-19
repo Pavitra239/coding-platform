@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import Header from "./Header";
+import Header from "../Header";
 import toast from "react-hot-toast";
 import ProfileLeft from "./ProfileLeft";
 import ProfileRight from "./ProfileRight";
-import SubmissionPage from "./SubmissionPage"; // Assume this is your SubmissionPage component
-import axiosInstance from "../utils/axiosInstance";
+import SubmissionPage from "../SubmissionPage"; // Assume this is your SubmissionPage component
+import axiosInstance from "../../utils/axiosInstance";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
