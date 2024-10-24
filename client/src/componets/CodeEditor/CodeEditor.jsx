@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 const CodeEditor = ({ language, setLanguage, problem }) => {
   const user = useSelector((state) => state.app.user);
   const userId = user._id;
+
   const [codeByLanguage, setCodeByLanguage] = useState({
     java: `import java.util.*;
 import java.lang.*;
@@ -38,6 +39,7 @@ int main() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState(null);
   const previousLanguageRef = useRef(language);
+  const [theme, setTheme] = useState("vs-dark"); // Default theme
 
   useEffect(() => {
     const fetchSavedCode = async () => {
@@ -71,18 +73,21 @@ int main() {
     }));
   };
 
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme); // Update theme state
+  };
+
   const handleRun = async () => {
     setIsLoading(true);
     setRunLoading(true);
     setResults(null);
     setError(null);
     try {
-      // Fetch only the first test case associated with the problemId
       const response = await axiosInstance.post("/compile", {
         code: codeByLanguage[language],
         problemId: problem._id,
         language,
-        runSingleTestCase: true, // New flag to indicate only the first test case
+        runSingleTestCase: true,
       });
       setResults(response.data.testResults);
     } catch (error) {
@@ -94,19 +99,18 @@ int main() {
       setRunLoading(false);
     }
   };
-  
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitLoading(true);
     setResults(null);
     setError(null);
     try {
-      // Run all test cases associated with the problemId
       const response = await axiosInstance.post("/compile", {
         code: codeByLanguage[language],
         problemId: problem._id,
         language,
-        runSingleTestCase: false, // New flag to indicate all test cases should be run
+        runSingleTestCase: false,
       });
       setResults(response.data.testResults);
     } catch (error) {
@@ -119,7 +123,6 @@ int main() {
       setSubmitLoading(false);
     }
   };
-  
 
   const handleSaveCode = async () => {
     try {
@@ -136,7 +139,7 @@ int main() {
   };
 
   return (
-    <div className="code-editor bg-gray-900 p-6  shadow-lg">
+    <div className="code-editor bg-gray-900 p-6 shadow-lg">
       <ScoreAndLanguageSelector
         language={language}
         handleLanguageChange={handleLanguageChange}
@@ -146,7 +149,10 @@ int main() {
         language={language}
         code={codeByLanguage[language] || ""}
         handleEditorChange={handleEditorChange}
+        theme={theme} // Pass the theme to CodeEditorArea
+        handleThemeChange={handleThemeChange} // Pass the theme change handler
       />
+
       <TestCaseResults
         results={results}
         activeTestCaseIndex={activeTestCaseIndex}
