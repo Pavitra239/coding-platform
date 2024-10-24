@@ -2,8 +2,21 @@ import Problem from '../models/problem.js';
 
 // Create problem
 export const createProblem = async (req, res) => {
-  const { title, description, difficulty, inputFormat, outputFormat, sampleIO, testCases, constraints, tags, createdBy, score } = req.body;
-  console.log(req.body);
+  const {
+    title,
+    description,
+    difficulty,
+    inputFormat,
+    outputFormat,
+    sampleIO,
+    testCases = [],  // Default to an empty array if undefined
+    constraints,
+    tags,
+    createdBy,
+    score
+  } = req.body;
+
+  console.log("testCases", testCases);
 
   try {
     const problem = new Problem({
@@ -12,12 +25,24 @@ export const createProblem = async (req, res) => {
       difficulty,
       inputFormat,
       outputFormat,
-      sampleIO, // Expecting an array of { input, output } pairs for samples
-      testCases, // Expecting an array of { input, output, timeLimit, memoryLimit } pairs for test cases
+      sampleIO,
+      testCases: testCases.map(testCase => ({
+        inputs: testCase.inputs.map((input, index) => ({
+          value: input,
+          type: testCase.inputTypes[index] // Use index to get corresponding type
+        })),
+        outputs: testCase.outputs.map((output, index) => ({
+          value: output,
+          type: testCase.outputTypes[index] // Use index to get corresponding type
+        })),
+        // Assuming timeLimit and memoryLimit are included in testCase
+        timeLimit: testCase.timeLimit,
+        memoryLimit: testCase.memoryLimit
+      })),
       constraints,
       tags,
       score,
-      createdBy: req.user?._id || createdBy, // Use req.user._id if available, otherwise fall back to req.body.createdBy for testing
+      createdBy: req.user?._id || createdBy,
     });
 
     const createdProblem = await problem.save();
@@ -27,6 +52,8 @@ export const createProblem = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+
 
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
@@ -78,26 +105,40 @@ export const updateProblem = async (req, res) => {
       }));
     }
 
-    // If testCases are provided, ensure they are correctly formatted as an array of objects
+    // If testCases are provided, ensure they are correctly formatted
     if (updates.testCases) {
       problem.testCases = updates.testCases.map(testCase => ({
-        input: testCase.input,
-        output: testCase.output,
-        timeLimit: testCase.timeLimit || 1, // Set default values for time and memory limits if not provided
-        memoryLimit: testCase.memoryLimit || 256,
+        inputs: testCase.inputs.map((input, index) => ({
+          value: input, // Ensure input has a value
+          type: testCase.inputTypes[index] // Corresponding input type
+        })),
+        outputs: testCase.outputs.map((output, index) => ({
+          value: output, // Ensure output has a value
+          type: testCase.outputTypes[index] // Corresponding output type
+        })),
+        // Assuming timeLimit and memoryLimit are included in testCase
+        timeLimit: testCase.timeLimit,
+        memoryLimit: testCase.memoryLimit,
       }));
     }
 
-    // Update the rest of the fields
-    Object.assign(problem, updates);
-    
+    // Update other fields if they exist in the updates
+    Object.keys(updates).forEach(key => {
+      if (!['sampleIO', 'testCases'].includes(key)) {
+        problem[key] = updates[key];
+      }
+    });
+
     const updatedProblem = await problem.save();
 
     res.json(updatedProblem);
   } catch (error) {
+    console.error("Update Problem Error:", error); // Log the error for debugging
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 // Delete problem
 export const deleteProblem = async (req, res) => {

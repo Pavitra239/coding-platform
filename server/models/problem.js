@@ -8,11 +8,19 @@ const sampleSchema = new Schema({
   output: { type: String, required: [true, 'Sample output is required'] }
 });
 
+const inputSchema = new mongoose.Schema({
+  value: { type: mongoose.Schema.Types.Mixed, required: true }, // Assuming mixed types for inputs
+  type: { type: String, required: true }, // For input types
+});
+
+const outputSchema = new mongoose.Schema({
+  value: { type: mongoose.Schema.Types.Mixed, required: true }, // Assuming mixed types for outputs
+  type: { type: String, required: true }, // For output types
+});
+
 const testCaseSchema = new Schema({
-  input: { type: String, required: [true, 'Test case input is required'] },
-  output: { type: String, required: [true, 'Test case output is required'] },
-  timeLimit: { type: Number, default: 1 }, // In seconds, optional
-  memoryLimit: { type: Number, default: 256 }, // In MB, optional
+  inputs: { type: [inputSchema], required: true }, // Array of inputs
+  outputs: { type: [outputSchema], required: true }, // Array of outputs
 });
 
 const problemSchema = new Schema({
