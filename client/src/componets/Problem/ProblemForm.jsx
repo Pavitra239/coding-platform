@@ -28,7 +28,14 @@ const ProblemForm = () => {
     constraints: "",
     tags: "",
     score: 0,
-    testCases: [{ input: "", output: "" }],
+    testCases: [
+      {
+        inputs: [""],
+        inputTypes: ["string"],
+        outputs: [""],
+        outputTypes: ["string"],
+      },
+    ],
   });
 
   const [isEditing, setIsEditing] = useState(false); // Check if we're in edit mode
@@ -40,12 +47,32 @@ const ProblemForm = () => {
   // Fetch problem if editing
   useEffect(() => {
     if (id) {
-      setIsEditing(true); // We're editing an existing problem
+      setIsEditing(true);
       const fetchProblem = async () => {
         const token = localStorage.getItem("UserToken");
         try {
           const response = await axiosInstance.get(`/problems/${id}`);
-          setProblemData(response.data); // Populate form with fetched data
+          const fetchedData = response.data;
+          console.log(fetchedData);
+  
+          // Map fetched data to internal state structure
+          setProblemData({
+            title: fetchedData.title,
+            description: fetchedData.description,
+            difficulty: fetchedData.difficulty || DIFFICULTY.EASY,
+            inputFormat: fetchedData.inputFormat,
+            outputFormat: fetchedData.outputFormat,
+            sampleIO: fetchedData.sampleIO || [{ input: "", output: "" }],
+            constraints: fetchedData.constraints,
+            tags: fetchedData.tags,
+            score: fetchedData.score || 0,
+            testCases: fetchedData.testCases.map((testCase) => ({
+              inputs: testCase.inputs.map(input => input.value), // Extracting only values
+              inputTypes: testCase.inputs.map(input => input.type), // Extracting types directly
+              outputs: testCase.outputs.map(output => output.value), // Extracting only values
+              outputTypes: testCase.outputs.map(output => output.type), // Extracting types directly
+            })),
+          });
         } catch (error) {
           toast.error("Failed to load problem data");
           console.error(error);
@@ -53,9 +80,12 @@ const ProblemForm = () => {
       };
       fetchProblem();
     } else {
-      setIsEditing(false); // We're creating a new problem
+      setIsEditing(false);
     }
   }, [id]);
+  
+
+  
 
   // Handle input change
   const handleChange = (e) => {
@@ -98,11 +128,7 @@ const ProblemForm = () => {
     ) {
       newErrors.sampleIO = true;
     }
-    if (
-      problemData.testCases.some((sample) => !sample.input || !sample.output)
-    ) {
-      newErrors.testCases = true;
-    }
+
     if (!problemData.constraints) newErrors.constraints = true;
     if (!problemData.tags) newErrors.tags = true;
     if (!problemData.score) newErrors.score = true;
@@ -110,24 +136,227 @@ const ProblemForm = () => {
   };
 
   // Handle dynamic test cases change
-  const handleTestCaseChange = (index, e) => {
-    const { name, value } = e.target;
-    const newTestCases = [...problemData.testCases];
-    newTestCases[index][name] = value;
-    setProblemData({ ...problemData, testCases: newTestCases });
+  const handleTestCaseChange = (index, type, value, fieldIndex, inputType) => {
+    const updatedTestCases = [...problemData.testCases];
+
+    if (type === "input") {
+      // Check if the input should be an int or string
+      updatedTestCases[index].inputs[fieldIndex] =
+        inputType === "int" ? parseInt(value) : value;
+    } else {
+      updatedTestCases[index].outputs[fieldIndex] =
+        inputType === "int" ? parseInt(value) : value;
+    }
+
+    setProblemData({ ...problemData, testCases: updatedTestCases });
   };
-  
+
   const addTestCase = () => {
     setProblemData({
       ...problemData,
-      testCases: [...problemData.testCases, { input: "", output: "" }],
+      testCases: [...problemData.testCases, { inputs: [], outputs: [] }],
     });
   };
-  // Remove a test case
+
   const removeTestCase = (index) => {
     const newTestCases = problemData.testCases.filter((_, i) => i !== index);
     setProblemData({ ...problemData, testCases: newTestCases });
   };
+
+  const renderTestCases = () => {
+    return problemData.testCases.map((testCase, index) => (
+      <div
+        key={index}
+        className="relative p-6 mb-8 bg-gray-900 rounded-lg shadow-lg border border-gray-600"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <label className="text-xl font-semibold text-white">
+            Test Case {index + 1}
+          </label>
+          <button
+            type="button"
+            onClick={() => removeTestCase(index)}
+            className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Remove Test Case
+          </button>
+        </div>
+  
+        <div className="space-y-4">
+          <div>
+            <label className="block text-lg font-medium text-white mb-2">
+              Inputs
+            </label>
+            {testCase.inputs.map((input, inputIndex) => (
+              <div
+                key={inputIndex}
+                className="flex items-center space-x-3 mb-3"
+              >
+                <select
+                  onChange={(e) => {
+                    const inputType = e.target.value;
+                    const updatedTestCases = [...problemData.testCases];
+                    updatedTestCases[index].inputTypes[inputIndex] = inputType;
+                    setProblemData({ ...problemData, testCases: updatedTestCases });
+                  }}
+                  value={testCase.inputTypes[inputIndex]}
+                  className="w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="string">String</option>
+                  <option value="int">Integer</option>
+                </select>
+  
+                <input
+                  type={testCase.inputTypes[inputIndex] === "int" ? "number" : "text"}
+                  value={input}
+                  onChange={(e) =>
+                    handleTestCaseChange(
+                      index,
+                      "input",
+                      e.target.value,
+                      inputIndex,
+                      testCase.inputTypes[inputIndex]
+                    )
+                  }
+                  className="w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={`Enter input ${inputIndex + 1}`}
+                />
+  
+                <button
+                  type="button"
+                  onClick={() => removeInputField(index, inputIndex)}
+                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <div
+              onClick={() => addInputField(index)}
+              className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
+            >
+              + Add Input
+            </div>
+          </div>
+  
+          <div>
+            <label className="block text-lg font-medium text-white mb-2">
+              Outputs
+            </label>
+            {testCase.outputs.map((output, outputIndex) => (
+              <div
+                key={outputIndex}
+                className="flex items-center space-x-3 mb-3"
+              >
+                <select
+                  onChange={(e) => {
+                    const outputType = e.target.value;
+                    const updatedTestCases = [...problemData.testCases];
+                    updatedTestCases[index].outputTypes[outputIndex] = outputType;
+                    setProblemData({ ...problemData, testCases: updatedTestCases });
+                  }}
+                  value={testCase.outputTypes[outputIndex]}
+                  className="w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="string">String</option>
+                  <option value="int">Integer</option>
+                </select>
+  
+                <input
+                  type={testCase.outputTypes[outputIndex] === "int" ? "number" : "text"}
+                  value={output}
+                  onChange={(e) =>
+                    handleTestCaseChange(
+                      index,
+                      "output",
+                      e.target.value,
+                      outputIndex,
+                      testCase.outputTypes[outputIndex]
+                    )
+                  }
+                  className="w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={`Enter output ${outputIndex + 1}`}
+                />
+  
+                <button
+                  type="button"
+                  onClick={() => removeOutputField(index, outputIndex)}
+                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <div
+              onClick={() => addOutputField(index)}
+              className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
+            >
+              + Add Output
+            </div>
+          </div>
+        </div>
+      </div>
+    ));
+  };
+  
+
+  const removeInputField = (testCaseIndex, inputIndex) => {
+    const updatedTestCases = [...problemData.testCases];
+    updatedTestCases[testCaseIndex].inputs.splice(inputIndex, 1); // Remove the input field
+    setProblemData({ ...problemData, testCases: updatedTestCases });
+  };
+  
+  const removeOutputField = (testCaseIndex, outputIndex) => {
+    const updatedTestCases = [...problemData.testCases];
+    updatedTestCases[testCaseIndex].outputs.splice(outputIndex, 1); // Remove the output field
+    setProblemData({ ...problemData, testCases: updatedTestCases });
+  };
+  
+  
+
+  // Function to add an input field
+const addInputField = (testCaseIndex) => {
+  const updatedTestCases = [...problemData.testCases];
+  
+  // Ensure the inputs array exists and is initialized
+  if (!updatedTestCases[testCaseIndex].inputs) {
+    updatedTestCases[testCaseIndex].inputs = [];
+  }
+
+  // Ensure the inputTypes array exists and is initialized
+  if (!updatedTestCases[testCaseIndex].inputTypes) {
+    updatedTestCases[testCaseIndex].inputTypes = [];
+  }
+
+  // Push a default empty string for input and a default 'string' type
+  updatedTestCases[testCaseIndex].inputs.push('');
+  updatedTestCases[testCaseIndex].inputTypes.push('string');
+  
+  setProblemData({ ...problemData, testCases: updatedTestCases });
+};
+
+// Function to add an output field
+const addOutputField = (testCaseIndex) => {
+  const updatedTestCases = [...problemData.testCases];
+  
+  // Ensure the outputs array exists and is initialized
+  if (!updatedTestCases[testCaseIndex].outputs) {
+    updatedTestCases[testCaseIndex].outputs = [];
+  }
+
+  // Ensure the outputTypes array exists and is initialized
+  if (!updatedTestCases[testCaseIndex].outputTypes) {
+    updatedTestCases[testCaseIndex].outputTypes = [];
+  }
+
+  // Push a default empty string for output and a default 'string' type
+  updatedTestCases[testCaseIndex].outputs.push('');
+  updatedTestCases[testCaseIndex].outputTypes.push('string');
+  
+  setProblemData({ ...problemData, testCases: updatedTestCases });
+};
+
+
   // Handle form submission for both create and edit
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -141,7 +370,6 @@ const ProblemForm = () => {
   };
 
   const confirmSubmit = async () => {
-    const token = localStorage.getItem("UserToken");
     const actionType = isEditing ? "edit" : "create";
     const apiMethod =
       actionType === "edit" ? axiosInstance.put : axiosInstance.post;
@@ -154,14 +382,12 @@ const ProblemForm = () => {
         : problemData.tags; // Keep the original tags if unchanged
 
     try {
-      const response = await apiMethod(
-        apiEndpoint,
-        {
-          ...problemData,
-          tags, // Use the processed tags
-          createdBy: user._id,
-        }
-      );
+      console.log(problemData);
+      const response = await apiMethod(apiEndpoint, {
+        ...problemData,
+        tags, // Use the processed tags
+        createdBy: user._id,
+      });
 
       if (response.status === 200 || response.status === 201) {
         toast.success(
@@ -257,10 +483,9 @@ const ProblemForm = () => {
                 rows="6"
               />
             </div>
-            
 
             {/* Difficulty */}
-           
+
             <div>
               <label className="block text-lg font-medium mb-2">
                 Difficulty
@@ -413,66 +638,26 @@ const ProblemForm = () => {
             </div>
 
             <div>
-              <label className="block text-lg font-medium mb-2">
-                Test Cases
-              </label>
-              {problemData.testCases.map((testCase, index) => (
-                <div key={index} className="space-y-2 mb-4">
-                  <textarea
-                    name="input"
-                    type="text"
-                    value={testCase.input}
-                    onChange={(e) => handleTestCaseChange(index, e)}
-                    className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
-                      errors.testCases ? "border-red-500" : "border-gray-700"
-                    }`}
-                    placeholder={`Test Case ${index + 1} Input`}
-                    rows={3}
-                  />
-                  <textarea
-                    name="output"
-                    value={testCase.output}
-                    onChange={(e) => handleTestCaseChange(index, e)}
-                    className={`w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500  ${
-                      errors.testCases ? "border-red-500" : "border-gray-700"
-                    }`}
-                    placeholder={`Test Case ${index + 1} Expected Output`}
-                    rows={3}
-                  />
-                  {
-                    // Disable Remove button if only one test case exists
-                    problemData.testCases.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeTestCase(index)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                      >
-                        Remove Test Case
-                      </button>
-                    )
-                  }
-                </div>
-              ))}
+              {renderTestCases()}
               <button
                 type="button"
                 onClick={addTestCase}
                 className="text-blue-500 mt-2 mb-2"
               >
-                + Add More
+                + Add More Test Case
               </button>
 
               <div className="bg-gray-100 border border-gray-300 rounded-md p-4 my-4">
-      <h4 className="text-lg font-semibold text-gray-800 mb-2">Important Note:</h4>
-      <p className="text-gray-700 leading-relaxed">
-        As an admin, when you create a problem, please ensure that the input and output examples are accurate. 
-        These examples are crucial for testing the submitted code to determine its correctness.
-      </p>
-    </div>
-
-
-
-      
-              
+                <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                  Important Note:
+                </h4>
+                <p className="text-gray-700 leading-relaxed">
+                  As an admin, when you create a problem, please ensure that the
+                  input and output examples are accurate. These examples are
+                  crucial for testing the submitted code to determine its
+                  correctness.
+                </p>
+              </div>
             </div>
 
             <div className="text-center">

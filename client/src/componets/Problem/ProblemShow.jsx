@@ -5,7 +5,7 @@ import "../../CSS/ProblemShow.css";
 import Submission from "./Submission";
 import Solution from "./Solution";
 import Statement from "./Statement";
-import CodeEditor from "./CodeEditor";
+import CodeEditor from "../CodeEditor/CodeEditor";
 
 const ProblemShow = () => {
   const { id } = useParams();
@@ -60,11 +60,11 @@ const ProblemShow = () => {
   }
 
   return (
-    <div className="problem-container">
+    <div className="problem-container" >
       {/* Left Column: Problem Statement */}
       <div
         ref={resizableRef}
-        className="resizable bg-gray-900 p-2 flex flex-col"
+        className="resizable bg-gray-900 p-4 flex flex-col"
       >
         <div className="sticky top-0 z-10 pb-4">
           <button
