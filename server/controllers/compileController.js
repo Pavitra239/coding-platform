@@ -8,172 +8,112 @@ import problem from "../models/problem.js";
 
 const __dirname = path.resolve();
 const execAsync = util.promisify(exec);
-const TIME_LIMIT = 10000; 
+const TIME_LIMIT = 10000;
 
 export const compileCode = async (req, res) => {
-  const { code, problemId, language, runSingleTestCase } = req.body;
-  // console.log("Received request body:", req.body);
-
-  
-  if (!code || !problemId || !language) {
+  const { code, language, testCases, allTestcase } = req.body;
+  if (!code || !testCases || !language) {
     return res
       .status(400)
-      .json({ error: "Code, problem ID, and language are required" });
+      .json({ error: "Code, Testcases, and language are required" });
   }
 
-  const fileExtension =
-    language === "python"
-      ? "py"
-      : language === "cpp"
-      ? "cpp"
-      : language === "java"
-      ? "java"
-      : null;
+  const fileExtension = language === "python" ? "py" : language === "cpp" ? "cpp" : language === "java" ? "java" : null;
   if (!fileExtension) {
     return res.status(400).json({ error: "Unsupported language" });
   }
 
-  const fileName =
-    language === "java"
-      ? "Solution.java"
-      : `Solution_${uuidv4()}.${fileExtension}`;
+  const fileName = language === "java" ? "Solution.java" : `Solution_${uuidv4()}.${fileExtension}`;
   const tempDir = path.join(__dirname, "temp");
   const filePath = path.join(tempDir, fileName);
 
   try {
-    // Fetch test cases associated with the problemId
-    const problemData = await problem.findById(problemId);
-    if (
-      !problemData ||
-      !problemData.testCases ||
-      !Array.isArray(problemData.testCases)
-    ) {
-      return res
-        .status(404)
-        .json({ error: "Test cases not found for this problem" });
-    }
-    const { testCases } = problemData;
-    const testCasesToRun = runSingleTestCase ? [testCases[0]] : testCases;
-
-    console.log(testCases);
+    const testCasesToRun = allTestcase ? testCases : [testCases[0]];
 
     await fs.mkdir(tempDir, { recursive: true });
     await fs.writeFile(filePath, code);
-    console.log(`File created successfully at ${filePath}`);
 
-    // Define compile and run commands based on the language
-    const compileCommand =
-      language === "cpp"
-        ? `g++ ${filePath} -o ${filePath}.exe`
-        : language === "java"
-        ? `javac ${filePath}`
-        : null;
-    const runCommand =
-      language === "cpp" && process.platform === "win32"
-        ? `${filePath}.exe`
-        : language === "cpp"
-        ? `${filePath}.out`
-        : language === "java"
-        ? `java -cp ${tempDir} Solution`
-        : `python ${filePath}`;
+    const compileCommand = language === "cpp" ? `g++ ${filePath} -o ${filePath}.exe` : language === "java" ? `javac ${filePath}` : null;
+    const runCommand = language === "cpp" && process.platform === "win32"
+      ? `${filePath}.exe`
+      : language === "cpp"
+      ? `${filePath}.out`
+      : language === "java"
+      ? `java -cp ${tempDir} Solution`
+      : `python ${filePath}`;
 
-    // Compile the code if necessary
     if (compileCommand) {
       const { stderr: compileStderr } = await execAsync(compileCommand);
       if (compileStderr) {
         throw new Error(`Compilation Error: ${compileStderr}`);
       }
-      console.log("Compilation successful");
     }
 
-    const arraysEqual = (arr1, arr2) => {
-      console.log("Comparing arrays:", arr1, arr2);
-      const areEqual =
-        arr1.length === arr2.length &&
-        arr1.every((value, index) => value === arr2[index]);
-      console.log("Arrays are equal:", areEqual);
-      return areEqual;
-    };
+    const arraysEqual = (arr1, arr2) => arr1.length === arr2.length && arr1.every((value, index) => value === arr2[index]);
 
     const executeWithTimeout = (inputs) => {
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error("Execution timed out"));
-        }, TIME_LIMIT);
-
-        // Extract input values and prepare the input string for execution
+        const timeout = setTimeout(() => reject(new Error("Execution timed out")), TIME_LIMIT);
         const inputValues = inputs.map((input) => input.value);
-        const inputString = inputValues.join(" ") + "\n"; // Adjust this format as needed
+        const inputString = inputValues.join(" ") + "\n";
 
-        console.log(
-          `Executing command: ${runCommand} with input: ${inputString}`
-        );
-
-        const child = exec(
-          runCommand,
-          { timeout: TIME_LIMIT },
-          (error, stdout, stderr) => {
-            clearTimeout(timeout);
-            if (error) {
-              if (
-                stderr.includes("invalid_argument") ||
-                stderr.includes("stoi")
-              ) {
-                resolve(["Invalid input"]);
-              } else {
-                reject(
-                  new Error(`Execution Error: ${stderr || error.message}`)
-                );
-              }
+        const child = exec(runCommand, { timeout: TIME_LIMIT }, (error, stdout, stderr) => {
+          clearTimeout(timeout);
+          if (error) {
+            if (stderr.includes("invalid_argument") || stderr.includes("stoi")) {
+              resolve({ output: ["Invalid input"], time: 0, memory: 0 });
             } else {
-              const outputArray = stdout
-                .trim()
-                .replace("Output: ", "")
-                .split(/\s+/)
-                .map((value) => (isNaN(value) ? value : Number(value)));
-
-              console.log("Raw output from execution:", stdout.trim());
-              console.log("Parsed output array:", outputArray);
-
-              resolve(outputArray);
+              reject(new Error(`Execution Error: ${stderr || error.message}`));
             }
+          } else {
+            const outputArray = stdout.trim().replace("Output: ", "").split(/\s+/).map((value) => (isNaN(value) ? value : Number(value)));
+            const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024;
+            resolve({ output: outputArray, time: Date.now(), memory: memoryUsage });
           }
-        );
+        });
 
-        // Send the prepared input to the child process
+        const startTime = Date.now();
         child.stdin.write(inputString);
         child.stdin.end();
+        child.on("close", () => resolve({ time: Date.now() - startTime, memory: process.memoryUsage().heapUsed / 1024 / 1024 }));
       });
     };
 
+    let totalExecutionTime = 0;
+    let totalMemoryUsage = 0;
     const testResults = [];
+
+    const overallStartTime = Date.now();
+
     for (const { inputs, outputs: expectedOutputs } of testCasesToRun) {
       try {
-        const cleanedOutput = await executeWithTimeout(inputs);
+        const { output, time, memory } = await executeWithTimeout(inputs);
         const expectedValues = expectedOutputs.map((output) => output.value);
-        const passed = arraysEqual(cleanedOutput, expectedValues);
-        testResults.push({
-          inputs,
-          expectedOutputs,
-          output: cleanedOutput,
-          passed,
-        });
+        const passed = arraysEqual(output, expectedValues);
+
+        testResults.push({ inputs, expectedOutputs, output, passed, time, memory });
+        totalExecutionTime += time;
+        totalMemoryUsage += memory;
+
       } catch (runError) {
-        testResults.push({
-          inputs,
-          expectedOutputs,
-          output: runError.message,
-          passed: false,
-        });
+        testResults.push({ inputs, expectedOutputs, output: runError.message, passed: false });
       }
     }
 
-    res.json({ testResults });
+    const overallExecutionTime = Date.now() - overallStartTime;
+    const averageMemoryUsage = totalMemoryUsage / testCasesToRun.length;
+
+    console.log("Test results:", testResults);
+    console.log("Overall execution time:", overallExecutionTime);
+    console.log("Average memory usage:", averageMemoryUsage);
+
+    res.json({
+      testResults,
+      overallTime: overallExecutionTime,
+      averageMemory: averageMemoryUsage,
+    });
   } catch (error) {
-    console.error("An error occurred during compilation or execution:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred", details: error.message });
+    res.status(500).json({ error: "An error occurred", details: error.message });
   } finally {
     try {
       await fs.unlink(filePath);
@@ -185,6 +125,7 @@ export const compileCode = async (req, res) => {
     }
   }
 };
+
 
 export const saveCode = async (req, res) => {
   const { userId, problemId, codeByLanguage } = req.body;
