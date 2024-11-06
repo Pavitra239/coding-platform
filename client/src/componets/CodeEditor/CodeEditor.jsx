@@ -9,6 +9,9 @@ import toast from "react-hot-toast";
 const CodeEditor = ({ language, setLanguage, problem }) => {
   const user = useSelector((state) => state.app.user);
   const userId = user._id;
+  const testcases = problem.testCases;
+
+  // console.log(testcases[0]);
 
   const [codeByLanguage, setCodeByLanguage] = useState({
     java: `import java.util.*;
@@ -85,11 +88,12 @@ int main() {
     try {
       const response = await axiosInstance.post("/compile", {
         code: codeByLanguage[language],
-        problemId: problem._id,
         language,
-        runSingleTestCase: true,
+        testCases : testcases,
+        allTestcase : false
       });
       setResults(response.data.testResults);
+      console.log("Submission response:", response.data.testResults);
     } catch (error) {
       setError(
         error.response?.data?.details || "Failed to run code. Please try again."
@@ -105,24 +109,56 @@ int main() {
     setSubmitLoading(true);
     setResults(null);
     setError(null);
+
     try {
-      const response = await axiosInstance.post("/compile", {
-        code: codeByLanguage[language],
-        problemId: problem._id,
-        language,
-        runSingleTestCase: false,
-      });
-      setResults(response.data.testResults);
+        const response = await axiosInstance.post("/compile", {
+            code: codeByLanguage[language],
+            language,
+            testCases: testcases,
+            allTestcase: true
+        });
+
+        setResults(response.data.testResults);
+        console.log("Submission response:", response.data.testResults);
+
+        console.log("Submission response:", response.data);
+
+        // After successfully compiling and running, save the submission
+        const totalExecutionTime = response.data.overallTime;
+        const averageMemoryUsage = response.data.averageMemory;
+
+        console.log("Total Execution Time:", totalExecutionTime);
+        console.log("Average Memory Usage:", averageMemoryUsage);
+
+        // Check if all test cases passed
+        const allTestCasesPassed = response.data.testResults.every(test => test.passed);
+
+        // Set status based on test case results
+        const status = allTestCasesPassed ? "completed" : "rejected";
+        console.log("Submission Status:", status);
+
+        await axiosInstance.post("/submissions", {
+            user_id: userId,             // assuming you have the user_id available
+            problem_id: problem._id,     // assuming you have the problem_id available
+            code: codeByLanguage[language],
+            language,
+            execution_time: totalExecutionTime,
+            memory_usage: averageMemoryUsage,
+            status: status,              // Set the status to either "completed" or "rejected"
+        });
+
     } catch (error) {
-      setError(
-        error.response?.data?.details ||
-          "Failed to submit code. Please try again."
-      );
+        setError(
+            error.response?.data?.details ||
+            "Failed to submit code. Please try again."
+        );
     } finally {
-      setIsLoading(false);
-      setSubmitLoading(false);
+        setIsLoading(false);
+        setSubmitLoading(false);
     }
-  };
+};
+
+
 
   const handleSaveCode = async () => {
     try {

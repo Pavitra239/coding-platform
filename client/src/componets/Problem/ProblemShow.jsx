@@ -125,7 +125,7 @@ const ProblemShow = () => {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {activeTab === "statement" && <Statement problem={problem} />}
-          {activeTab === "submissions" && <Submission />}
+          {activeTab === "submissions" && <Submission problemId={problem._id} />}
           {activeTab === "solution" && <Solution />}
         </div>
       </div>
