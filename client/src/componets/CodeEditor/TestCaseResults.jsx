@@ -12,7 +12,6 @@ const TestCaseResults = ({
   handleSaveCode,
   error,
 }) => {
-  // Ensure activeTestCaseIndex is within bounds and results exist
   const hasResults = results && results.length > 0;
   const currentTestCase =
     hasResults && activeTestCaseIndex >= 0 && activeTestCaseIndex < results.length
@@ -47,14 +46,12 @@ const TestCaseResults = ({
         </button>
       </div>
 
-      {/* Error Handling Section */}
       {error && (
         <div className="mt-4 p-4 bg-red-800 text-red-200 rounded-lg shadow-lg max-w-full overflow-auto">
           <strong>Error:</strong> {error}
         </div>
       )}
 
-      {/* Results Section */}
       {hasResults && !error ? (
         <div className="mt-6">
           <div className="flex space-x-4">
@@ -100,9 +97,9 @@ const TestCaseResults = ({
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">Output</h4>
                   <div className="p-3 bg-gray-900 rounded-lg overflow-auto">
-                    {currentTestCase.output && currentTestCase.output.length > 0
+                    {Array.isArray(currentTestCase.output)
                       ? currentTestCase.output.join(", ")
-                      : "No output available"}
+                      : currentTestCase.output || "No output available"}
                   </div>
                 </div>
               </div>
@@ -128,7 +125,7 @@ const TestCaseResults = ({
       ) : (
         !error && (
           <div className="mt-4 text-gray-500">
-            
+         
           </div>
         )
       )}

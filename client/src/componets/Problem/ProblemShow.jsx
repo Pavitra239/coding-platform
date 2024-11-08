@@ -14,11 +14,17 @@ const ProblemShow = () => {
   const [language, setLanguage] = useState("java");
   const [code, setCode] = useState("");
   const [activeTab, setActiveTab] = useState("statement");
+  const [latestSubmission, setLatestSubmission] = useState(null); // Store latest submission
+
+  const handleSubmission = (submission) => {
+    setLatestSubmission(submission); // Update with the new submission
+    setActiveTab("submissions");
+  };
 
   const codeTemplates = {
     java:
       "public class Solution {\n  public static void main(String[] args) {\n    // Your code here\n  }\n}",
-    python: 'if __name__ == "__main__":\n    // Your code here\n    pass',
+    python: 'if __name__ == "__main__":\n    # Your code here\n    pass',
     cpp:
       "#include <iostream>\nint main() {\n  // Your code here\n  return 0;\n}",
   };
@@ -29,7 +35,6 @@ const ProblemShow = () => {
     const fetchProblem = async () => {
       try {
         const response = await axiosInstance.get(`/problems/${id}`);
-        // console.log(response.data);
         setProblem(response.data);
       } catch (error) {
         console.error("Failed to load problem data", error);
@@ -60,7 +65,7 @@ const ProblemShow = () => {
   }
 
   return (
-    <div className="problem-container" >
+    <div className="problem-container">
       {/* Left Column: Problem Statement */}
       <div
         ref={resizableRef}
@@ -125,7 +130,12 @@ const ProblemShow = () => {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {activeTab === "statement" && <Statement problem={problem} />}
-          {activeTab === "submissions" && <Submission problemId={problem._id} />}
+          {activeTab === "submissions" && (
+            <Submission
+              problemId={problem._id}
+              latestSubmission={latestSubmission} // Pass latest submission
+            />
+          )}
           {activeTab === "solution" && <Solution />}
         </div>
       </div>
@@ -148,6 +158,7 @@ const ProblemShow = () => {
         code={code}
         setCode={setCode}
         problem={problem}
+        onSubmission={handleSubmission} // Handle new submission
       />
     </div>
   );
