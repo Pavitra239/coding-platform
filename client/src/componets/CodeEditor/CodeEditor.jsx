@@ -6,7 +6,7 @@ import TestCaseResults from "./TestCaseResults";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-const CodeEditor = ({ language, setLanguage, problem }) => {
+const CodeEditor = ({ language, setLanguage, problem, onSubmission  }) => {
   const user = useSelector((state) => state.app.user);
   const userId = user._id;
   const testcases = problem.testCases;
@@ -104,6 +104,7 @@ int main() {
     }
   };
 
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitLoading(true);
@@ -111,6 +112,7 @@ int main() {
     setError(null);
 
     try {
+        // Send the code, language, and test cases to the backend for compilation
         const response = await axiosInstance.post("/compile", {
             code: codeByLanguage[language],
             language,
@@ -118,12 +120,11 @@ int main() {
             allTestcase: true
         });
 
+        // Set the results for the frontend
         setResults(response.data.testResults);
         console.log("Submission response:", response.data.testResults);
 
-        console.log("Submission response:", response.data);
-
-        // After successfully compiling and running, save the submission
+        // Collect overall performance data
         const totalExecutionTime = response.data.overallTime;
         const averageMemoryUsage = response.data.averageMemory;
 
@@ -133,19 +134,37 @@ int main() {
         // Check if all test cases passed
         const allTestCasesPassed = response.data.testResults.every(test => test.passed);
 
-        // Set status based on test case results
+        // Set submission status based on whether all test cases passed
         const status = allTestCasesPassed ? "completed" : "rejected";
         console.log("Submission Status:", status);
 
-        await axiosInstance.post("/submissions", {
-            user_id: userId,             // assuming you have the user_id available
-            problem_id: problem._id,     // assuming you have the problem_id available
+        // Prepare the test case results to send along with the submission
+        const testCaseResults = response.data.testResults.map(test => ({
+            inputs: test.inputs,
+            expectedOutputs: test.expectedOutputs,
+            output: test.output,
+            passed: test.passed,
+            time: test.time,
+            memory: test.memory
+        }));
+
+        // Send the submission to the backend
+        const rk = await axiosInstance.post("/submissions", {
+            user_id: userId,               // assuming you have the user_id available
+            problem_id: problem._id,       // assuming you have the problem_id available
             code: codeByLanguage[language],
             language,
             execution_time: totalExecutionTime,
             memory_usage: averageMemoryUsage,
-            status: status,              // Set the status to either "completed" or "rejected"
+            status: status,                // Set the status to either "completed" or "rejected"
+            testCaseResults: testCaseResults // Pass test case results as well
         });
+
+        console.log("Submission response:", rk.data.submission);
+        if (onSubmission) {
+          onSubmission(rk.data.submission);
+      }
+        
 
     } catch (error) {
         setError(
@@ -157,7 +176,6 @@ int main() {
         setSubmitLoading(false);
     }
 };
-
 
 
   const handleSaveCode = async () => {
@@ -201,7 +219,10 @@ int main() {
         handleSaveCode={handleSaveCode}
         error={error}
       />
+
     </div>
+
+    
   );
 };
 
