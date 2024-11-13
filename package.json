@@ -10,6 +10,7 @@
     "build": "cd client && npm run build && cd .. && robocopy \"client\\dist\" \"server\\public\" /mir",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
+    "start": "cd server && npm start",
     "dev": "concurrently --kill-others-on-fail \" npm run server\" \" npm run client\""
   },
   "author": "",
