@@ -26,9 +26,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.static('public'));
 
-app.use('/', (req, res) => {
-  res.sendFile('index.html');
-});
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/contests', contestRoutes); // Use contest routes
 app.use('/api/v1/problems', problemRoutes); // Use problem routes
