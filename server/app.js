@@ -13,6 +13,7 @@ import user from './routes/user.js';
 import cors from 'cors';
 import compileRoutes from './routes/compileRoutes.js'; // Import the compile routes
 import submissionRoutes from './routes/submissionRoutes.js'; // Import the submission routes
+import adminRouter from './routes/admin.router.js';
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -32,6 +33,7 @@ app.use('/api/v1/problems', problemRoutes); // Use problem routes
 app.use('/api/v1/user', user);
 app.use('/api/v1/compile', compileRoutes);
 app.use('/api/v1/submissions', submissionRoutes); // Use submission routes
+app.use('/api/v1/admin',adminRouter); // admin section
 
 app.all('*', notFoundHandler);
 app.use(errorHandler);

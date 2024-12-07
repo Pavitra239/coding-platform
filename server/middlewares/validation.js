@@ -29,38 +29,38 @@ const withValidationResult = (validateValues) => {
   ];
 };
 
-  export const registerInputValidator = withValidationResult([
-    body('username')
-      .isString()
-      .notEmpty()
-      .withMessage('username is required'),
-    body('email')
-      .notEmpty()
-      .withMessage('email is required')
-      .isEmail()
-      .withMessage('invalid email')
-      .custom(async (value) => {
-        const user = await User.findOne({ email: value });
-        if (user) throw new BadRequestError('user already exists');
-      }),
-    body('password')
-      .isString()
-      .notEmpty()
-      .withMessage('password is required')
-      .isLength({ min: 8 })
-      .withMessage('password should contain at least 8 characters'),
-    body('profile.name')
-      .isString()
-      .notEmpty()
-      .withMessage('name is required'),
-  ]);
-
-export const loginInputValidator = withValidationResult([
+export const registerInputValidator = withValidationResult([
+  body('username')
+    .isString()
+    .notEmpty()
+    .withMessage('username is required'),
   body('email')
     .notEmpty()
     .withMessage('email is required')
     .isEmail()
     .withMessage('invalid email')
+    .custom(async (value) => {
+      const user = await User.findOne({ email: value });
+      if (user) throw new BadRequestError('user already exists');
+    }),
+  body('password')
+    .isString()
+    .notEmpty()
+    .withMessage('password is required')
+    .isLength({ min: 8 })
+    .withMessage('password should contain at least 8 characters'),
+  body('profile.name')
+    .isString()
+    .notEmpty()
+    .withMessage('name is required'),
+]);
+
+export const loginInputValidator = withValidationResult([
+  body('email')
+    .notEmpty()
+    .withMessage('email is required')
+    .matches(/^.+@charusat\.edu\.in$/)
+    .withMessage('email must be in the format: username@charusat.edu.in')
     .custom(async (value) => {
       const user = await User.findOne({ email: value });
       if (!user) throw new BadRequestError('user not found');
@@ -69,8 +69,8 @@ export const loginInputValidator = withValidationResult([
     .isString()
     .notEmpty()
     .withMessage('password is required')
-    .isLength({ min: 8 })
-    .withMessage('password should contain at least 8 characters'),
+    .isLength({ min: 6 })
+    .withMessage('password should contain at least 6 characters'),
 ]);
 
 

@@ -12,6 +12,7 @@ import ProblemShow from './Problem/ProblemShow';
 import NotFoundError from './NotFoundError';
 import Contest from './Contest/Contest';
 import Profile from './Profile/Profile';
+import AdminPage from './Admin/AdminPage';
 
 const Body = () => {
   const appRouter = createBrowserRouter([
@@ -23,11 +24,12 @@ const Body = () => {
     { path: "/create-contest/:id", element: <CreateContest /> },
     { path: "/contests/:id", element: <Contest /> },
     { path: "/make-problem", element: <MakeProblem /> },
+    { path: "/pending-requests", element: <AdminPage /> },
     { path: "/problem-form", element: <ProblemForm /> },
     { path: "/problem-form/:id", element: <ProblemForm /> },
     { path: "/problems/:id", element: <ProblemShow /> },
     { path: "/profile", element: <Profile /> },
-    {path: "*",element: <NotFoundError/>},
+    { path: "*", element: <NotFoundError /> },
   ]);
 
   return (

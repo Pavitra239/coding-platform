@@ -13,6 +13,7 @@ const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScreenSmall, setIsScreenSmall] = useState(false);
   const [isOnMakeContest, setIsOnMakeContest] = useState(false);
@@ -22,6 +23,10 @@ const Header = () => {
       navigate("/");
     }
   }, [authStatus]);
+
+  useEffect(() => {
+    setIsAdmin(user?.role);
+  })
 
   useEffect(() => {
     const handleResize = () => {
@@ -96,54 +101,58 @@ const Header = () => {
         <div className="hidden md:flex items-center space-x-4 flex-wrap">
           <Link
             to="/browse"
-            className={`text-lg font-semibold transition duration-300 ${
-              isActive("/browse")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`text-lg font-semibold transition duration-300 ${isActive("/browse")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
           >
             Home
           </Link>
           <Link
             to="/profile"
-            className={`text-lg font-semibold transition duration-300 ${
-              isActive("/profile")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`text-lg font-semibold transition duration-300 ${isActive("/profile")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
           >
             Profile
           </Link>
           <Link
             to="/history"
-            className={`text-lg font-semibold transition duration-300 ${
-              isActive("/history")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`text-lg font-semibold transition duration-300 ${isActive("/history")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
           >
             History
           </Link>
           <Link
             to="/support"
-            className={`text-lg font-semibold transition duration-300 ${
-              isActive("/support")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`text-lg font-semibold transition duration-300 ${isActive("/support")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
           >
             Support
           </Link>
           <Link
             to="/make-problem"
-            className={`text-lg font-semibold transition duration-300 ${
-              isActive("/make-problem")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`text-lg font-semibold transition duration-300 ${isActive("/make-problem")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
           >
             Problem
           </Link>
+          {user?.role === 'admin' && <Link
+            to="/pending-requests"
+            className={`text-lg font-semibold transition duration-300 ${isActive("/pending-requests")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
+          >
+            Requests
+          </Link>}
 
           <div className="flex items-center space-x-2">
             <IoIosArrowDropdown size="24px" color="white" />
@@ -169,55 +178,50 @@ const Header = () => {
         <div className="absolute top-12 right-4 w-48 bg-gray-800 text-white rounded-lg shadow-lg p-4">
           <Link
             to="/browse"
-            className={`block mb-2 font-semibold transition duration-300 ${
-              isActive("/browse")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`block mb-2 font-semibold transition duration-300 ${isActive("/browse")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
             onClick={() => setIsMenuOpen(false)}
           >
             Home
           </Link>
           <Link
             to="/profile"
-            className={`block mb-2 font-semibold transition duration-300 ${
-              isActive("/profile")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`block mb-2 font-semibold transition duration-300 ${isActive("/profile")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
             onClick={() => setIsMenuOpen(false)}
           >
             Profile
           </Link>
           <Link
             to="/history"
-            className={`block mb-2 font-semibold transition duration-300 ${
-              isActive("/history")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`block mb-2 font-semibold transition duration-300 ${isActive("/history")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
             onClick={() => setIsMenuOpen(false)}
           >
             History
           </Link>
           <Link
             to="/support"
-            className={`block mb-2 font-semibold transition duration-300 ${
-              isActive("/support")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`block mb-2 font-semibold transition duration-300 ${isActive("/support")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
             onClick={() => setIsMenuOpen(false)}
           >
             Support
           </Link>
           <Link
             to="/make-problem"
-            className={`block mb-2 font-semibold transition duration-300 ${
-              isActive("/make-problem")
-                ? "text-blue-400"
-                : "text-white hover:text-blue-300"
-            }`}
+            className={`block mb-2 font-semibold transition duration-300 ${isActive("/make-problem")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
             onClick={() => setIsMenuOpen(false)}
           >
             Problem

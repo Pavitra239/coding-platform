@@ -54,7 +54,7 @@ const MakeProblem = () => {
     setProblemToDelete(problemId);
     setShowDeleteModal(true);
   };
-
+  
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setProblemToDelete(null);
@@ -152,7 +152,9 @@ const MakeProblem = () => {
             <option value="Hard">Hard</option>
           </select>
 
-          <label htmlFor="search-box" className="text-lg">Search Problems:</label>
+          <label htmlFor="search-box" className="text-lg">
+            Search Problems:
+          </label>
           <input
             id="search-box"
             type="text"
@@ -166,17 +168,42 @@ const MakeProblem = () => {
         <table className="min-w-full text-lg text-left text-gray-500">
           <thead className="bg-gray-900 text-gray-400">
             <tr>
-              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("index")}>#</th>
-              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("title")}>Title</th>
-              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("difficulty")}>Difficulty</th>
-              <th className="py-3 px-6 cursor-pointer text-lg" onClick={() => handleSort("createdAt")}>Created Date</th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("index")}
+              >
+                #
+              </th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("title")}
+              >
+                Title
+              </th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("difficulty")}
+              >
+                Difficulty
+              </th>
+              <th
+                className="py-3 px-6 cursor-pointer text-lg"
+                onClick={() => handleSort("createdAt")}
+              >
+                Created Date
+              </th>
               <th className="py-3 px-6 text-lg cursor-pointer"></th>
             </tr>
           </thead>
           <tbody>
             {filteredProblems.length > 0 ? (
               filteredProblems.map((problem, index) => (
-                <tr key={problem._id} className={`${index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}`}>
+                <tr
+                  key={problem._id}
+                  className={`${
+                    index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
+                  }`}
+                >
                   <td className="py-3 px-6">{index + 1}</td>
                   <td
                     className="capitalize py-3 px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
@@ -186,18 +213,27 @@ const MakeProblem = () => {
                     {problem.title}
                   </td>
                   <td
-                    className={`py-3 px-6 ${problem.difficulty === "easy" ? "text-green-500" : problem.difficulty === "medium" ? "text-yellow-500" : "text-red-500"}`}
+                    className={`py-3 px-6 ${
+                      problem.difficulty === "easy"
+                        ? "text-green-500"
+                        : problem.difficulty === "medium"
+                        ? "text-yellow-500"
+                        : "text-red-500"
+                    }`}
                   >
-                    {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+                    {problem.difficulty.charAt(0).toUpperCase() +
+                      problem.difficulty.slice(1)}
                   </td>
-                  <td className="py-3 px-6 text-gray-300">{new Date(problem.createdAt).toLocaleString()}</td>
+                  <td className="py-3 px-6 text-gray-300">
+                    {new Date(problem.createdAt).toLocaleString()}
+                  </td>
                   <td className="py-3 px-6 text-gray-300 flex gap-2">
                     {/* Show Edit and Delete buttons only if the user is not a student */}
                     {userRole !== "student" && (
                       <>
                         <button
                           onClick={() => handleEditProblem(problem._id)}
-                          className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
+                          className="bg-blue-500 text-white  py-1 px-3 rounded hover:bg-blue-600 transition"
                         >
                           Edit
                         </button>
@@ -207,6 +243,12 @@ const MakeProblem = () => {
                         >
                           Delete
                         </button>
+                        <button
+                          onClick={() => handleDashboardConfirmation(problem._id)}
+                          className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
+                        >
+                          Dashboard
+                        </button>
                       </>
                     )}
                   </td>
@@ -214,7 +256,9 @@ const MakeProblem = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="py-3 px-6 text-center text-gray-300">No problems found</td>
+                <td colSpan="4" className="py-3 px-6 text-center text-gray-300">
+                  No problems found
+                </td>
               </tr>
             )}
           </tbody>
@@ -228,25 +272,29 @@ const MakeProblem = () => {
       )}
 
       {/* Delete Confirmation Modal */}
+
       {showDeleteModal && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black bg-opacity-50">
-          <div className="bg-gray-900 p-8 rounded-lg">
-            <h2 className="text-white text-xl mb-4">Confirm Delete</h2>
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-gray-800 p-8 rounded-lg">
+            <h3 className="text-white text-xl font-bold mb-4">
+              Confirm Deletion
+            </h3>
             <p className="text-gray-300 mb-4">
-              Are you sure you want to delete this problem? This action cannot be undone.
+              Are you sure you want to delete this Problem? This action cannot
+              be undone.
             </p>
-            <div className="flex gap-4">
-              <button
-                onClick={handleDeleteProblem}
-                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
-              >
-                Delete
-              </button>
+            <div className="flex justify-end">
               <button
                 onClick={cancelDelete}
-                className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition"
+                className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition mr-2"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleDeleteProblem}
+                className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition"
+              >
+                Delete
               </button>
             </div>
           </div>

@@ -6,7 +6,7 @@ const SubmissionList = ({ submissions, onSelect, loading, error }) => {
     <div>
       <h3 className="font-bold text-xl text-white mb-2">Submissions</h3>
       <p className="text-gray-400 mb-4">Here, you can view your previous submissions for this problem.</p>
-      {error && <p className="text-red-500">{error}</p>}
+      {/* {error && <p className="text-red-500">{error}</p>} */}
       {loading ? (
         <div className="flex justify-center items-center my-4">
           <div className="spinner-border animate-spin border-t-4 border-blue-600 border-solid rounded-full w-12 h-12"></div>
