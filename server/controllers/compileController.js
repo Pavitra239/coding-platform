@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import util from "util";
 import Code from "../models/Code.js";
 import problem from "../models/problem.js";
+import { count } from "console";
 
 const __dirname = path.resolve();
 const execAsync = util.promisify(exec);
@@ -49,7 +50,20 @@ export const compileCode = async (req, res) => {
       }
     }
 
-    const arraysEqual = (arr1, arr2) => arr1.length === arr2.length && arr1.every((value, index) => value === arr2[index]);
+    // const arraysEqual = (arr1, arr2) => arr1.length === arr2.length && arr1.every((value, index) => value === arr2[index]);
+    const arraysEqual = (arr1, arr2) => {
+      if (arr1.length !== arr2.length) {
+        console.log("Arrays are of different lengths:", arr1.length, arr2.length);
+        return false;
+      }
+    
+      return arr1.every((value, index) => {
+        const isEqual = value === arr2[index];
+        console.log(`Comparing arr1[${index}] = ${value} with arr2[${index}] = ${arr2[index]}: ${isEqual ? "Equal" : "Not Equal"}`);
+        return isEqual;
+      });
+    };
+    
 
     const executeWithTimeout = (inputs) => {
       return new Promise((resolve, reject) => {
@@ -66,8 +80,9 @@ export const compileCode = async (req, res) => {
               reject(new Error(`Execution Error: ${stderr || error.message}`));
             }
           } else {
-            const outputArray = stdout.trim().replace("Output: ", "").split(/\s+/).map((value) => (isNaN(value) ? value : Number(value)));
+            const outputArray = stdout.trim().split(/\s+/).map((value) => (isNaN(value) ? value : Number(value)));
             const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024;
+            console.log("Output Array:", outputArray);
             resolve({ output: outputArray, time: Date.now(), memory: memoryUsage });
           }
         });

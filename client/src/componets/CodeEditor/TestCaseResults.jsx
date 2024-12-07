@@ -97,9 +97,13 @@ const TestCaseResults = ({
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">Output</h4>
                   <div className="p-3 bg-gray-900 rounded-lg overflow-auto">
-                    {Array.isArray(currentTestCase.output)
+                  <div>
+                  
+                  {Array.isArray(currentTestCase.output)
                       ? currentTestCase.output.join(", ")
                       : currentTestCase.output || "No output available"}
+                  </div>
+                    
                   </div>
                 </div>
               </div>

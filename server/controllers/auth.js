@@ -10,9 +10,14 @@ export const login = async (req, res) => {
   if (!user) {
     throw new BadRequestError("User not found");
   }
-  console.log("USer: ", user, "Email: ", email, "Password: ", password);
+  if (!user.isApproved) {
+    return res.status(404).json({
+      message: `Your registration request has not been approved yet.`,
+    })
+  }
+  console.log("User: ", user, "Email: ", email, "Password: ", password);
   const isValidPassword = await user.comparePassword(password, user.password);
-  if (!isValidPassword)  throw new BadRequestError("ID & Password not found");
+  if (!isValidPassword) throw new BadRequestError("ID & Password not found");
 
   const token = await createToken({ id: user._id });
 
@@ -21,8 +26,8 @@ export const login = async (req, res) => {
     .status(200)
     .cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // secure flag for production
-      expires: new Date(Date.now() + oneDay), // 1 day expiration
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(Date.now() + oneDay),
     })
     .json({
       message: `Welcome back ${user.username}`,
@@ -33,17 +38,25 @@ export const login = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const isFirstUser = (await User.countDocuments()) === 0;
-  if (isFirstUser) req.body.role = "admin";
-  console.log(req.body);
-  const user = await User.create(req.body);
-  console.log(user);
+  try {
+    const userData = req.body;
 
-  return res.status(201).json({
-    message: "Account created successfully.",
-    success: true,
-  });
+    const user = await User.create(userData);
+    console.log(user);
+
+    return res.status(201).json({
+      message: "The registration request has been sent successfully.",
+      success: true,
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    return res.status(400).json({
+      message: error.message || "Failed to create account.",
+      success: false,
+    });
+  }
 };
+
 
 export const verifyEmail = async (req, res) => {
   const { token } = req.query;
