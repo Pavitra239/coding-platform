@@ -54,7 +54,7 @@ const adminController = {
 
             const emailDomain = "@charusat.edu.in";
             const generatedEmail = `${user.id.toLowerCase()}${emailDomain}`;
-            const generatedPassword = user.id;
+            const generatedPassword = user.id;
 
             user.isApproved = true;
             user.email = generatedEmail;

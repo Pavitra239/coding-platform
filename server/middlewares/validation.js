@@ -56,22 +56,20 @@ export const registerInputValidator = withValidationResult([
 ]);
 
 export const loginInputValidator = withValidationResult([
-  body('email')
+  body('id')
     .notEmpty()
-    .withMessage('email is required')
-    .matches(/^.+@charusat\.edu\.in$/)
-    .withMessage('email must be in the format: username@charusat.edu.in')
-    .custom(async (value) => {
-      const user = await User.findOne({ email: value });
-      if (!user) throw new BadRequestError('user not found');
-    }),
+    .withMessage('ID is required')
+    .isAlphanumeric()
+    .withMessage('ID must be alphanumeric'),
   body('password')
     .isString()
     .notEmpty()
-    .withMessage('password is required')
+    .withMessage('Password is required')
     .isLength({ min: 6 })
-    .withMessage('password should contain at least 6 characters'),
+    .withMessage('Password should contain at least 6 characters'),
 ]);
+
+
 
 
 export const idValidator = withValidationResult([
