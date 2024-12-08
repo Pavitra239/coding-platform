@@ -5,41 +5,134 @@ import { BadRequestError, NotFoundError } from "../utils/errors.js";
 import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw new BadRequestError("User not found");
-  }
-  if (!user.isApproved) {
-    return res.status(404).json({
-      message: `Your registration request has not been approved yet.`,
-    })
-  }
-  console.log("User: ", user, "Email: ", email, "Password: ", password);
-  const isValidPassword = await user.comparePassword(password, user.password);
-  if (!isValidPassword) throw new BadRequestError("ID & Password not found");
+  const { id, password } = req.body; // Use `id` instead of `email`
 
-  const token = await createToken({ id: user._id });
+  try {
+    const user = await User.findOne({ id }); // Query by `id` instead of `email`
 
-  const oneDay = 1000 * 24 * 60 * 60; // 1 day in milliseconds
-  return res
-    .status(200)
-    .cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      expires: new Date(Date.now() + oneDay),
-    })
-    .json({
-      message: `Welcome back ${user.username}`,
-      user,
-      success: true,
-      token,
+    if (!user) {
+      return res.status(200).json({
+        message: "Invalid ID & Password!",
+        success: false,
+      });
+    }
+
+    if (!user.isApproved) {
+      return res.status(200).json({
+        message: "Your registration request has not been approved yet.",
+        success: false,
+      });
+    }
+
+    const isPasswordValid = await user.comparePassword(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(200).json({
+        message: "Invalid ID & Password!",
+        success: false,
+      });
+    }
+
+    const isFirstTime = user.firstTimeLogin;
+
+    if (isFirstTime) {
+      return res.status(200).json({
+        firstTimeLogin: isFirstTime,
+        message: "Welcome on your first login!",
+        success: true,
+      });
+    }
+
+    const token = await createToken({ id: user._id });
+    const oneDay = 1000 * 60 * 60 * 24; // One day in milliseconds
+
+    return res
+      .status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        expires: new Date(Date.now() + oneDay),
+      })
+      .json({
+        message: "Welcome back!",
+        firstTimeLogin: isFirstTime,
+        user,
+        success: true,
+        token,
+      });
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      message: "An error occurred during login. Please try again later.",
+      success: false,
     });
+  }
 };
+
+
+export const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "All fields are required.", success: false });
+    }
+
+    let email = `${oldPassword.toLowerCase()}@charusat.edu.in`;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found.", success: false });
+    }
+
+    const isPasswordValid = await user.comparePassword(oldPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Old password is not valid.", success: false });
+    }
+
+    if (newPassword === oldPassword) {
+      return res.status(400).json({ message: "New password cannot be the same as the old password.", success: false });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters long.", success: false });
+    }
+
+    user.password = newPassword;
+    user.firstTimeLogin = false;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password changed successfully!",
+      success: true
+    });
+
+  } catch (error) {
+    console.error("PasswordChange error:", error);
+    return res.status(500).json({
+      message: "An error occurred while changing the password.",
+      success: false
+    });
+  }
+};
+
 
 export const register = async (req, res) => {
   try {
     const userData = req.body;
+
+    console.log(userData)
+
+    const existingUser = await User.findOne({
+      id: userData.id,
+    });
+    
+    console.log(existingUser + "hello")
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "A registration request has already been sent from this ID.",
+        success: false,
+      });
+    }
 
     const user = await User.create(userData);
     console.log(user);
@@ -56,7 +149,6 @@ export const register = async (req, res) => {
     });
   }
 };
-
 
 export const verifyEmail = async (req, res) => {
   const { token } = req.query;

@@ -44,10 +44,15 @@ const userSchema = new Schema(
     },
     subject: {
       type: String,
+      require: [true, 'subject is required'],
     },
     isApproved: {
       type: Boolean,
       default: false,
+    },
+    firstTimeLogin: {
+      type: Boolean,
+      default: true,
     },
     profile: {
       name: {

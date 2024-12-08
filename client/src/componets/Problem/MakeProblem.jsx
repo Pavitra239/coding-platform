@@ -165,7 +165,7 @@ const MakeProblem = () => {
           />
         </div>
 
-        <table className="min-w-full text-lg text-left text-gray-500">
+        <table className="min-w-full text-lg text-left text-gray-500" >
           <thead className="bg-gray-900 text-gray-400">
             <tr>
               <th

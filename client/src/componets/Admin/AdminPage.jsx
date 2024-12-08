@@ -7,6 +7,7 @@ function AdminPage() {
         <>
             <Header />
             <section>
+             
                 <Admin />
             </section>
         </>
