@@ -47,7 +47,7 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
 
       {/* Always display additional user details */}
       <div className="mt-4 space-y-3 p-2" style={{ width: "100%" }}>
-        {formData.bio && (
+        {/* {formData.bio && (
           <div>
             <label className="font-semibold flex items-center justify-center">
               <FaClipboardList className="mr-1" /> Bio:
@@ -64,7 +64,7 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
               </button>
             )}
           </div>
-        )}
+        )} */}
 
         {formData.birthday && (
           <div>
