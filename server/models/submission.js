@@ -58,6 +58,14 @@ const submissionSchema = new Schema({
     type: Number,
     required: [true, 'Memory usage is required'],
   },
+  numberOfTestCase: {
+    type: Number,
+    required: [true, 'numberOfTestCase is required'],
+  },
+  numberOfTestCasePass: {
+    type: Number,
+    required: [true, 'numberOfTestCasePass is required'],
+  },
   testCaseResults: [testCaseResultSchema], // Array to store multiple test case results
 }, {
   timestamps: true,

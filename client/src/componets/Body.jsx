@@ -13,6 +13,9 @@ import NotFoundError from './NotFoundError';
 import Contest from './Contest/Contest';
 import Profile from './Profile/Profile';
 import AdminPage from './Admin/AdminPage';
+import Dashboard from './Problem/Dashboard';
+import History from './History';
+
 
 const Body = () => {
   const appRouter = createBrowserRouter([
@@ -29,6 +32,9 @@ const Body = () => {
     { path: "/problem-form/:id", element: <ProblemForm /> },
     { path: "/problems/:id", element: <ProblemShow /> },
     { path: "/profile", element: <Profile /> },
+    { path: "/dashboard/:problemId", element: <Dashboard /> },
+    { path: "/history", element: <History /> },
+
     { path: "*", element: <NotFoundError /> },
   ]);
 

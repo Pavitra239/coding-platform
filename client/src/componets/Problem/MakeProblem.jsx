@@ -54,7 +54,23 @@ const MakeProblem = () => {
     setProblemToDelete(problemId);
     setShowDeleteModal(true);
   };
-  
+
+  const handleDashboardConfirmation = (
+    problemId,
+    title,
+    difficulty,
+    createdAt
+  ) => {
+    // Passing the problem data using state with the navigate function
+    navigate(`/dashboard/${problemId}`, {
+      state: {
+        problemTitle: title,
+        difficulty: difficulty,
+        createdAt: createdAt,
+      },
+    });
+  };
+
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setProblemToDelete(null);
@@ -165,7 +181,7 @@ const MakeProblem = () => {
           />
         </div>
 
-        <table className="min-w-full text-lg text-left text-gray-500" >
+        <table className="min-w-full text-lg text-left text-gray-500">
           <thead className="bg-gray-900 text-gray-400">
             <tr>
               <th
@@ -244,7 +260,14 @@ const MakeProblem = () => {
                           Delete
                         </button>
                         <button
-                          onClick={() => handleDashboardConfirmation(problem._id)}
+                          onClick={() =>
+                            handleDashboardConfirmation(
+                              problem._id,
+                              problem.title,
+                              problem.difficulty,
+                              problem.createdAt
+                            )
+                          }
                           className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
                         >
                           Dashboard

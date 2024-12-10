@@ -138,6 +138,15 @@ int main() {
         const status = allTestCasesPassed ? "completed" : "rejected";
         console.log("Submission Status:", status);
 
+        // Calculate number of test cases and number of passed test cases
+        const numberOfTestCase = response.data.testResults.length;
+        const numberOfTestCasePass = response.data.testResults.filter(test => test.passed).length;
+
+        console.log("Number of Test Cases:", numberOfTestCase);
+        console.log("Number of Test Cases Passed:", numberOfTestCasePass);
+
+        console.log("helllo")
+
         // Prepare the test case results to send along with the submission
         const testCaseResults = response.data.testResults.map(test => ({
             inputs: test.inputs,
@@ -157,14 +166,16 @@ int main() {
             execution_time: totalExecutionTime,
             memory_usage: averageMemoryUsage,
             status: status,                // Set the status to either "completed" or "rejected"
+            numberOfTestCase,              // Total number of test cases
+            numberOfTestCasePass,          // Number of passed test cases
             testCaseResults: testCaseResults // Pass test case results as well
         });
 
+
         console.log("Submission response:", rk.data.submission);
         if (onSubmission) {
-          onSubmission(rk.data.submission);
-      }
-        
+            onSubmission(rk.data.submission);
+        }
 
     } catch (error) {
         setError(
@@ -176,6 +187,7 @@ int main() {
         setSubmitLoading(false);
     }
 };
+
 
 
   const handleSaveCode = async () => {

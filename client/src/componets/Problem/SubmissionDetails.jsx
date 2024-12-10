@@ -5,12 +5,12 @@ const SubmissionDetails = ({ submission, onBack }) => {
   const [expandedCase, setExpandedCase] = useState(0); // Default: Show details of the first test case
 
   // Count the number of passed test cases
-  const passedCount = submission?.testCaseResults
-    ? submission.testCaseResults.filter((test) => test.passed).length
-    : 0;
-  const totalTests = submission?.testCaseResults
-    ? submission.testCaseResults.length
-    : 0;
+  // const passedCount = submission?.testCaseResults
+  //   ? submission.testCaseResults.filter((test) => test.passed).length
+  //   : 0;
+  // const totalTests = submission?.testCaseResults
+  //   ? submission.testCaseResults.length
+  //   : 0;
 
   // Toggle visibility of a test case's details
   const toggleExpand = (index) => {
@@ -18,7 +18,7 @@ const SubmissionDetails = ({ submission, onBack }) => {
   };
 
   return (
-    <div>
+    <div className="bg-gray-900 min-h-screen p-2">
       {/* Back button */}
       <button
         className="mb-4 bg-blue-600 px-4 py-2 rounded text-white hover:bg-blue-500"
@@ -32,14 +32,14 @@ const SubmissionDetails = ({ submission, onBack }) => {
       {/* Test Case Overview */}
       <div className="mb-6 bg-gray-800 p-4 rounded-lg flex justify-between items-center">
         <span className="text-lg font-semibold text-white">
-          Test Cases: {passedCount}/{totalTests} Passed
+          Test Cases: {submission.numberOfTestCasePass}/{submission.numberOfTestCase} Passed
         </span>
         <span
           className={`px-3 py-1 rounded ${
-            passedCount === totalTests ? "bg-green-600" : "bg-red-600"
+            submission.numberOfTestCase === submission.numberOfTestCasePass ? "bg-green-600" : "bg-red-600"
           } text-white`}
         >
-          {passedCount === totalTests ? "All Passed" : "Some Failed"}
+          {submission.numberOfTestCase === submission.numberOfTestCasePass ? "All Passed" : "Some Failed"}
         </span>
       </div>
 
