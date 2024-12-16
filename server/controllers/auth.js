@@ -5,10 +5,18 @@ import { BadRequestError, NotFoundError } from "../utils/errors.js";
 import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
-  const { id, password } = req.body; // Use `id` instead of `email`
+  console.log("Api hit")
+  const { id, email, password } = req.body;
+  console.log(id, email, password);
 
   try {
-    const user = await User.findOne({ id }); // Query by `id` instead of `email`
+    let user;
+    if (id) {
+      user = await User.findOne({ id });
+    }
+    else if (email) {
+      user = await User.findOne({ email });
+    }
 
     if (!user) {
       return res.status(200).json({
@@ -44,7 +52,7 @@ export const login = async (req, res) => {
     }
 
     const token = await createToken({ id: user._id });
-    const oneDay = 1000 * 60 * 60 * 24; // One day in milliseconds
+    const oneDay = 1000 * 60 * 60 * 24;
 
     return res
       .status(200)
@@ -78,9 +86,20 @@ export const changePassword = async (req, res) => {
     }
 
     let email = `${oldPassword.toLowerCase()}@charusat.edu.in`;
-    const user = await User.findOne({ email });
+    let facultyEmail = `${oldPassword.toLowerCase()}@charusat.ac.in`;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.findOne({ email: facultyEmail });
+    }
+
     if (!user) {
       return res.status(404).json({ message: "User not found.", success: false });
+    }
+
+    if (!user.isApproved) {
+      return res.status(404).json({ message: "You are not approved yet.", success: false });
     }
 
     const isPasswordValid = await user.comparePassword(oldPassword, user.password);
@@ -114,24 +133,39 @@ export const changePassword = async (req, res) => {
   }
 };
 
-
 export const register = async (req, res) => {
   try {
     const userData = req.body;
 
-    console.log(userData)
+    if (!userData.id && !userData.email) {
+      return res.status(400).json({ message: "ID or email is required.", success: false });
+    }
 
-    const existingUser = await User.findOne({
-      id: userData.id,
-    });
-    
+    console.log(userData)
+    let existingUser = 'op';
+    if (userData.role === 'student') {
+      existingUser = await User.findOne({ id: userData.id });
+    } else if (userData.role === 'faculty') {
+      existingUser = await User.findOne({ email: userData.email });
+    }
+
     console.log(existingUser + "hello")
 
     if (existingUser) {
-      return res.status(400).json({
-        message: "A registration request has already been sent from this ID.",
+      return res.status(409).json({
+        message: `A ${userData.role} with this ${userData.role === 'student' ? 'ID' : 'email'} already exists.`,
         success: false,
       });
+    }
+
+    console.log(userData);
+
+    if (userData.role === 'faculty') {
+      const facultyEmailPattern = /^[a-zA-Z0-9._%+-]+@charusat\.ac\.in$/;
+
+      if (!facultyEmailPattern.test(userData.email)) {
+        throw new Error(`Invalid email for faculty. Faculty email must match the pattern "name@charusat.ac.in".`);
+      }
     }
 
     const user = await User.create(userData);
@@ -203,6 +237,40 @@ export const getCurrentUser = async (req, res) => {
     res.status(500).json({
       message: "Internal Server Error",
       success: false,
+    });
+  }
+};
+
+export const fetchSubjects = async (req, res) => {
+  try {
+    const subjects = await User.find({ role: 'faculty', isApproved: true })
+      .select('subject _id username');
+
+    if (!subjects || subjects.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No subjects found for faculty."
+      });
+    }
+
+    const subjectList = subjects.map((faculty) => ({
+      id: faculty._id,
+      subject: faculty.subject,
+      teacher: faculty.username,
+    }));
+
+    // Return success response with subject list
+    return res.status(200).json({
+      success: true,
+      subjects: subjectList,
+    });
+  } catch (error) {
+    console.error("Error fetching subjects:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching subjects.",
+      error: error.message,
     });
   }
 };

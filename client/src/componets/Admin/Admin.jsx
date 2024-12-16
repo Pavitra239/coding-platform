@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
 import { BeatLoader } from "react-spinners";
-import Header from "../Header";
 
 const Admin = () => {
   const user = useSelector((store) => store.app.user);
@@ -169,12 +168,13 @@ const Admin = () => {
               <thead className="bg-gray-900 text-gray-400">
                 <tr>
                   <th className="py-3 px-6">#</th>
-                  <th className="py-3 px-6">ID</th>
+                  <th className="py-3 px-6">Email</th>
                   <th className="py-3 px-6">Name</th>
                   <th className="py-3 px-6">Mobile No</th>
                   <th className="py-3 px-6">Branch</th>
                   <th className="py-3 px-6">Semester</th>
                   <th className="py-3 px-6">Batch</th>
+                  <th className="py-3 px-6">Subject</th>
                   <th className="py-3 px-6">Actions</th>
                 </tr>
               </thead>
@@ -183,19 +183,19 @@ const Admin = () => {
                   pendingUsers.map((user, index) => (
                     <tr
                       key={user._id}
-                      className={`${
-                        index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
-                      }`}
+                      className={`${index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
+                        }`}
                     >
                       <td className="py-3 px-6">
                         {(currentPage - 1) * PAGE_SIZE + index + 1}
                       </td>
-                      <td className="py-3 px-6 text-gray-300">{user.id}</td>
+                      <td className="py-3 px-6 text-gray-300">{user.email}</td>
                       <td className="capitalize py-3 px-6">{user.username}</td>
                       <td className="py-3 px-6 text-gray-300">{user.mobileNo}</td>
                       <td className="py-3 px-6">{user.branch}</td>
                       <td className="py-3 px-6 text-gray-300">{user.semester}</td>
                       <td className="py-3 px-6">{user.batch}</td>
+                      <td className="py-3 px-6">{user.subject}</td>
                       <td className="py-3 px-6 flex gap-2">
                         <button
                           onClick={() => handleAcceptUser(user._id)}

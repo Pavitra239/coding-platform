@@ -7,6 +7,7 @@ import Header from "./Header";
 import axiosInstance from "../utils/axiosInstance";
 import { SEM, BRANCH } from "../../../server/utils/constants";
 import PasswordChange from "./PassWordChange";
+import { ClipLoader } from "react-spinners";
 
 const Login = () => {
   const user = useSelector((store) => store.app.user);
@@ -14,18 +15,21 @@ const Login = () => {
   const authStatus = useSelector((store) => store.app.authStatus);
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
-  const [id, setId] = useState("");
+  const [idOrEmail, setIdOrEmail] = useState("");
   const [mobileNo, setMobileNo] = useState("");
   const [branch, setBranch] = useState("");
   const [sem, setSem] = useState("");
   const [batch, setBatch] = useState("");
   const [subject, setSubject] = useState("");
+  const [subjects, setSubjects] = useState([]);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isLoading = useSelector((store) => store.app.isLoading);
+  const [userType, setUserType] = useState("");
+  const [isLoad, setIsLoad] = useState(false);
 
   const toggleLogin = () => {
     setIsLogin(!isLogin);
@@ -39,10 +43,31 @@ const Login = () => {
     }
   }, [authStatus]);
 
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        if (userType === "student") {
+          setIsLoad(true);
+          const res = await axiosInstance.get("auth/fetch-subjects");
+          if (res.data.success) {
+            console.log(res.data.subjects);
+            setSubjects(res.data.subjects);
+          }
+          setIsLoad(false);
+        }
+      } catch (error) {
+        setIsLoad(false);
+        console.error("Failed to fetch subjects:", error);
+      }
+    };
+
+    fetchSubjects();
+  }, [userType]);
+
   const validateRegistration = () => {
     if (
       !username ||
-      !id ||
+      !idOrEmail ||
       !mobileNo ||
       !branch ||
       !sem ||
@@ -56,12 +81,16 @@ const Login = () => {
       toast.error("Mobile number must be 10 digits.");
       return false;
     }
+    if (userType === "faculty" && !/\S+@\S+\.\S+/.test(idOrEmail)) {
+      toast.error("Please enter a valid email for faculty.");
+      return false;
+    }
     return true;
   };
 
   const validateLogin = () => {
-    if (!id || !password) {
-      toast.error("ID and password are required for login.");
+    if (!idOrEmail || !password) {
+      toast.error("ID/Email and password are required for login.");
       return false;
     }
     return true;
@@ -71,16 +100,24 @@ const Login = () => {
     e.preventDefault();
     if (!validateRegistration()) return;
 
+    const selectedSubject = subjects.find((subj) => subj.id === subject);
+    console.log(selectedSubject);
+
     const newUser = {
       username,
-      id,
+      id: userType === "student" ? idOrEmail : undefined,
+      email: userType === "faculty" ? idOrEmail : undefined,
+      facultyId: userType === "student" ? selectedSubject.id : undefined,
       mobileNo,
       branch,
       semester: sem,
       batch,
-      subject,
+      subject: userType === "student" ? selectedSubject.subject : subject,
+      role: userType,
       profile: { name: fullName },
     };
+
+    console.log(newUser);
 
     try {
       dispatch(setLoading(true));
@@ -103,8 +140,12 @@ const Login = () => {
     if (!validateLogin()) return;
 
     dispatch(setLoading(true));
-    const user = { id, password };
+    const user = {
+      [idOrEmail.includes("@") ? "email" : "id"]: idOrEmail,
+      password,
+    };
 
+    console.log("This is user: ", user);
     try {
       const url = `auth/login`;
       const res = await axiosInstance.post(url, user);
@@ -137,7 +178,7 @@ const Login = () => {
   const resetForm = () => {
     setFullName("");
     setUsername("");
-    setId("");
+    setIdOrEmail("");
     setPassword("");
   };
 
@@ -147,7 +188,7 @@ const Login = () => {
         <Header />
         <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-r overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
           {isFirstTime ? (
-            <PasswordChange id={id} />
+            <PasswordChange id={idOrEmail} />
           ) : (
             <form
               onSubmit={isLogin ? handleLogin : handleRegistration}
@@ -167,25 +208,37 @@ const Login = () => {
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <input
-                      value={id}
-                      onChange={(e) => setId(e.target.value)}
-                      type="text"
-                      placeholder="ID"
-                      className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                    <input
                       value={mobileNo}
                       onChange={(e) => setMobileNo(e.target.value)}
                       type="text"
                       placeholder="Mobile No"
                       className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
+                    <select
+                      id="userType"
+                      value={userType}
+                      onChange={(e) => {
+                        setUserType(e.target.value);
+                        setSubject("");
+                      }}
+                      className="p-3 w-full cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
+                      <option value="" disabled>
+                        -- Select User Type --
+                      </option>
+                      <option value="student" onSelect={() => setSubject("")}>
+                        Student
+                      </option>
+                      <option value="faculty" onSelect={() => setSubject("")}>
+                        Faculty
+                      </option>
+                    </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <select
                       value={branch}
                       onChange={(e) => setBranch(e.target.value)}
-                      className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     >
                       <option value="">Select Branch</option>
                       {Object.values(BRANCH).map((branchOption, index) => (
@@ -197,11 +250,15 @@ const Login = () => {
                     <select
                       value={sem}
                       onChange={(e) => setSem(e.target.value)}
-                      className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     >
                       <option value="">Select Semester</option>
                       {Object.values(SEM).map((semOption, index) => (
-                        <option key={index} value={semOption}>
+                        <option
+                          key={index}
+                          value={semOption}
+                          className="cursor-pointer"
+                        >
                           Semester {semOption}
                         </option>
                       ))}
@@ -215,23 +272,76 @@ const Login = () => {
                       placeholder="Batch"
                       className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
+                    {userType === "student" ? (
+                      <input
+                        value={idOrEmail}
+                        onChange={(e) => setIdOrEmail(e.target.value)}
+                        type="text"
+                        disabled={userType !== "student"}
+                        placeholder="Student ID"
+                        className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    ) : (
+                      <input
+                        value={idOrEmail}
+                        onChange={(e) => setIdOrEmail(e.target.value)}
+                        disabled={userType !== "faculty"}
+                        type="email"
+                        placeholder="Faculty Email"
+                        className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    )}
+                  </div>
+                  {userType === "student" && (
+                    <select
+                      value={isLoad ? "" : subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      disabled={isLoad}
+                    >
+                      <option value="" disabled>
+                        {isLoad ? (
+                          <div className="flex justify-center items-center">
+                            <ClipLoader color="#36D7B7" size={15} />
+                            <span className="ml-2">Loading...</span>
+                          </div>
+                        ) : subjects.length === 0 ? (
+                          "Subjects not available"
+                        ) : (
+                          "-- Select Subject --"
+                        )}
+                      </option>
+                      {!isLoad &&
+                        subjects.map((subj, index) => (
+                          <option
+                            key={index}
+                            value={subj.id}
+                            className="cursor-pointer"
+                          >
+                            {subj.subject} ({subj.teacher})
+                          </option>
+                        ))}
+                    </select>
+                  )}
+
+                  {userType === "faculty" && (
                     <input
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       type="text"
-                      placeholder="Subject"
+                      placeholder="Enter Subject"
                       className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
-                  </div>
+                  )}
                 </>
               )}
               {isLogin && (
                 <>
                   <input
-                    value={id}
-                    onChange={(e) => setId(e.target.value)}
-                    type="text"
-                    placeholder="ID"
+                    value={idOrEmail}
+                    onChange={(e) => setIdOrEmail(e.target.value)}
+                    type="name"
+                    placeholder="Id"
                     className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                   <div className="relative w-full">
@@ -248,9 +358,9 @@ const Login = () => {
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 focus:outline-none"
                     >
                       {showPassword ? (
-                        <span>👁️</span> // Icon for visible password
+                        <span>👁️</span>
                       ) : (
-                        <span>🙈</span> // Icon for hidden password
+                        <span>🙈</span> //
                       )}
                     </button>
                   </div>

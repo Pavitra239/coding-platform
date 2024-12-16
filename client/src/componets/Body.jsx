@@ -1,4 +1,3 @@
-// Body.js
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from './Login';
@@ -15,6 +14,7 @@ import Profile from './Profile/Profile';
 import AdminPage from './Admin/AdminPage';
 import Dashboard from './Problem/Dashboard';
 import History from './History';
+import FacultyPage from './Faculty/FacultyPage';
 
 
 const Body = () => {
@@ -28,13 +28,13 @@ const Body = () => {
     { path: "/contests/:id", element: <Contest /> },
     { path: "/make-problem", element: <MakeProblem /> },
     { path: "/pending-requests", element: <AdminPage /> },
+    { path: "/faculty-section", element: <FacultyPage /> },
     { path: "/problem-form", element: <ProblemForm /> },
     { path: "/problem-form/:id", element: <ProblemForm /> },
     { path: "/problems/:id", element: <ProblemShow /> },
     { path: "/profile", element: <Profile /> },
     { path: "/dashboard/:problemId", element: <Dashboard /> },
     { path: "/history", element: <History /> },
-
     { path: "*", element: <NotFoundError /> },
   ]);
 

@@ -53,6 +53,12 @@ const History = () => {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
 
+  const truncateTitle = (title, maxLength) => {
+    return title && title.length > maxLength
+      ? `${title.slice(0, maxLength)}...`
+      : title || "Untitled";
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
@@ -68,8 +74,13 @@ const History = () => {
 
             {/* {error && <p className="text-red-500">{error}</p>} */}
             {loading && (
-              <div className="flex justify-center items-center">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="flex justify-center items-center h-64">
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+                  <p className="mt-4 text-blue-500 text-lg font-medium">
+                    Loading, please wait...
+                  </p>
+                </div>
               </div>
             )}
 
@@ -111,7 +122,8 @@ const History = () => {
                               {index + 1 + (currentPage - 1) * 10}
                             </td>
                             <td className="py-3 px-6 border border-gray-600 capitalize">
-                              {submission.problem_id.title}
+                              {/* {submission.problem_id.title} */}
+                              {truncateTitle(submission.problem_id?.title, 50)}
                             </td>
                             <td className="py-3 px-6 border border-gray-600">
                               {submission.language}

@@ -153,7 +153,15 @@ const Header = () => {
           >
             Requests
           </Link>}
-
+          {user?.role === 'faculty' && <Link
+            to="/faculty-section"
+            className={`text-lg font-semibold transition duration-300 ${isActive("/faculty-section")
+              ? "text-blue-400"
+              : "text-white hover:text-blue-300"
+              }`}
+          >
+            Requests
+          </Link>}
           <div className="flex items-center space-x-2">
             <IoIosArrowDropdown size="24px" color="white" />
             <h1 className="text-lg font-medium text-white">{user?.username}</h1>

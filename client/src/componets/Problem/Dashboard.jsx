@@ -121,9 +121,10 @@ const Dashboard = () => {
   // }
 
   return (
+    <>
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
-      <div className="mx-auto px-5 pt-20">
+      <div className="mx-auto px-5 pt-20 pb-5">
         {selectedSubmission ? (
           <SubmissionDetails
             submission={selectedSubmission}
@@ -325,6 +326,8 @@ const Dashboard = () => {
         )}
       </div>
     </div>
+    </>
+
   );
 };
 

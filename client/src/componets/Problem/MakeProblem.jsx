@@ -147,7 +147,7 @@ const MakeProblem = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto p-5 mt-5">
+      <div className="overflow-x-auto p-5 pt-8">
         <h1 className="text-3xl font-bold text-white mb-10 text-center">
           Problem List
         </h1>
@@ -289,8 +289,13 @@ const MakeProblem = () => {
       </div>
 
       {loading && (
-        <div className="flex justify-center items-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+            <p className="mt-4 text-blue-500 text-lg font-medium">
+              Loading, please wait...
+            </p>
+          </div>
         </div>
       )}
 

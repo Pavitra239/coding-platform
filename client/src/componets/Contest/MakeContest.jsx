@@ -133,7 +133,7 @@ const MakeContest = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto p-5 mt-5">
+      <div className="overflow-x-auto p-5 pt-8">
         <h1 className="text-3xl font-bold text-white mb-10 text-center">
           Contest List
         </h1>
@@ -215,7 +215,17 @@ const MakeContest = () => {
                   <td className="py-3 px-6 text-gray-300">
                     {new Date(contest.start_time).toLocaleString()}
                   </td>
-                  <td className={`py-3 px-6 ${contest.status === "upcoming" ? "text-yellow-500" : contest.status === "ongoing" ? "text-green-500" : "text-red-500"}`}>{contest.status}</td>
+                  <td
+                    className={`py-3 px-6 ${
+                      contest.status === "upcoming"
+                        ? "text-yellow-500"
+                        : contest.status === "ongoing"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {contest.status}
+                  </td>
                   {userRole !== "student" && (
                     <td className="py-3 px-6 text-gray-300 flex gap-2">
                       <button
@@ -246,8 +256,13 @@ const MakeContest = () => {
       </div>
 
       {loading && (
-        <div className="flex justify-center items-center">
-          <div className="loader"></div>
+        <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+            <p className="mt-4 text-blue-500 text-lg font-medium">
+              Loading, please wait...
+            </p>
+          </div>
         </div>
       )}
 
