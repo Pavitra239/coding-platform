@@ -30,7 +30,7 @@ const Header = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsScreenSmall(window.innerWidth <= 900);
+      setIsScreenSmall(window.innerWidth <= 1200);
     };
 
     handleResize();

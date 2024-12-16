@@ -196,17 +196,18 @@ const formatDateTimeLocal = (isoString) => {
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
       <div className="mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold mt-10 mb-6 text-center">
+        <h1 className="text-2xl font-bold mt-10 mb-6 text-center">
           {isEditMode ? "Edit Contest" : "Create Contest"}
         </h1>
 
         {/* Back Button */}
         <button
-          onClick={handleBackClick}
-          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mb-4"
-        >
-          Back
-        </button>
+            onClick={handleBackClick}
+            className="px-4 py-1 sm:px-6 sm:py-2 bg-blue-500 text-white text-base sm:text-sm rounded-lg hover:bg-blue-600 transition duration-200 ease-in-out mb-4"
+          >
+            Back
+          </button>
+          
         <ConfirmationModal
             isOpen={isModalOpen}
             onClose={handleCloseModal}
@@ -217,7 +218,7 @@ const formatDateTimeLocal = (isoString) => {
         <form onSubmit={handleSubmit}>
           {/* Contest Name */}
           <div className="mb-4">
-            <label className="block text-lg font-medium mb-2" htmlFor="name">
+            <label className="block text-1xl font-medium mb-2" htmlFor="name">
               Contest Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -235,7 +236,7 @@ const formatDateTimeLocal = (isoString) => {
 
           {/* Description */}
           <div className="mb-4">
-            <label className="block text-lg font-medium mb-2" htmlFor="description">
+            <label className="block text-1xl font-medium mb-2" htmlFor="description">
               Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -253,7 +254,7 @@ const formatDateTimeLocal = (isoString) => {
 
           {/* Start Time */}
           <div className="mb-4">
-            <label className="block text-lg font-medium mb-2" htmlFor="start_time">
+            <label className="block text-1xl font-medium mb-2" htmlFor="start_time">
               Start Time <span className="text-red-500">*</span>
             </label>
             <input
@@ -270,7 +271,7 @@ const formatDateTimeLocal = (isoString) => {
 
           {/* End Time */}
           <div className="mb-4">
-            <label className="block text-lg font-medium mb-2" htmlFor="end_time">
+            <label className="block text-1xl font-medium mb-2" htmlFor="end_time">
               End Time <span className="text-red-500">*</span>
             </label>
             <input
@@ -287,7 +288,7 @@ const formatDateTimeLocal = (isoString) => {
 
           {/* Problems */}
           <div className="mb-4">
-            <label className="block text-lg font-medium mb-2">
+            <label className="block text-1xl font-medium mb-2">
               Select Problems <span className="text-red-500">*</span>
             </label>
             <input
@@ -300,7 +301,7 @@ const formatDateTimeLocal = (isoString) => {
             <ul className="rounded-lg p-4 max-h-64 overflow-y-auto">
               {displayedProblems.map((problem) => (
                 <li key={problem._id} className="mb-2 p-2">
-                  <label className="flex items-center p-4 border border-gray-700 rounded-lg">
+                  <label className="flex items-center p-4 text-1xl border border-gray-700 rounded-lg">
                     <input
                       type="checkbox"
                       className="mr-10 cursor-pointer"

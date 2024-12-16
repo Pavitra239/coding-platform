@@ -17,7 +17,6 @@ const Contest = () => {
     const fetchContest = async () => {
       if (id) {
         try {
-          
           const response = await axiosInstance.get(`/contests/${id}`);
           const contestData = response.data;
           setContest(contestData);
@@ -90,6 +89,12 @@ const Contest = () => {
     return { days, hours, minutes, seconds };
   };
 
+  React.useEffect(() => {
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <>
       <div className="min-h-screen bg-gray-900">
@@ -98,18 +103,27 @@ const Contest = () => {
           {contest ? (
             <>
               <div
-                className="mb-12 flex justify-center items-center p-6 bg-gray-800 rounded-lg shadow-lg w-full"
+                className="mb-12 flex justify-center items-center p-4 sm:p-6 bg-gray-800 rounded-lg shadow-lg w-full"
                 style={{ boxShadow: "1px 1px 5px white" }}
               >
-                <h1 className="text-xl sm:text-2xl md:text-4xl font-semibold text-white text-center tracking-wide capitalize">
+                <h1
+                  className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-semibold text-white text-center tracking-wide capitalize break-words truncate"
+                  style={{
+                    wordBreak: "break-word", // Break long words
+                    overflowWrap: "break-word", // Ensure breaking on overflow
+                    maxWidth: "100%", // Limit to container width
+                    whiteSpace: "normal", // Allow wrapping to multiple lines
+                  }}
+                >
                   {contest.name}
                 </h1>
               </div>
 
-              <div className="flex justify-between items-start w-full mb-4">
-                <div className="flex justify-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
+                {/* Back Button */}
+                <div className="flex justify-center sm:mb-0">
                   <button
-                    className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-300 ease-in-out border border-blue-500"
+                    className="px-4 sm:px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-300 ease-in-out border border-blue-500 text-sm sm:text-base"
                     onClick={() => {
                       navigate(-1);
                       toast.success("Back to previous page");
@@ -119,14 +133,15 @@ const Contest = () => {
                   </button>
                 </div>
 
-                <div className="flex flex-col items-center mb-8">
-                  <h2 className="text-lg font-semibold text-gray-600 mb-4">
+                {/* Contest Status and Timer */}
+                <div className="flex flex-col items-center w-full mb-8">
+                  <h2 className="text-lg font-semibold text-gray-600 mb-4 text-center">
                     {getContestStatus() === "upcoming" && "Starts in"}
                     {getContestStatus() === "ongoing" && "Time Left"}
                     {getContestStatus() === "ended" && ""}
                   </h2>
                   {getContestStatus() !== "ended" && (
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 justify-center sm:justify-start">
                       {Object.entries(formatTime(timeLeft)).map(
                         ([unit, value]) => (
                           <div
@@ -143,14 +158,14 @@ const Contest = () => {
                 </div>
               </div>
 
-              <div className="p-6 rounded-lg mb-8">
-                <h2 className="text-lg font-semibold mb-2">Description</h2>
-                <p className="border text-justify whitespace-pre-wrap border-gray-700 bg-gray-900 p-4 rounded-lg capitalize">
+              <div className="p-2 rounded-lg mb-8">
+                <h2 className="text-1xl font-semibold mb-2">Description</h2>
+                <p className="border text-justify whitespace-pre-wrap border-gray-700 bg-gray-900 p-4 rounded-lg capitalize text-base sm:text-sm">
                   {contest.description}
                 </p>
               </div>
 
-              {getContestStatus() !== "upcoming"  && (
+              {getContestStatus() !== "upcoming" && (
                 <div>
                   <h2 className="text-2xl font-semibold mb-4">Problems:</h2>
                   <div className="p-4">
@@ -161,15 +176,19 @@ const Contest = () => {
                         onClick={() => handleProblemClick(problem._id)}
                       >
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-xl font-bold text-blue-400">
-                            {problem.title}
+                          <h3 className="text-1xl font-bold text-blue-400">
+                            {problem.title.length > 30
+                              ? `${problem.title.slice(0, 30)}...`
+                              : problem.title}
                           </h3>
+
                           <span className="font-semibold text-white">
                             Score: {problem.score}
                           </span>
                         </div>
 
                         <div className="flex justify-between items-center">
+                          {/* Difficulty Badge */}
                           <div className="text-white flex gap-2">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
@@ -184,20 +203,18 @@ const Contest = () => {
                             </span>
                           </div>
 
+                          {/* Tags */}
                           <div className="flex gap-2">
-                            {problem.tags
-                              .slice(
-                                0,
-                                screenWidth <= 1000 ? 2 : problem.tags.length
-                              )
-                              .map((tag, index) => (
-                                <span
-                                  key={index}
-                                  className="bg-gray-700 px-3 py-1 rounded-full text-xs font-semibold uppercase text-white transition group-hover:bg-gray-900"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
+                            {window.innerWidth > 600
+                              ? problem.tags.slice(0, 2).map((tag, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-gray-700 px-3 py-1 rounded-full text-xs font-semibold uppercase text-white transition group-hover:bg-gray-900"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))
+                              : null}
                           </div>
                         </div>
                       </div>
@@ -207,7 +224,16 @@ const Contest = () => {
               )}
             </>
           ) : (
-            <p>Loading contest data...</p>
+            <>
+              <div className="flex justify-center items-center h-64">
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+                  <p className="mt-4 text-blue-500 text-lg font-medium">
+                    Loading, please wait...
+                  </p>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

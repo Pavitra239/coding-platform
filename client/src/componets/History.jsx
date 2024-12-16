@@ -88,7 +88,7 @@ const History = () => {
               <div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-lg text-left text-gray-500 border-collapse border border-gray-600">
-                    <thead className="sticky top-0 bg-gray-900 text-gray-400 z-10">
+                    <thead className=" bg-gray-900 text-gray-400">
                       <tr>
                         <th className="py-3 px-6 border border-gray-600">#</th>
                         <th className="py-3 px-6 border border-gray-600">
