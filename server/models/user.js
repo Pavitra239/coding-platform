@@ -2,6 +2,7 @@ import mongoose, { mongo } from "mongoose";
 import { ROLES, SEM, BRANCH } from "../utils/constants.js";
 import bcrypt from "bcrypt";
 const { Schema } = mongoose;
+import { v4 as uuidv4 } from 'uuid';
 
 const userSchema = new Schema(
   {
@@ -11,10 +12,19 @@ const userSchema = new Schema(
     },
     id: {
       type: String,
-      required: [true, "id is required"],
+      unique: true,
+      default: function () {
+        return uuidv4();
+      },
     },
     email: {
       type: String,
+      trim: true,
+      lowercase: true,
+      required: function () {
+        return this.role === ROLES.FACULTY;
+      },
+      match: [/\S+@\S+\.\S+/, 'Please enter a valid email address']
     },
     mobileNo: {
       type: String,
@@ -53,6 +63,11 @@ const userSchema = new Schema(
     firstTimeLogin: {
       type: Boolean,
       default: true,
+    },
+    facultyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
     },
     profile: {
       name: {
@@ -96,7 +111,10 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-// export default mongoose.model('User', userSchema);
+userSchema.index(
+  { email: 1, role: 1 },
+  { unique: true, partialFilterExpression: { email: { $exists: true } } }
+);
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {

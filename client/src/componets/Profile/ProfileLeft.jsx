@@ -6,10 +6,19 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
   const githubURL = formData.github ? `https://github.com/${formData.github}` : null;
   const linkedInURL = formData.linkedIn || null;
 
-  // Function to limit the bio length
-  const getShortBio = (bio) => {
-    return bio && bio.length > 50 ? bio.slice(0, 120) + "..." : bio;
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+   
+    return `${day}-${month}-${year}`;
   };
+
+  // Function to limit the bio length
+  // const getShortBio = (bio) => {
+  //   return bio && bio.length > 50 ? bio.slice(0, 120) + "..." : bio;
+  // };
 
   return (
     <div className="flex flex-col items-center sticky top-20">
@@ -71,7 +80,7 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
             <label className="font-semibold flex items-center justify-center">
               <FaBirthdayCake className="mr-1" /> Birthday:
             </label>
-            <p className="text-gray-400 flex items-center justify-center">{formData.birthday}</p>
+            <p className="text-gray-400 flex items-center justify-center">{formatDate(formData.birthday)}</p>
           </div>
         )}
 

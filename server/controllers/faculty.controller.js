@@ -1,13 +1,21 @@
 import User from '../models/user.js';
 import bcrypt from 'bcrypt';
 
-const adminController = {
-    // for the sending all the pending request to the perticuler admin for the validation
+const facultyController = {
+
     getPendingRequest: async (req, res, next) => {
         try {
+            const facultyId = req.query.facultyId;
             const page = parseInt(req.query.page) || 1;
             const limit = 10;
             const skip = (page - 1) * limit;
+
+            if (!facultyId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Faculty ID is required"
+                });
+            }
 
             if (page <= 0) {
                 return res.status(400).json({
@@ -17,19 +25,27 @@ const adminController = {
             }
 
             const [pendingUsers, totalUsers] = await Promise.all([
-                User.find({ isApproved: false, role: 'faculty' })
-                    .select("_id email mobileNo username branch semester batch subject")
+                User.find({
+                    isApproved: false,
+                    role: 'student',
+                    facultyId: facultyId
+                })
+                    .select("_id id username mobileNo email branch semester batch")
                     .skip(skip)
                     .limit(limit)
                     .sort({ createdAt: 1 }),
 
-                User.countDocuments({ isApproved: false, role: 'faculty' })
+                User.countDocuments({
+                    isApproved: false,
+                    role: 'student',
+                    facultyId: facultyId
+                })
             ]);
 
             if (pendingUsers.length === 0) {
                 return res.status(200).json({
                     success: false,
-                    message: "No pending users found"
+                    message: "No pending users found for this faculty"
                 });
             }
 
@@ -49,12 +65,13 @@ const adminController = {
         }
     },
 
+    // Accept request by faculty
     acceptRequest: async (req, res, next) => {
         try {
-            const { userId } = req.body;
+            const { userId, facultyId } = req.body;
 
-            if (!userId) {
-                return res.status(400).json({ success: false, message: "User ID is required" });
+            if (!userId || !facultyId) {
+                return res.status(400).json({ success: false, message: "User ID and Faculty ID are required" });
             }
 
             const user = await User.findById(userId);
@@ -67,12 +84,19 @@ const adminController = {
                 return res.status(400).json({ success: false, message: "User is already approved" });
             }
 
-            if (user.role === 'faculty') {
-                const emailPrefix = user.email.split('@')[0];
-                user.password = emailPrefix;
+            if (user.facultyId.toString() !== facultyId) {
+                return res.status(400).json({ success: false, message: "This student is not associated with the given faculty" });
             }
 
+            const emailDomain = "@charusat.edu.in";
+            const generatedEmail = `${user.id.toLowerCase()}${emailDomain}`;
+            const generatedPassword = user.id;
+
             user.isApproved = true;
+            user.email = generatedEmail;
+            user.password = generatedPassword;
+
+            user.facultyId = facultyId;
 
             await user.save();
 
@@ -80,6 +104,7 @@ const adminController = {
                 success: true,
                 message: "User request accepted and approved",
                 data: {
+                    id: user.id,
                     username: user.username,
                     email: user.email,
                     branch: user.branch,
@@ -89,23 +114,27 @@ const adminController = {
             });
         } catch (error) {
             console.error("Error accepting user request:", error);
-            res.status(500).json({
-                success: false,
-                message: "An internal server error occurred",
-                error: error.message,
-            });
+            res.status(500).json({ success: false, message: "An internal server error occurred", error: error.message });
         }
     },
 
     // decline request by admin
     declineRequest: async (req, res, next) => {
         try {
-            const { userId } = req.body;
+            const { userId, facultyId } = req.body;
+
+            if (!userId || !facultyId) {
+                return res.status(400).json({ success: false, message: "User ID and Faculty ID are required" });
+            }
 
             const user = await User.findById(userId);
 
             if (!user) {
                 return res.status(404).json({ success: false, message: "User not found" });
+            }
+
+            if (user.facultyId.toString() !== facultyId) {
+                return res.status(400).json({ success: false, message: "This student is not associated with the given faculty" });
             }
 
             await User.findByIdAndDelete(userId);
@@ -115,18 +144,28 @@ const adminController = {
                 message: "User request declined and user removed successfully"
             });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            console.error("Error declining user request:", error);
+            res.status(500).json({
+                success: false,
+                message: error.message || "An internal server error occurred"
+            });
         }
     },
 
     // Accept all requests by admin
     acceptAllRequests: async (req, res, next) => {
-        console.log("This is api hit")
         try {
-            const pendingUsers = await User.find({ isApproved: false, role: 'faculty' });
+            const { facultyId } = req.body;
+
+            if (!facultyId) {
+                return res.status(400).json({ success: false, message: "Faculty ID is required" });
+            }
+
+            const pendingUsers = await User.find({ isApproved: false, role: 'student', facultyId: facultyId });
+            console.log(pendingUsers);
 
             if (pendingUsers.length === 0) {
-                return res.status(404).json({ success: false, message: "No pending faculty users to approve" });
+                return res.status(404).json({ success: false, message: "No pending users to approve for this faculty" });
             }
 
             const bulkOps = [];
@@ -137,16 +176,21 @@ const adminController = {
                     continue;
                 }
 
-                const emailPrefix = user.email.split('@')[0];
-                const generatedPassword = await bcrypt.hash(emailPrefix, 10);
+                console.log(user);
+
+                const emailDomain = "@charusat.edu.in";
+                const generatedEmail = `${user.id.toLowerCase()}${emailDomain}`;
+                const generatedPassword = await bcrypt.hash(user.id, 10);
 
                 bulkOps.push({
                     updateOne: {
                         filter: { _id: user._id },
                         update: {
                             $set: {
+                                email: generatedEmail,
                                 password: generatedPassword,
                                 isApproved: true,
+                                facultyId: facultyId,
                             },
                         },
                     },
@@ -155,18 +199,16 @@ const adminController = {
                 approvedCount++;
             }
 
-            console.log(bulkOps);
-
             if (bulkOps.length > 0) {
                 await User.bulkWrite(bulkOps);
             }
 
             res.status(200).json({
                 success: true,
-                message: `${approvedCount} faculty users have been approved`,
+                message: `${approvedCount} users have been approved.`,
             });
         } catch (error) {
-            console.error("Error approving faculty users:", error);
+            console.error("Error approving users:", error);
             res.status(500).json({
                 success: false,
                 message: "An internal server error occurred",
@@ -178,7 +220,13 @@ const adminController = {
     // for declining all the users by admin
     declineAllRequests: async (req, res, next) => {
         try {
-            const deletedUsers = await User.deleteMany({ isApproved: false, role: 'faculty' });
+            const { facultyId } = req.body;
+
+            if (!facultyId) {
+                return res.status(400).json({ success: false, message: "Faculty ID is required" });
+            }
+
+            const deletedUsers = await User.deleteMany({ isApproved: false, role: 'student', facultyId });
 
             if (deletedUsers.deletedCount === 0) {
                 return res.status(404).json({ success: false, message: "No pending users to decline" });
@@ -194,4 +242,4 @@ const adminController = {
     }
 };
 
-export default adminController;
+export default facultyController;

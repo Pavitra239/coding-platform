@@ -4,8 +4,9 @@ const ProfileRight = ({ formData, handleInputChange, handleSubmit, user }) => {
   return (
     <div className="flex flex-col space-y-4">
       <div
-        className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-6"
-        style={{ boxShadow: "1px 1px 4px white" }}
+        className="dark:bg-gray-900 shadow-lg rounded-lg p-6"
+        // style={{border:"2px solid red"}}
+        style={{ boxShadow: "1px 1px 4px gray" }}
       >
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
