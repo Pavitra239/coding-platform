@@ -119,6 +119,16 @@ const MakeContest = () => {
       return contest.status === statusFilter;
     });
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
@@ -133,66 +143,78 @@ const MakeContest = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto p-5 pt-8">
-        <h1 className="text-3xl font-bold text-white mb-10 text-center">
+      <div className="p-5 pt-8">
+        <h1 className="text-2xl font-bold text-white mb-10 text-center">
           Contest List
         </h1>
 
         {/* Status Filter */}
-        <div className="mb-10 flex flex-col gap-4">
-          <label htmlFor="status-filter" className="text-lg">
-            Filter by Status:
-          </label>
-          <select
-            id="status-filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-gray-800 text-white py-2 px-4 rounded text-lg"
-          >
-            <option value="">All</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label
+              htmlFor="status-filter"
+              className="mr-2 text-lg sm:text-sm text-white"
+            >
+              Filter by Status:
+            </label>
+            <select
+              id="status-filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-gray-800 text-white py-2 px-4 rounded text-lg sm:text-sm"
+            >
+              <option value="">All</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
 
-        <div className="mb-10 flex flex-col gap-4">
-          <label htmlFor="search-box" className="text-lg">
-            Search Contests:
-          </label>
-          <input
-            id="search-box"
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name..."
-            className="bg-gray-800 text-white py-2 px-4 rounded text-lg"
-          />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
+            <label
+              htmlFor="search-box"
+              className="text-lg sm:text-sm text-white"
+            >
+              Search Contests:
+            </label>
+            <input
+              id="search-box"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name..."
+              className="bg-gray-800 text-white py-2 px-4 rounded text-lg sm:text-sm w-full sm:w-96"
+            />
+          </div>
         </div>
+      </div>
 
-        <table className="min-w-full text-lg text-left text-gray-500">
+      <div className="overflow-x-auto p-4 sm:p-6 lg:p-8">
+        <table className="w-full border-collapse border border-gray-700 text-sm sm:text-base md:text-lg text-left text-gray-500">
           <thead className="bg-gray-900 text-gray-400">
             <tr>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("index")}
               >
                 #
               </th>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("name")}
               >
                 Name
               </th>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("createdAt")}
               >
-                Start Date & Time
+                Start Date
               </th>
-              <th className="cursor-pointer text-lg">Status</th>
-              <th className="py-3 px-6 text-lg cursor-pointer"></th>
+              <th className="py-3 px-4 sm:px-6 text-center">Status</th>
+              {userRole !== "student" && (
+                <th className="py-3 px-4 sm:px-6 text-center">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -204,19 +226,19 @@ const MakeContest = () => {
                     index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                   }`}
                 >
-                  <td className="py-3 px-6">{index + 1}</td>
+                  <td className="py-3 px-4 sm:px-6 text-center">{index + 1}</td>
                   <td
-                    className="py-3 capitalize px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
+                    className="py-3 px-4 sm:px-6 font-bold text-white capitalize cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[250px]"
                     onClick={() => navigate(`/contests/${contest._id}`)}
                     title={contest.name}
                   >
                     {contest.name}
                   </td>
-                  <td className="py-3 px-6 text-gray-300">
-                    {new Date(contest.start_time).toLocaleString()}
+                  <td className="py-3 px-4 sm:px-6 text-gray-300 text-center">
+                    {formatDate(contest.start_time)}
                   </td>
                   <td
-                    className={`py-3 px-6 ${
+                    className={`py-3 px-4 sm:px-6 text-center ${
                       contest.status === "upcoming"
                         ? "text-yellow-500"
                         : contest.status === "ongoing"
@@ -227,7 +249,7 @@ const MakeContest = () => {
                     {contest.status}
                   </td>
                   {userRole !== "student" && (
-                    <td className="py-3 px-6 text-gray-300 flex gap-2">
+                    <td className="py-3 px-4 sm:px-6 flex justify-center items-center gap-2">
                       <button
                         onClick={() => handleEditContest(contest._id)}
                         className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
@@ -246,7 +268,10 @@ const MakeContest = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="py-3 px-6 text-center text-gray-300">
+                <td
+                  colSpan="5"
+                  className="py-3 px-4 sm:px-6 text-center text-gray-300"
+                >
                   No contests found
                 </td>
               </tr>

@@ -28,12 +28,12 @@ const Browse = () => {
             <h2 className="text-2xl lg:text-4xl font-bold mb-4 lg:mb-8">
               Coding Time!
             </h2>
-            <p className="mb-5">
+            <p className="mb-5 text-justify text-1xl">
               Test your Coding knowledge with our Coding Contest. Ready to challenge yourself?
             </p>
             <button
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300"
-              onClick={handleJoinQuizClick}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300 text-justify"
+              // onClick={handleJoinQuizClick}
             >
               Join Contest
             </button>

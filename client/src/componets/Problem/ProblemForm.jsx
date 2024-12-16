@@ -179,42 +179,42 @@ const ProblemForm = () => {
         key={index}
         className="relative p-6 mb-8 bg-gray-900 rounded-lg shadow-lg border border-gray-600"
       >
-        <div className="flex justify-between items-center mb-4">
-          <label className="text-xl font-semibold text-white">
+        <div className="flex flex-wrap justify-between items-center mb-4">
+          <label className="text-1xl font-semibold text-white">
             Test Case {index + 1}
           </label>
           <button
             type="button"
             onClick={() => removeTestCase(index)}
-            className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors"
+            className="px-2 py-2 bg-red-600 text-white text-1xl font-medium rounded-lg hover:bg-red-700 transition-colors"
+            aria-label={`Remove Test Case ${index + 1}`}
           >
             Remove Test Case
           </button>
         </div>
-
+  
         <div className="space-y-4">
+          {/* Inputs Section */}
           <div>
-            <label className="block text-lg font-medium text-white mb-2">
+            <label className="block text-1xl font-medium text-white mb-2">
               Inputs
             </label>
             {testCase.inputs.map((input, inputIndex) => (
               <div
                 key={inputIndex}
-                className="flex items-center space-x-3 mb-3"
+                className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3"
               >
                 <select
                   onChange={(e) => {
                     const inputType = e.target.value;
                     const updatedTestCases = [...problemData.testCases];
-
-                    // If the input type has changed, reset the input value
+  
                     if (
-                      updatedTestCases[index].inputTypes[inputIndex] !==
-                      inputType
+                      updatedTestCases[index].inputTypes[inputIndex] !== inputType
                     ) {
-                      updatedTestCases[index].inputs[inputIndex] = ""; // Clear the input value
+                      updatedTestCases[index].inputs[inputIndex] = ""; // Reset input value
                     }
-
+  
                     updatedTestCases[index].inputTypes[inputIndex] = inputType;
                     setProblemData({
                       ...problemData,
@@ -222,22 +222,19 @@ const ProblemForm = () => {
                     });
                   }}
                   value={testCase.inputTypes[inputIndex]}
-                  className="w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label={`Input type for input ${inputIndex + 1}`}
                 >
                   <option value="string">String</option>
                   <option value="int">Integer</option>
                 </select>
-
+  
                 <input
                   type={
-                    testCase.inputTypes[inputIndex] === "int"
-                      ? "number"
-                      : "text"
+                    testCase.inputTypes[inputIndex] === "int" ? "number" : "text"
                   }
                   step={
-                    testCase.inputTypes[inputIndex] === "int"
-                      ? "any"
-                      : undefined
+                    testCase.inputTypes[inputIndex] === "int" ? "any" : undefined
                   }
                   value={input}
                   onChange={(e) =>
@@ -249,14 +246,16 @@ const ProblemForm = () => {
                       testCase.inputTypes[inputIndex]
                     )
                   }
-                  className="w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={`Enter input ${inputIndex + 1}`}
+                  aria-label={`Input value for input ${inputIndex + 1}`}
                 />
-
+  
                 <button
                   type="button"
                   onClick={() => removeInputField(index, inputIndex)}
                   className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  aria-label={`Remove Input ${inputIndex + 1}`}
                 >
                   Remove
                 </button>
@@ -265,58 +264,54 @@ const ProblemForm = () => {
             <div
               onClick={() => addInputField(index)}
               className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
+              aria-label="Add Input"
             >
               + Add Input
             </div>
           </div>
-
+  
+          {/* Outputs Section */}
           <div>
-            <label className="block text-lg font-medium text-white mb-2">
+            <label className="block text-1xl font-medium text-white mb-2">
               Outputs
             </label>
             {testCase.outputs.map((output, outputIndex) => (
               <div
                 key={outputIndex}
-                className="flex items-center space-x-3 mb-3"
+                className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3"
               >
                 <select
                   onChange={(e) => {
                     const outputType = e.target.value;
                     const updatedTestCases = [...problemData.testCases];
-
-                    // If the output type has changed, reset the output value
+  
                     if (
                       updatedTestCases[index].outputTypes[outputIndex] !==
                       outputType
                     ) {
-                      updatedTestCases[index].outputs[outputIndex] = ""; // Clear the output value
+                      updatedTestCases[index].outputs[outputIndex] = ""; // Reset output value
                     }
-
-                    updatedTestCases[index].outputTypes[
-                      outputIndex
-                    ] = outputType;
+  
+                    updatedTestCases[index].outputTypes[outputIndex] = outputType;
                     setProblemData({
                       ...problemData,
                       testCases: updatedTestCases,
                     });
                   }}
                   value={testCase.outputTypes[outputIndex]}
-                  className="w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label={`Output type for output ${outputIndex + 1}`}
                 >
                   <option value="string">String</option>
                   <option value="int">Integer</option>
                 </select>
-
+  
                 <input
                   type={
-                    testCase.outputTypes[outputIndex] === "int"
-                      ? "number"
-                      : "text"
+                    testCase.outputTypes[outputIndex] === "int" ? "number" : "text"
                   }
                   step={
-                    testCase.outputTypes[outputIndex] === "int"
-                      ? "any"
-                      : undefined
+                    testCase.outputTypes[outputIndex] === "int" ? "any" : undefined
                   }
                   value={output}
                   onChange={(e) =>
@@ -328,14 +323,16 @@ const ProblemForm = () => {
                       testCase.outputTypes[outputIndex]
                     )
                   }
-                  className="w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={`Enter output ${outputIndex + 1}`}
+                  aria-label={`Output value for output ${outputIndex + 1}`}
                 />
-
+  
                 <button
                   type="button"
                   onClick={() => removeOutputField(index, outputIndex)}
                   className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  aria-label={`Remove Output ${outputIndex + 1}`}
                 >
                   Remove
                 </button>
@@ -344,6 +341,7 @@ const ProblemForm = () => {
             <div
               onClick={() => addOutputField(index)}
               className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
+              aria-label="Add Output"
             >
               + Add Output
             </div>
@@ -352,6 +350,7 @@ const ProblemForm = () => {
       </div>
     ));
   };
+  
 
   const removeInputField = (testCaseIndex, inputIndex) => {
     const updatedTestCases = [...problemData.testCases];
@@ -483,13 +482,13 @@ const ProblemForm = () => {
         <Header />
 
         <div className="mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold mt-10 mb-6 text-center">
+          <h1 className="text-2xl font-bold mt-10 mb-6 text-center">
             {isEditing ? "Edit Problem" : "Create Problem"}
           </h1>
 
           <button
             onClick={handleBackClick}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mb-4"
+            className="px-4 py-1 sm:px-6 sm:py-2 bg-blue-500 text-white text-base sm:text-sm rounded-lg hover:bg-blue-600 transition duration-200 ease-in-out mb-4"
           >
             Back
           </button>
@@ -503,7 +502,7 @@ const ProblemForm = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>
-              <label className="block text-lg font-medium mb-2">Title</label>
+              <label className="block text-1xl font-medium mb-2">Title</label>
               <input
                 type="text"
                 name="title"
@@ -519,7 +518,7 @@ const ProblemForm = () => {
             {/* Similar fields for Description, Difficulty, Input/Output Format, Sample IO, Constraints, Tags, and Score */}
             {/* Description */}
             <div>
-              <label className="block text-lg font-medium mb-2">
+              <label className="block text-1xl font-medium mb-2">
                 Description
               </label>
               <textarea
@@ -537,7 +536,7 @@ const ProblemForm = () => {
             {/* Difficulty */}
 
             <div>
-              <label className="block text-lg font-medium mb-2">
+              <label className="block text-1xl font-medium mb-2">
                 Difficulty
               </label>
               <select
@@ -554,7 +553,7 @@ const ProblemForm = () => {
 
             {/* Input Format */}
             <div>
-              <label className="block text-lg font-medium mb-2">
+              <label className="block text-1xl font-medium mb-2">
                 Input Format
               </label>
               <textarea
@@ -572,7 +571,7 @@ const ProblemForm = () => {
 
             {/* Output Format */}
             <div>
-              <label className="block text-lg font-medium mb-2">
+              <label className="block text-1xl font-medium mb-2">
                 Output Format
               </label>
               <textarea
@@ -590,7 +589,7 @@ const ProblemForm = () => {
 
             {/* Sample IO */}
             <div>
-              <label className="block text-lg font-medium mb-2">
+              <label className="block text-1xl font-medium mb-2">
                 Sample Input/Output
               </label>
               {problemData.sampleIO.map((sample, index) => (
@@ -642,7 +641,7 @@ const ProblemForm = () => {
 
             {/* Constraints */}
             <div>
-              <label className="block text-lg font-medium mb-2">
+              <label className="block text-1xl font-medium mb-2">
                 Constraints
               </label>
               <textarea
@@ -659,7 +658,7 @@ const ProblemForm = () => {
 
             {/* Tags */}
             <div>
-              <label className="block text-lg font-medium mb-2">Tags</label>
+              <label className="block text-1xl font-medium mb-2">Tags</label>
               <input
                 type="text"
                 name="tags"
@@ -675,7 +674,7 @@ const ProblemForm = () => {
 
             {/* Score */}
             <div>
-              <label className="block text-lg font-medium mb-2">Score</label>
+              <label className="block text-1xl font-medium mb-2">Score</label>
               <input
                 type="number"
                 name="score"
@@ -698,10 +697,10 @@ const ProblemForm = () => {
               </button>
 
               <div className="bg-gray-100 border border-gray-300 rounded-md p-4 my-4">
-                <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                <h4 className="text-lg sm:text-base font-semibold text-gray-800 mb-2">
                   Important Note:
                 </h4>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 sm:text-sm leading-relaxed text-justify">
                   As an admin, when you create a problem, please ensure that the
                   input and output examples are accurate. These examples are
                   crucial for testing the submitted code to determine its

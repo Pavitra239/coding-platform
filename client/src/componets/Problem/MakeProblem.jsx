@@ -132,6 +132,16 @@ const MakeProblem = () => {
       problem.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
@@ -147,68 +157,80 @@ const MakeProblem = () => {
         )}
       </div>
 
-      <div className="overflow-x-auto p-5 pt-8">
-        <h1 className="text-3xl font-bold text-white mb-10 text-center">
+      <div className="p-5 pt-8">
+        <h1 className="text-2xl font-bold text-white mb-10 text-center">
           Problem List
         </h1>
 
-        <div className="mb-10 flex flex-col gap-4">
-          <label htmlFor="difficulty-filter" className="mr-2 text-lg">
-            Filter by Difficulty:
-          </label>
-          <select
-            id="difficulty-filter"
-            value={difficultyFilter}
-            onChange={handleDifficultyFilterChange}
-            className="bg-gray-800 text-white py-2 px-4 rounded mb-5 text-lg"
-          >
-            <option value="All">All</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label
+              htmlFor="difficulty-filter"
+              className="mr-2 text-lg sm:text-sm text-white"
+            >
+              Filter by Difficulty:
+            </label>
+            <select
+              id="difficulty-filter"
+              value={difficultyFilter}
+              onChange={handleDifficultyFilterChange}
+              className="bg-gray-800 text-white py-2 px-4 rounded text-lg sm:text-sm"
+            >
+              <option value="All">All</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
 
-          <label htmlFor="search-box" className="text-lg">
-            Search Problems:
-          </label>
-          <input
-            id="search-box"
-            type="text"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Search by title..."
-            className="bg-gray-800 text-white py-2 px-4 rounded text-lg"
-          />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
+            <label
+              htmlFor="search-box"
+              className="text-lg sm:text-sm text-white"
+            >
+              Search Problems:
+            </label>
+            <input
+              id="search-box"
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search by title..."
+              className="bg-gray-800 text-white py-2 px-4 rounded text-lg sm:text-sm w-full sm:w-96"
+            />
+          </div>
         </div>
+      </div>
 
-        <table className="min-w-full text-lg text-left text-gray-500">
+      <div className="overflow-x-auto p-5">
+        <table className="w-full border-collapse border border-gray-700 text-sm sm:text-lg text-left text-gray-500">
           <thead className="bg-gray-900 text-gray-400">
             <tr>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("index")}
               >
                 #
               </th>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("title")}
               >
                 Title
               </th>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("difficulty")}
               >
                 Difficulty
               </th>
               <th
-                className="py-3 px-6 cursor-pointer text-lg"
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
                 onClick={() => handleSort("createdAt")}
               >
                 Created Date
               </th>
-              <th className="py-3 px-6 text-lg cursor-pointer"></th>
+              <th className="py-3 px-4 sm:px-6 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -220,36 +242,37 @@ const MakeProblem = () => {
                     index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                   }`}
                 >
-                  <td className="py-3 px-6">{index + 1}</td>
+                  <td className="py-3 px-4 sm:px-6 text-center font-medium text-gray-300">
+                    {index + 1}
+                  </td>
                   <td
-                    className="capitalize py-3 px-6 font-bold text-white cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[250px]"
+                    className="capitalize py-3 px-4 sm:px-6 text-white font-bold text-center cursor-pointer hover:text-blue-500 transition duration-300 truncate max-w-[180px] sm:max-w-[300px]"
                     onClick={() => navigate(`/problems/${problem._id}`)}
                     title={problem.title}
                   >
                     {problem.title}
                   </td>
                   <td
-                    className={`py-3 px-6 ${
+                    className={`py-3 px-4 sm:px-6 text-center font-medium ${
                       problem.difficulty === "easy"
-                        ? "text-green-500"
+                        ? "text-green-400"
                         : problem.difficulty === "medium"
-                        ? "text-yellow-500"
-                        : "text-red-500"
+                        ? "text-yellow-400"
+                        : "text-red-400"
                     }`}
                   >
                     {problem.difficulty.charAt(0).toUpperCase() +
                       problem.difficulty.slice(1)}
                   </td>
-                  <td className="py-3 px-6 text-gray-300">
-                    {new Date(problem.createdAt).toLocaleString()}
+                  <td className="py-3 px-4 sm:px-6 text-center text-gray-300">
+                    {formatDate(problem.createdAt)}
                   </td>
-                  <td className="py-3 px-6 text-gray-300 flex gap-2">
-                    {/* Show Edit and Delete buttons only if the user is not a student */}
+                  <td className="py-3 px-4 sm:px-6 text-center flex justify-center gap-2">
                     {userRole !== "student" && (
                       <>
                         <button
                           onClick={() => handleEditProblem(problem._id)}
-                          className="bg-blue-500 text-white  py-1 px-3 rounded hover:bg-blue-600 transition"
+                          className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
                         >
                           Edit
                         </button>
@@ -279,7 +302,10 @@ const MakeProblem = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="py-3 px-6 text-center text-gray-300">
+                <td
+                  colSpan="5"
+                  className="py-3 px-4 sm:px-6 text-center text-gray-300"
+                >
                   No problems found
                 </td>
               </tr>
@@ -303,24 +329,24 @@ const MakeProblem = () => {
 
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-gray-800 p-8 rounded-lg">
-            <h3 className="text-white text-xl font-bold mb-4">
+          <div className="bg-gray-800 p-6 sm:p-8 rounded-lg w-11/12 max-w-md sm:max-w-lg mx-auto">
+            <h3 className="text-white text-lg sm:text-xl font-bold mb-4 text-center">
               Confirm Deletion
             </h3>
-            <p className="text-gray-300 mb-4">
-              Are you sure you want to delete this Problem? This action cannot
+            <p className="text-gray-300 mb-4 text-sm sm:text-base text-center">
+              Are you sure you want to delete this problem? This action cannot
               be undone.
             </p>
-            <div className="flex justify-end">
+            <div className="flex justify-center gap-4">
               <button
                 onClick={cancelDelete}
-                className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition mr-2"
+                className="bg-gray-500 text-white py-2 px-4 sm:py-2.5 sm:px-6 rounded-lg hover:bg-gray-600 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteProblem}
-                className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition"
+                className="bg-red-500 text-white py-2 px-4 sm:py-2.5 sm:px-6 rounded-lg hover:bg-red-600 transition"
               >
                 Delete
               </button>
