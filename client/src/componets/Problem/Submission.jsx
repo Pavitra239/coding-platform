@@ -44,7 +44,7 @@ const Submission = ({ problemId, latestSubmission }) => {
   }, [latestSubmission]);
 
   return (
-    <div className="bg-gray-900 p-6 rounded-lg shadow-lg">
+    <div className="bg-gray-900 p-2 rounded-lg shadow-lg">
       {selectedSubmission ? (
         <SubmissionDetails
           submission={selectedSubmission}

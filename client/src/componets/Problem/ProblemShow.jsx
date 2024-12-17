@@ -44,6 +44,8 @@ const ProblemShow = () => {
     fetchProblem();
   }, [id]);
 
+ 
+
   useEffect(() => {
     setCode(codeTemplates[language]);
   }, [language]);
@@ -89,7 +91,7 @@ const ProblemShow = () => {
           </button>
 
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               {problem.title}
             </h1>
           </div>
