@@ -5,7 +5,10 @@ const SubmissionDetails = ({ submission, onBack }) => {
 
   // Helper function to safely access nested properties
   const safeAccess = (obj, path, defaultValue = "N/A") =>
-    path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : defaultValue), obj);
+    path.reduce(
+      (acc, key) => (acc && acc[key] !== undefined ? acc[key] : defaultValue),
+      obj
+    );
 
   // Toggle visibility of a test case's details
   const toggleExpand = (index) => {
@@ -25,29 +28,30 @@ const SubmissionDetails = ({ submission, onBack }) => {
       <h3 className="font-bold text-xl text-white mb-4">Submission Details</h3>
 
       {/* Test Case Overview */}
-      <div className="mb-6 bg-gray-800 p-4 rounded-lg flex justify-between items-center">
+      <div className="mb-6 bg-gray-800 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <span className="text-lg font-semibold text-white">
-          Test Cases: {submission?.numberOfTestCasePass || 0}/{submission?.numberOfTestCase || 0} Passed
+          Test Cases: {submission?.numberOfTestCasePass || 0}/
+          {submission?.numberOfTestCase || 0} Passed
         </span>
         <span
-          className={`px-3 py-1 rounded ${
+          className={`px-3 py-1 rounded text-center ${
             submission?.numberOfTestCase === submission?.numberOfTestCasePass
               ? "bg-green-600"
               : "bg-red-600"
           } text-white`}
         >
-          {submission?.numberOfTestCase === submission?.numberOfTestCasePass ? "All Passed" : "Some Failed"}
+          {submission?.numberOfTestCase === submission?.numberOfTestCasePass
+            ? "All Passed"
+            : "Some Failed"}
         </span>
       </div>
 
       {/* Submission Details */}
-      <div className="mb-6 p-6 rounded-lg shadow-md bg-gray-800 text-gray-300">
-        <div className="flex space-x-4 p-4 rounded-lg bg-gray-800 text-gray-300 shadow-lg">
+      <div className="mb-6 p-4 sm:p-6 rounded-lg shadow-md bg-gray-800 text-gray-300 space-y-6">
+        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
           {/* Runtime Section */}
           <div className="flex-1 p-4 rounded-lg bg-gray-900 flex flex-col items-center text-center shadow-sm">
-            <div className="flex items-center mb-2">
-              <span className="text-gray-200 font-semibold">Runtime</span>
-            </div>
+            <span className="text-gray-200 font-semibold mb-2">Runtime</span>
             <p className="text-2xl font-bold text-white">
               {submission?.execution_time !== undefined
                 ? `${submission.execution_time.toFixed(2)} ms`
@@ -57,9 +61,7 @@ const SubmissionDetails = ({ submission, onBack }) => {
 
           {/* Memory Section */}
           <div className="flex-1 p-4 rounded-lg bg-gray-900 flex flex-col items-center text-center shadow-sm">
-            <div className="flex items-center mb-2">
-              <span className="text-gray-200 font-semibold">Memory</span>
-            </div>
+            <span className="text-gray-200 font-semibold mb-2">Memory</span>
             <p className="text-2xl font-bold text-white">
               {submission?.memory_usage !== undefined
                 ? `${submission.memory_usage.toFixed(2)} MB`
@@ -68,17 +70,16 @@ const SubmissionDetails = ({ submission, onBack }) => {
           </div>
         </div>
 
-        <p className="mb-4 text-lg flex items-center mt-5">
-          <strong className="mr-2">Language:</strong>
-          <span>{submission?.language || "N/A"}</span>
+        <p className="text-lg">
+          <strong>Language:</strong> {submission?.language || "N/A"}
         </p>
 
         {/* Code Block */}
-        <div className="mt-6 p-4 rounded-lg bg-gray-900 shadow-inner border border-gray-700 overflow-auto">
+        <div className="p-4 rounded-lg bg-gray-900 shadow-inner border border-gray-700 overflow-auto">
           <p className="mb-2">
             <strong>Code:</strong>
           </p>
-          <pre className="text-gray-100 font-mono bg-gray-900 p-4 rounded-md overflow-x-auto">
+          <pre className="text-gray-100 font-mono bg-gray-900 p-4 rounded-md overflow-x-auto text-sm sm:text-base">
             {submission?.code || "No code available"}
           </pre>
         </div>
@@ -87,7 +88,8 @@ const SubmissionDetails = ({ submission, onBack }) => {
       {/* Test Case Details */}
       <div className="mt-4">
         <h4 className="text-lg font-bold text-white mb-4">Test Cases</h4>
-        {Array.isArray(submission?.testCaseResults) && submission.testCaseResults.length > 0 ? (
+        {Array.isArray(submission?.testCaseResults) &&
+        submission.testCaseResults.length > 0 ? (
           submission.testCaseResults.map((testCase, index) => (
             <div key={index} className="bg-gray-800 p-4 rounded-lg mb-4">
               {/* Test Case Summary */}
@@ -97,7 +99,11 @@ const SubmissionDetails = ({ submission, onBack }) => {
               >
                 <p className="text-lg font-semibold text-gray-300">
                   Case {index + 1} -{" "}
-                  <span className={testCase?.passed ? "text-green-500" : "text-red-500"}>
+                  <span
+                    className={
+                      testCase?.passed ? "text-green-500" : "text-red-500"
+                    }
+                  >
                     {testCase?.passed ? "✓ Passed" : "✗ Failed"}
                   </span>
                 </p>
@@ -108,38 +114,42 @@ const SubmissionDetails = ({ submission, onBack }) => {
 
               {/* Test Case Details (Visible when expanded) */}
               {expandedCase === index && (
-                <div className="mt-3">
+                <div className="mt-3 space-y-4">
                   {/* Input */}
-                  <div className="mb-2">
+                  <div>
                     <p className="text-gray-400 mb-1">
                       <strong>Input:</strong>
                     </p>
-                    <pre className="bg-gray-900 p-3 rounded text-white">
-                      {safeAccess(testCase, ["inputs"], []).map((input, idx) => (
-                        <div key={idx}>{input?.value || "N/A"}</div>
-                      ))}
+                    <pre className="bg-gray-900 p-3 rounded text-white text-sm sm:text-base">
+                      {safeAccess(testCase, ["inputs"], []).map(
+                        (input, idx) => (
+                          <div key={idx}>{input?.value || "N/A"}</div>
+                        )
+                      )}
                     </pre>
                   </div>
 
                   {/* Output */}
-                  <div className="mb-2">
+                  <div>
                     <p className="text-gray-400 mb-1">
                       <strong>Output:</strong>
                     </p>
-                    <pre className="bg-gray-900 p-3 rounded text-white">
+                    <pre className="bg-gray-900 p-3 rounded text-white text-sm sm:text-base">
                       {testCase?.output ? testCase.output.join("\n") : "N/A"}
                     </pre>
                   </div>
 
                   {/* Expected Output */}
-                  <div className="mb-2">
+                  <div>
                     <p className="text-gray-400 mb-1">
                       <strong>Expected Output:</strong>
                     </p>
-                    <pre className="bg-gray-900 p-3 rounded text-white">
-                      {safeAccess(testCase, ["expectedOutputs"], []).map((output, idx) => (
-                        <div key={idx}>{output?.value || "N/A"}</div>
-                      ))}
+                    <pre className="bg-gray-900 p-3 rounded text-white text-sm sm:text-base">
+                      {safeAccess(testCase, ["expectedOutputs"], []).map(
+                        (output, idx) => (
+                          <div key={idx}>{output?.value || "N/A"}</div>
+                        )
+                      )}
                     </pre>
                   </div>
                 </div>
