@@ -15,6 +15,10 @@ import AdminPage from './Admin/AdminPage';
 import Dashboard from './Problem/Dashboard';
 import History from './History';
 import FacultyPage from './Faculty/FacultyPage';
+import StudentRegister from './Faculty/StudentRegister';
+import FacultyRegister from './Faculty/FacultyRegister';
+import AdminRegister from './Admin/AdminRegister';
+import StudentList from './Admin/StudentList';
 
 
 const Body = () => {
@@ -36,6 +40,10 @@ const Body = () => {
     { path: "/dashboard/:problemId", element: <Dashboard /> },
     { path: "/history", element: <History /> },
     { path: "*", element: <NotFoundError /> },
+    { path: "/add-student-using-file", element: <StudentRegister /> },
+    { path: "/registerStudent", element: <FacultyRegister /> },
+    { path: "/registerFaculty", element: <AdminRegister /> },
+    { path:"/students/:facultyId", element: <StudentList /> },
   ]);
 
   return (

@@ -72,7 +72,6 @@ const History = () => {
           <>
             <h1 className="text-2xl font-bold mb-4">Submission History</h1>
 
-            {/* {error && <p className="text-red-500">{error}</p>} */}
             {loading && (
               <div className="flex justify-center items-center h-64">
                 <div className="flex flex-col items-center">
@@ -86,24 +85,27 @@ const History = () => {
 
             {!loading && (
               <div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-lg text-left text-gray-500 border-collapse border border-gray-600">
-                    <thead className=" bg-gray-900 text-gray-400">
+                {/* Add responsive overflow behavior */}
+                <div className="p-4 overflow-x-auto">
+                  <table className="min-w-full text-sm sm:text-lg text-left text-gray-500">
+                    <thead className="bg-gray-900 text-gray-400">
                       <tr>
-                        <th className="py-3 px-6 border border-gray-600">#</th>
-                        <th className="py-3 px-6 border border-gray-600">
+                        <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
+                          #
+                        </th>
+                        <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
                           Problem Title
                         </th>
-                        <th className="py-3 px-6 border border-gray-600">
+                        <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
                           Language
                         </th>
-                        <th className="py-3 px-6 border border-gray-600">
+                        <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
                           TestCases
                         </th>
-                        <th className="py-3 px-6 border border-gray-600">
+                        <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
                           Status
                         </th>
-                        <th className="py-3 px-6 border border-gray-600">
+                        <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
                           Submission Time
                         </th>
                       </tr>
@@ -118,24 +120,26 @@ const History = () => {
                               index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                             } hover:text-blue-400 text-gray-300 cursor-pointer transition-all duration-300 ease-in-out transform`}
                           >
-                            <td className="py-3 px-6 border border-gray-600">
+                            <td className="py-3 px-6 border border-gray-600 text-center">
                               {index + 1 + (currentPage - 1) * 10}
                             </td>
-                            <td className="py-3 px-6 border border-gray-600 capitalize">
-                              {/* {submission.problem_id.title} */}
-                              {truncateTitle(submission.problem_id?.title, 50)}
+                            <td className="capitalize py-3 px-4 border border-gray-600 sm:px-6 text-white font-bold">
+                              {truncateTitle(
+                                submission.problem_id?.title,
+                                window.innerWidth < 900 ? 25 : 50
+                              )}
                             </td>
-                            <td className="py-3 px-6 border border-gray-600">
+                            <td className="py-3 px-4 border border-gray-600 sm:px-6 text-center capitalize">
                               {submission.language}
                             </td>
-                            <td className="py-3 px-6 border border-gray-600 capitalize">
+                            <td className="py-3 px-4 sm:px-6 border border-gray-600 capitalize text-center">
                               {submission.numberOfTestCasePass != null &&
                               submission.numberOfTestCase != null
                                 ? `${submission.numberOfTestCasePass}/${submission.numberOfTestCase}`
                                 : "N/A"}
                             </td>
                             <td
-                              className={`py-3 px-6 border border-gray-600 capitalize ${
+                              className={`py-3 px-4 sm:px-6 border border-gray-600 text-center capitalize ${
                                 submission.status === "completed"
                                   ? "text-green-500"
                                   : "text-red-500"
@@ -143,7 +147,7 @@ const History = () => {
                             >
                               {submission.status}
                             </td>
-                            <td className="py-3 px-6 border border-gray-600">
+                            <td className="py-3 px-4 sm:px-6 text-center border border-gray-600 text-gray-300">
                               {formatDate(submission.createdAt)}
                             </td>
                           </tr>

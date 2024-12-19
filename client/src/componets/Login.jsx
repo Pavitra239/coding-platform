@@ -99,31 +99,31 @@ const Login = () => {
   const handleRegistration = async (e) => {
     e.preventDefault();
     if (!validateRegistration()) return;
-
+  
     const selectedSubject = subjects.find((subj) => subj.id === subject);
     console.log(selectedSubject);
-
+  
     const newUser = {
       username,
-      id: userType === "student" ? idOrEmail : undefined,
-      email: userType === "faculty" ? idOrEmail : undefined,
+      id: userType === "student" ? idOrEmail.toLowerCase() : undefined, // Convert id to lowercase
+      email: userType === "faculty" ? idOrEmail.toLowerCase() : undefined, // Convert email to lowercase
       facultyId: userType === "student" ? selectedSubject.id : undefined,
       mobileNo,
-      branch,
+      branch: branch.toLowerCase(), // Convert branch to lowercase
       semester: sem,
-      batch,
+      batch : batch.toLowerCase(),
       subject: userType === "student" ? selectedSubject.subject : subject,
       role: userType,
       profile: { name: fullName },
     };
-
+  
     console.log(newUser);
-
+  
     try {
       dispatch(setLoading(true));
-
+  
       const res = await axiosInstance.post("auth/register", newUser);
-
+  
       if (res.data.success) {
         toast.success(res.data.message);
         setIsLogin(true);
@@ -134,6 +134,7 @@ const Login = () => {
       dispatch(setLoading(false));
     }
   };
+  
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -149,6 +150,7 @@ const Login = () => {
     try {
       const url = `auth/login`;
       const res = await axiosInstance.post(url, user);
+      console.log(res.data);
       if (res.data.success) {
         const { firstTimeLogin, message } = res.data;
         if (firstTimeLogin) {

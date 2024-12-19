@@ -28,7 +28,6 @@ const userSchema = new Schema(
     },
     mobileNo: {
       type: String,
-      required: [true, "mobile no is required"],
     },
     password: {
       type: String,
@@ -54,7 +53,6 @@ const userSchema = new Schema(
     },
     subject: {
       type: String,
-      require: [true, 'subject is required'],
     },
     isApproved: {
       type: Boolean,

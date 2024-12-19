@@ -5,7 +5,7 @@ import { BadRequestError, NotFoundError } from "../utils/errors.js";
 import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
-  console.log("Api hit")
+  console.log("Api hit");
   const { id, email, password } = req.body;
   console.log(id, email, password);
 
@@ -13,8 +13,7 @@ export const login = async (req, res) => {
     let user;
     if (id) {
       user = await User.findOne({ id });
-    }
-    else if (email) {
+    } else if (email) {
       user = await User.findOne({ email });
     }
 
@@ -77,12 +76,13 @@ export const login = async (req, res) => {
   }
 };
 
-
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: "All fields are required.", success: false });
+      return res
+        .status(400)
+        .json({ message: "All fields are required.", success: false });
     }
 
     let email = `${oldPassword.toLowerCase()}@charusat.edu.in`;
@@ -95,24 +95,43 @@ export const changePassword = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json({ message: "User not found.", success: false });
+      return res
+        .status(404)
+        .json({ message: "User not found.", success: false });
     }
 
     if (!user.isApproved) {
-      return res.status(404).json({ message: "You are not approved yet.", success: false });
+      return res
+        .status(404)
+        .json({ message: "You are not approved yet.", success: false });
     }
 
-    const isPasswordValid = await user.comparePassword(oldPassword, user.password);
+    const isPasswordValid = await user.comparePassword(
+      oldPassword,
+      user.password
+    );
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Old password is not valid.", success: false });
+      return res
+        .status(401)
+        .json({ message: "Old password is not valid.", success: false });
     }
 
     if (newPassword === oldPassword) {
-      return res.status(400).json({ message: "New password cannot be the same as the old password.", success: false });
+      return res
+        .status(400)
+        .json({
+          message: "New password cannot be the same as the old password.",
+          success: false,
+        });
     }
 
     if (newPassword.length < 6) {
-      return res.status(400).json({ message: "New password must be at least 6 characters long.", success: false });
+      return res
+        .status(400)
+        .json({
+          message: "New password must be at least 6 characters long.",
+          success: false,
+        });
     }
 
     user.password = newPassword;
@@ -121,14 +140,13 @@ export const changePassword = async (req, res) => {
 
     return res.status(200).json({
       message: "Password changed successfully!",
-      success: true
+      success: true,
     });
-
   } catch (error) {
     console.error("PasswordChange error:", error);
     return res.status(500).json({
       message: "An error occurred while changing the password.",
-      success: false
+      success: false,
     });
   }
 };
@@ -138,33 +156,47 @@ export const register = async (req, res) => {
     const userData = req.body;
 
     if (!userData.id && !userData.email) {
-      return res.status(400).json({ message: "ID or email is required.", success: false });
+      return res
+        .status(400)
+        .json({ message: "ID or email is required.", success: false });
     }
 
-    console.log(userData)
-    let existingUser = 'op';
-    if (userData.role === 'student') {
+    console.log(userData);
+    let existingUser = "op";
+    if (userData.role === "student") {
       existingUser = await User.findOne({ id: userData.id });
-    } else if (userData.role === 'faculty') {
+    } else if (userData.role === "faculty") {
       existingUser = await User.findOne({ email: userData.email });
     }
 
-    console.log(existingUser + "hello")
+    console.log(existingUser + "hello");
 
     if (existingUser) {
+      if (existingUser.isApproved === false) {
+        return res.status(409).json({
+          message: `A ${userData.role} with this ${
+            userData.role === "student" ? "ID" : "email"
+          } request not Approved.`,
+          success: false,
+        });
+      }
       return res.status(409).json({
-        message: `A ${userData.role} with this ${userData.role === 'student' ? 'ID' : 'email'} already exists.`,
+        message: `A ${userData.role} with this ${
+          userData.role === "student" ? "ID" : "email"
+        } already exists.`,
         success: false,
       });
     }
 
     console.log(userData);
 
-    if (userData.role === 'faculty') {
+    if (userData.role === "faculty") {
       const facultyEmailPattern = /^[a-zA-Z0-9._%+-]+@charusat\.ac\.in$/;
 
       if (!facultyEmailPattern.test(userData.email)) {
-        throw new Error(`Invalid email for faculty. Faculty email must match the pattern "name@charusat.ac.in".`);
+        throw new Error(
+          `Invalid email for faculty. Faculty email must match the pattern "name@charusat.ac.in".`
+        );
       }
     }
 
@@ -243,13 +275,15 @@ export const getCurrentUser = async (req, res) => {
 
 export const fetchSubjects = async (req, res) => {
   try {
-    const subjects = await User.find({ role: 'faculty', isApproved: true })
-      .select('subject _id username');
+    const subjects = await User.find({
+      role: "faculty",
+      isApproved: true,
+    }).select("subject _id username");
 
     if (!subjects || subjects.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No subjects found for faculty."
+        message: "No subjects found for faculty.",
       });
     }
 

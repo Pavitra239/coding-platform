@@ -246,7 +246,7 @@ const MakeProblem = () => {
                     {index + 1}
                   </td>
                   <td
-                    className="capitalize py-3 px-4 sm:px-6 text-white font-bold text-center cursor-pointer hover:text-blue-500 transition duration-300 truncate max-w-[180px] sm:max-w-[300px]"
+                    className="capitalize py-3 px-4 sm:px-6 text-white font-bold cursor-pointer hover:text-blue-500 transition duration-300 truncate max-w-[180px] sm:max-w-[300px]"
                     onClick={() => navigate(`/problems/${problem._id}`)}
                     title={problem.title}
                   >
@@ -264,7 +264,7 @@ const MakeProblem = () => {
                     {problem.difficulty.charAt(0).toUpperCase() +
                       problem.difficulty.slice(1)}
                   </td>
-                  <td className="py-3 px-4 sm:px-6 text-center text-gray-300">
+                  <td className="py-3 px-4 sm:px-4 text-center text-gray-300">
                     {formatDate(problem.createdAt)}
                   </td>
                   <td className="py-3 px-4 sm:px-6 text-center flex justify-center gap-2">

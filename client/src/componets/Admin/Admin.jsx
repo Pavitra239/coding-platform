@@ -128,7 +128,8 @@ const Admin = () => {
   return (
     <>
       <div className="bg-gray-900 text-gray-100 min-h-screen overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-4 p-6 pt-[100px]">
+        
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-4 p-6 pt-[100px]">        
           <h1 className="text-2xl font-bold">Pending User Requests</h1>
           <div className="flex flex-col sm:flex-row gap-2">
             <button
@@ -154,6 +155,15 @@ const Admin = () => {
               )}
             </button>
           </div>
+
+          
+        </div>
+
+        <div className="p-4">
+          <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+          onClick={() => navigate("/registerFaculty")}>
+            Register Faculty 
+          </button>
         </div>
 
         {loading ? (
@@ -162,79 +172,82 @@ const Admin = () => {
           </div>
         ) : (
           <div className="p-4 overflow-x-auto">
-  <table className="min-w-full text-sm sm:text-lg text-left text-gray-500">
-    <thead className="bg-gray-900 text-gray-400">
-      <tr>
-        <th className="py-3 px-6">#</th>
-        <th className="py-3 px-6">Email</th>
-        <th className="py-3 px-6">Name</th>
-        <th className="py-3 px-6">Mobile No</th>
-        <th className="py-3 px-6">Branch</th>
-        <th className="py-3 px-6">Semester</th>
-        <th className="py-3 px-6">Batch</th>
-        <th className="py-3 px-6">Subject</th>
-        <th className="py-3 px-6">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {pendingUsers.length > 0 ? (
-        pendingUsers.map((user, index) => (
-          <tr
-            key={user._id}
-            className={`${
-              index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
-            }`}
-          >
-            <td className="py-3 px-6">
-              {(currentPage - 1) * PAGE_SIZE + index + 1}
-            </td>
-            <td className="py-3 px-6 text-gray-300">{user.email}</td>
-            <td className="capitalize py-3 px-6">{user.username}</td>
-            <td className="py-3 px-6 text-gray-300">{user.mobileNo}</td>
-            <td className="py-3 px-6">{user.branch}</td>
-            <td className="py-3 px-6 text-gray-300">{user.semester}</td>
-            <td className="py-3 px-6">{user.batch}</td>
-            <td className="py-3 px-6">{user.subject}</td>
-            <td className="py-3 px-6 flex gap-2">
-              <button
-                onClick={() => handleAcceptUser(user._id)}
-                disabled={actionLoading === user._id}
-                className="bg-green-600 text-white py-1 px-3 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-              >
-                {actionLoading === user._id ? (
-                  <BeatLoader size={10} color="#fff" />
+            <table className="min-w-full text-sm sm:text-lg text-left text-gray-500">
+              <thead className="bg-gray-900 text-gray-400">
+                <tr>
+                  <th className="py-3 px-6">#</th>
+                  <th className="py-3 px-6">Email</th>
+                  <th className="py-3 px-6">Name</th>
+                  <th className="py-3 px-6">Mobile No</th>
+                  <th className="py-3 px-6">Branch</th>
+                  <th className="py-3 px-6">Semester</th>
+                  <th className="py-3 px-6">Batch</th>
+                  <th className="py-3 px-6">Subject</th>
+                  <th className="py-3 px-6">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingUsers.length > 0 ? (
+                  pendingUsers.map((user, index) => (
+                    <tr
+                      key={user._id}
+                      className={`${
+                        index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
+                      }`}
+                    >
+                      <td className="py-3 px-6">
+                        {(currentPage - 1) * PAGE_SIZE + index + 1}
+                      </td>
+                      <td className="py-3 px-6 text-gray-300">{user.email}</td>
+                      <td className="capitalize py-3 px-6">{user.username}</td>
+                      <td className="py-3 px-6 text-gray-300">
+                        {user.mobileNo}
+                      </td>
+                      <td className="py-3 px-6">{user.branch}</td>
+                      <td className="py-3 px-6 text-gray-300">
+                        {user.semester}
+                      </td>
+                      <td className="py-3 px-6">{user.batch}</td>
+                      <td className="py-3 px-6">{user.subject}</td>
+                      <td className="py-3 px-6 flex gap-2">
+                        <button
+                          onClick={() => handleAcceptUser(user._id)}
+                          disabled={actionLoading === user._id}
+                          className="bg-green-600 text-white py-1 px-3 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                        >
+                          {actionLoading === user._id ? (
+                            <BeatLoader size={10} color="#fff" />
+                          ) : (
+                            "Accept"
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeclineUser(user._id)}
+                          disabled={actionLoading === user._id}
+                          className="bg-red-600 text-white py-1 px-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                        >
+                          {actionLoading === user._id ? (
+                            <BeatLoader size={10} color="#fff" />
+                          ) : (
+                            "Decline"
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
                 ) : (
-                  "Accept"
+                  <tr>
+                    <td
+                      colSpan="9"
+                      className="py-3 px-6 text-center text-gray-300"
+                    >
+                      No pending users found.
+                    </td>
+                  </tr>
                 )}
-              </button>
-              <button
-                onClick={() => handleDeclineUser(user._id)}
-                disabled={actionLoading === user._id}
-                className="bg-red-600 text-white py-1 px-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-              >
-                {actionLoading === user._id ? (
-                  <BeatLoader size={10} color="#fff" />
-                ) : (
-                  "Decline"
-                )}
-              </button>
-            </td>
-          </tr>
-        ))
-      ) : (
-        <tr>
-          <td
-            colSpan="9"
-            className="py-3 px-6 text-center text-gray-300"
-          >
-            No pending users found.
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
-
+              </tbody>
+            </table>
+          </div>
         )}
 
         <div className="flex justify-center mt-4">

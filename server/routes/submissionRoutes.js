@@ -113,19 +113,23 @@ router.get('/user/submissions', async (req, res) => {
   console.log(`User ID: ${user_id}, Page: ${page}, Limit: ${limit}`);
 
   try {
+    console.log("hello")
     const submissions = await Submission.find({ user_id })
-      .populate('user_id') // Populate all fields of the user
       .populate('problem_id', 'title description') // Populate only title and description of the problem
       .sort({ createdAt: -1 }) // Sort by createdAt field in descending order
       .skip((page - 1) * limit) // Skip records for pagination
       .limit(parseInt(limit)); // Limit the number of records
 
+    console.log(submissions)
+
     const totalSubmissions = await Submission.countDocuments({ user_id }); // Count total submissions
 
     if (submissions.length === 0) {
+      console.log("hello2")
       return res.status(404).json({ message: 'No submissions found for the given user ID.' });
     }
 
+    console.log("hello3")
     res.status(200).json({
       message: 'Submissions retrieved successfully',
       submissions,

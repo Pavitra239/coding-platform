@@ -9,7 +9,7 @@ import axiosInstance from "../../utils/axiosInstance";
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
-    fullName: "",
+    username: "",
     gender: "",
     location: "",
     birthday: "",
@@ -26,25 +26,28 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axiosInstance.get(
-          "auth/get-current-user",
-        );
-        console.log(response.data)
-        setUser(response.data.user);
+        const response = await axiosInstance.get("auth/get-current-user");
+        console.log(response.data);
+  
+        const userData = response.data.user;
+        const userProfile = userData.profile || {}; // Handle cases where profile is undefined
+  
+        setUser(userData);
+  
         setFormData({
-          fullName: response.data.user.username || "",
-          name: response.data.user.profile.name || "",
-          gender: response.data.user.profile.gender || "",
-          bio: response.data.user.profile.bio || "",
-          location: response.data.user.profile.location || "",
-          birthday: response.data.user.profile.birthday
-            ? response.data.user.profile.birthday.slice(0, 10)
+          username: userData.username || "",
+          name:  userProfile.name || "",
+          gender: userProfile.gender || "",
+          bio: userProfile.bio || "",
+          location: userProfile.location || "",
+          birthday: userProfile.birthday
+            ? userProfile.birthday.slice(0, 10)
             : "",
-          github: response.data.user.profile.github || "",
-          skills: response.data.user.profile.skills || "",
-          education: response.data.user.profile.education || "",
-          linkedIn: response.data.user.profile.linkedIn || "",
-          email: response.data.user.email || "",
+          github: userProfile.github || "",
+          skills: userProfile.skills || "",
+          education: userProfile.education || "",
+          linkedIn: userProfile.linkedIn || "",
+          email: userData.email || "",
         });
       } catch (error) {
         toast.error("Error fetching user data");
@@ -53,6 +56,7 @@ const Profile = () => {
     };
     fetchUserData();
   }, []);
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

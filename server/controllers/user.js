@@ -34,7 +34,7 @@ import jwt from "jsonwebtoken";
 export const updateUser = async (req, res) => {
   try {
     const {
-      fullName,
+      username,
       gender,
       location,
       birthday,
@@ -71,7 +71,7 @@ export const updateUser = async (req, res) => {
     }
 
     // Ensure fullName and name are not empty strings
-    if (!fullName?.trim() || !name?.trim()) {
+    if (!username?.trim()) {
       return res.status(400).json({
         message: "Username and profile name cannot be empty.",
         success: false,
@@ -79,7 +79,7 @@ export const updateUser = async (req, res) => {
     }
 
     // Update only the allowed fields
-    user.username = fullName;
+    user.username = username;
     user.profile.name = name;
     user.email = email;
     user.profile = Object.assign(user.profile, {
