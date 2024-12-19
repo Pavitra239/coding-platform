@@ -45,7 +45,7 @@ const Browse = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 lg:p-10 rounded-lg shadow-2xl max-w-md lg:max-w-lg w-full">
               <h2 className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6 text-black">
-                Enter Join Code!
+                Enter Join Codes
               </h2>
               <input
                 type="text"
