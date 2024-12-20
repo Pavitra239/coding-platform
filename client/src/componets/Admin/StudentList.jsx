@@ -112,7 +112,7 @@ const StudentList = () => {
                 {students.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="4"
+                      colSpan="7" 
                       className="py-3 px-6 text-center text-gray-400"
                     >
                       Data not available

@@ -82,11 +82,12 @@ router.get('/problem', async (req, res) => {
   const { problem_id } = req.query;
 
   console.log(problem_id);
+  console.log("hello123")
 
   try {
     // Find submissions by problem_id and populate user and problem data
     const submissions = await Submission.find({ problem_id })
-      .populate('user_id') // Populate all fields of the user
+      .populate('user_id', 'batch branch id semester username _id') // Populate all fields of the user
       .populate('problem_id', 'title description'); // Populate only title and description of the problem
 
     // If no submissions found, return a 404

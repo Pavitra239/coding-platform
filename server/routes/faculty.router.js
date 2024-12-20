@@ -3,7 +3,7 @@ import { isAuthorized, isFaculty } from "../middlewares/auth.js";
 import facultyController from "../controllers/faculty.controller.js";
 
 const router = express.Router();
-router.use(isAuthorized);
+
 // Pending request routes
 router
   .route("/get-pending-users")
@@ -28,7 +28,7 @@ router
   .post(isAuthorized, facultyController.getStudents);
 router
   .route("/remove-user/:userId")
-  .post(isAuthorized, isFaculty, facultyController.removeUser);
+  .delete(isAuthorized, isFaculty, facultyController.removeUser);
 
 // Bulk Registration Route
 // router.post("/bulk-register", async (req, res) => {

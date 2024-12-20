@@ -4,7 +4,6 @@ import Header from "../Header";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
 
-
 const AdminRegister = () => {
   const user = useSelector((store) => store.app.user);
   const [facultys, setFacultys] = useState([]);
@@ -53,9 +52,10 @@ const AdminRegister = () => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-    return `${day}-${month}-${year}`;
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
-
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
@@ -79,13 +79,13 @@ const AdminRegister = () => {
       <div>
         {loading ? (
           <div className="flex justify-center items-center h-64">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
-            <p className="mt-4 text-blue-500 text-lg font-medium">
-              Loading, please wait...
-            </p>
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+              <p className="mt-4 text-blue-500 text-lg font-medium">
+                Loading, please wait...
+              </p>
+            </div>
           </div>
-        </div>
         ) : (
           <div className="p-4">
             <table className="min-w-full  text-lg text-left text-gray-500">
@@ -100,23 +100,37 @@ const AdminRegister = () => {
                 </tr>
               </thead>
               <tbody>
-                {facultys.map((faculty, index) => (
-                  <tr
-                    key={faculty._id}
-                   
-                    onClick={() => handleFacultyClick(faculty._id)}
-                    className={`cursor-pointer ${
+                {facultys.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="py-3 px-6 text-center text-gray-400"
+                    >
+                      Data not available
+                    </td>
+                  </tr>
+                ) : (
+                  facultys.map((faculty, index) => (
+                    <tr
+                      key={faculty._id}
+                      onClick={() => handleFacultyClick(faculty._id)}
+                      className={`cursor-pointer ${
                         index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                       }`}
-                  >
-                    <td className="py-3 px-6">{index + 1}</td>
-                    <td className="py-3 px-6">{faculty.username}</td>
-                    <td className="py-3 px-6">{faculty.email}</td>
-                    <td className="py-3 px-6">{faculty?.branch?.toUpperCase()}</td>
-                    <td className="py-3 px-6">{faculty.subject}</td>
-                    <td className="py-3 px-6">{formatDate(faculty.createdAt)}</td>
-                  </tr>
-                ))}
+                    >
+                      <td className="py-3 px-6">{index + 1}</td>
+                      <td className="py-3 px-6">{faculty.username}</td>
+                      <td className="py-3 px-6">{faculty.email}</td>
+                      <td className="py-3 px-6">
+                        {faculty?.branch?.toUpperCase()}
+                      </td>
+                      <td className="py-3 px-6">{faculty.subject}</td>
+                      <td className="py-3 px-6">
+                        {formatDate(faculty.createdAt)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -1,5 +1,7 @@
 import User from '../models/user.js';
 import bcrypt from 'bcrypt';
+import Code from '../models/Code.js';
+import Submission from '../models/submission.js';
 
 const facultyController = {
 
@@ -372,20 +374,18 @@ const facultyController = {
       }
     },
 
-    removeUser : async (req, res) => {
+    removeUser: async (req, res) => {
       const { userId } = req.params;
     
       console.log("User ID received:", userId);
     
       if (!userId) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Missing User ID." });
+        return res.status(400).json({ success: false, message: "Missing User ID." });
       }
     
       try {
-        // Check if the user exists using a field that matches the ID type
-        const user = await User.findOne({ id: userId }); // Adjust query based on your schema
+        // Check if the user exists
+        const user = await User.findById(userId); // Assuming `userId` is an ObjectId
         if (!user) {
           return res
             .status(404)
@@ -393,13 +393,20 @@ const facultyController = {
         }
     
         console.log("User found:", user);
+        const userName = user.id;
     
         // Remove the user
-        await User.deleteOne({ id: userId }); // Adjust based on your schema
+        await User.deleteOne({ _id: userId }); // Assuming `_id` is the field for user ID
+    
+        // Remove all submissions related to the user
+        await Submission.deleteMany({ user_id: userId });
+    
+        // Remove all codes related to the user
+        await Code.deleteMany({ userId: userId });
     
         return res.status(200).json({
           success: true,
-          message: `User with ID ${userId} has been successfully removed.`,
+          message: `User with ID ${userName} and all related data have been successfully removed.`,
         });
       } catch (error) {
         console.error("Error in removing user:", error.message);

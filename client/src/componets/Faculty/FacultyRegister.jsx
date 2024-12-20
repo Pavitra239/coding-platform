@@ -83,6 +83,7 @@ const FacultyRegister = () => {
         `/faculty/remove-user/${userId}`
       );
 
+      console.log(response.data);
       if (response.data.success) {
         toast.success(response.data.message);
         fetchStudents(currentPage);
@@ -146,7 +147,7 @@ const FacultyRegister = () => {
               <tbody>
                 {students.map((student, index) => (
                   <tr
-                    key={student.id}
+                    key={student._id}
                     className={`${
                       index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                     }`}
@@ -169,7 +170,7 @@ const FacultyRegister = () => {
                     <td className="py-3">{formatDate(student?.createdAt)} </td>
                     <td className="py-3 px-6">
                       <button
-                        onClick={() => openDeleteModal(student.id)}
+                        onClick={() => openDeleteModal(student._id)}
                         className="bg-red-600 text-white py-1 px-3 rounded-lg hover:bg-red-700 transition"
                       >
                         Delete

@@ -13,6 +13,7 @@ router.route("/accept-all-requests").post(isAdmin, adminController.acceptAllRequ
 router.route("/decline-request").post(isAdmin, adminController.declineRequest);
 router.route("/decline-all-requests").post(isAdmin, adminController.declineAllRequests);
 router.route("/get-faculty-by-admin").post(isAdmin, adminController.getFaculty);
+router.route("/deleteFaculty").delete(isAdmin, adminController.getFaculty);
 
 // router.post("/get-faculty-by-admin", async (req, res) => {
 //   const { adminId, page = 1, limit = 10 } = req.body;

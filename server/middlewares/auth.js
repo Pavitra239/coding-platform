@@ -25,6 +25,7 @@ export const isAuthorized = async (req, res, next) => {
     id: user._id,
     isAdmin: user.role,
   };
+  console.log("hello")
   next();
 };
 
@@ -42,6 +43,7 @@ export const isFaculty = (req, res, next) => {
   console.log('=+-->', req.user);
   if (req.user && req.user.isAdmin === "faculty") {
     // Allow access if the user is an faculty
+    console.log("hello2")
     return next();
   }
   // Deny access if the user is not an faculty

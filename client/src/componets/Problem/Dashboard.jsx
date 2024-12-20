@@ -111,6 +111,16 @@ const Dashboard = () => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
   // if (selectedSubmission) {
   //   return (
   //     <SubmissionDetails
@@ -260,6 +270,9 @@ const Dashboard = () => {
                       <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                         TestCase Pass
                       </th>
+                      <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                        Submission Date
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -304,6 +317,9 @@ const Dashboard = () => {
                             submission.numberOfTestCase != null
                               ? `${submission.numberOfTestCasePass}/${submission.numberOfTestCase}`
                               : "N/A"}
+                          </td>
+                          <td className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                          {formatDate(submission?.createdAt)}
                           </td>
                         </tr>
                       ))

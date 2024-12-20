@@ -225,6 +225,31 @@ const adminController = {
         console.error("Error in fetching faculty by admin ID:", error);
         res.status(500).json({ success: false, message: "Internal server error." });
       }
+    },
+
+    deleteFaculty : async (req, res) => {
+        try {
+            const { facultyId } = req.body;
+        
+            if (!facultyId) {
+            return res.status(400).json({ success: false, message: "Faculty ID is required" });
+            }
+        
+            const faculty = await User.findById(facultyId);
+        
+            if (!faculty) {
+            return res.status(404).json({ success: false, message: "Faculty not found" });
+            }
+        
+            await User.findByIdAndDelete(facultyId);
+        
+            res.status(200).json({
+            success: true,
+            message: "Faculty deleted successfully"
+            });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
     }
 };
 

@@ -1,4 +1,6 @@
 import Problem from '../models/problem.js';
+import Code from '../models/Code.js';
+import Submission from '../models/submission.js';
 
 // Create problem
 export const createProblem = async (req, res) => {
@@ -142,16 +144,24 @@ export const updateProblem = async (req, res) => {
 
 // Delete problem
 export const deleteProblem = async (req, res) => {
-    try {
-      const problem = await Problem.findById(req.params.id);
-  
-      if (!problem) {
-        return res.status(404).json({ message: 'Problem not found' });
-      }
-  
-      await Problem.deleteOne({ _id: req.params.id }); // Use deleteOne instead of remove
-      res.json({ message: 'Problem removed' });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+  try {
+    const problem = await Problem.findById(req.params.id);
+
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
     }
+
+    // Delete the problem
+    await Problem.deleteOne({ _id: req.params.id });
+
+    // Delete all related codes
+    await Code.deleteMany({ problemId: req.params.id });
+
+    // Delete all related submissions
+    await Submission.deleteMany({ problem_id: req.params.id });
+
+    res.json({ message: 'Problem and all related data removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
