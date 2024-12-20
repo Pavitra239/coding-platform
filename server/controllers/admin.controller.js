@@ -191,6 +191,40 @@ const adminController = {
         } catch (error) {
             res.status(500).json({ message: error.message });
         }
+    },
+
+    getFaculty :  async (req, res) => {
+      const { page = 1, limit = 10 } = req.body;
+      console.log(req.body)
+    
+      
+    
+      try {
+        const skip = (page - 1) * limit;
+    
+        // Fetch approved facultys with pagination, sorted by the latest created first
+        const facultys = await User.find({role: "faculty", isApproved: true })
+          .select("username branch email subject createdAt id")
+          .sort({ createdAt: -1 }) // Sort by createdAt in descending order (latest first)
+          .skip(skip)
+          .limit(limit);
+    
+        const totalStudents = await User.countDocuments({ role: "faculty", isApproved: true });
+    
+        const totalPages = Math.ceil(totalStudents / limit);
+    
+        res.status(200).json({
+          success: true,
+          message: "Faculty fetched successfully.",
+          facultys,
+          totalPages, // Include totalPages
+          currentPage: page,
+          totalStudents
+        });
+      } catch (error) {
+        console.error("Error in fetching faculty by admin ID:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
+      }
     }
 };
 

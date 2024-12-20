@@ -1,11 +1,9 @@
 import express from "express";
 import { login, logout, register, verifyEmail, getCurrentUser, changePassword, fetchSubjects } from "../controllers/auth.js";
-import {
-  loginInputValidator,
-  registerInputValidator,
-} from "../middlewares/validation.js";
+import { isAuthorized } from '../middlewares/auth.js';
 
 const router = express.Router();
+
 router.route("/login").post(login);
 router.route("/register").post(register);
 router.route("/verify").get(verifyEmail);

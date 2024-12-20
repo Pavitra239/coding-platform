@@ -1,7 +1,8 @@
 import express from 'express';
 import Submission from '../models/submission.js';
-
+import { isAuthorized } from '../middlewares/auth.js';
 const router = express.Router();
+router.use(isAuthorized);
 
 // Route to create a new submission
 router.post('/', async (req, res) => {
@@ -20,12 +21,10 @@ router.post('/', async (req, res) => {
       numberOfTestCasePass // Added to capture the test case results from the body
     } = req.body;
 
-    // Validate the presence of required fields
     if (!testCaseResults || !Array.isArray(testCaseResults)) {
       return res.status(400).json({ message: 'Test case results are required and must be an array.' });
     }
 
-    // Create a new submission with the provided data
     const submission = new Submission({
       user_id,
       problem_id,

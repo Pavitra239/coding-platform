@@ -1,7 +1,8 @@
 import express from "express";
 import { compileCode, saveCode, getCode } from "../controllers/compileController.js";
-
+import { isAuthorized } from '../middlewares/auth.js';
 const router = express.Router();
+router.use(isAuthorized);
 
 // POST /api/v1/compile - Endpoint to compile and run code
 router.post("/", compileCode);

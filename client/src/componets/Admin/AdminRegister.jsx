@@ -21,7 +21,6 @@ const AdminRegister = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.post("/admin/get-faculty-by-admin", {
-        adminId: user._id,
         page,
         limit: itemsPerPage,
       });

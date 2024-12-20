@@ -4,7 +4,7 @@ import { verifyToken } from "../utils/jwt.js";
 
 export const isAuthorized = async (req, res, next) => {
   if (!req.headers.cookie) throw new UnauthorizedError("please login!");
-  console.log(req.headers.cookie);
+  // console.log(req.headers.cookie);
 
   const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => {
     const [name, value] = cookie.trim().split('=');
