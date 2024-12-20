@@ -2,7 +2,7 @@ import mongoose, { mongo } from "mongoose";
 import { ROLES, SEM, BRANCH } from "../utils/constants.js";
 import bcrypt from "bcrypt";
 const { Schema } = mongoose;
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const userSchema = new Schema(
   {
@@ -24,7 +24,7 @@ const userSchema = new Schema(
       required: function () {
         return this.role === ROLES.FACULTY;
       },
-      match: [/\S+@\S+\.\S+/, 'Please enter a valid email address']
+      match: [/\S+@\S+\.\S+/, "Please enter a valid email address"],
     },
     mobileNo: {
       type: String,
@@ -49,7 +49,7 @@ const userSchema = new Schema(
     },
     batch: {
       type: String,
-      required: [true, 'batch is required'],
+      required: [true, "batch is required"],
     },
     subject: {
       type: String,
@@ -64,7 +64,7 @@ const userSchema = new Schema(
     },
     facultyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: false,
     },
     profile: {
@@ -105,6 +105,13 @@ const userSchema = new Schema(
         ref: "Submission",
       },
     ],
+    sessionId: {
+      type: String,
+      default: null,
+    },
+    lastLoginTime: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

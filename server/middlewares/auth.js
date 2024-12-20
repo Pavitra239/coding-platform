@@ -4,10 +4,23 @@ import { verifyToken } from "../utils/jwt.js";
 
 export const isAuthorized = async (req, res, next) => {
   if (!req.headers.cookie) throw new UnauthorizedError("please login!");
-  const token = req.headers.cookie.slice(6);
+  console.log(req.headers.cookie);
+
+  const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    acc[name] = value;
+    return acc;
+  }, {});
+  const token = cookies.token;
+
+  if (!token) throw new UnauthorizedError("Token not found");
   const decoded = await verifyToken(token);
   const user = await User.findById(decoded.id, { password: 0 });
-  if (!user) throw new UnauthorizedError("invalid user");
+
+  console.log("-->", user.sessionId, "-->", decoded.sessionId)
+  if (!user || user.sessionId !== decoded.sessionId) {
+    throw new UnauthorizedError("Invalid or expired session. Please log in again.");
+  }
   req.user = {
     id: user._id,
     isAdmin: user.role,
@@ -26,7 +39,7 @@ export const isAdmin = (req, res, next) => {
 };
 
 export const isFaculty = (req, res, next) => {
-  console.log('=+-->',req.user);
+  console.log('=+-->', req.user);
   if (req.user && req.user.isAdmin === "faculty") {
     // Allow access if the user is an faculty
     return next();

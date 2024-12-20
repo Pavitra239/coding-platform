@@ -3,17 +3,21 @@ import { StatusCodes } from "http-status-codes";
 import { createToken, verifyToken } from "../utils/jwt.js";
 import { BadRequestError, NotFoundError } from "../utils/errors.js";
 import jwt from "jsonwebtoken";
+import { v4 as uuidv4 } from "uuid";
+import cron from 'node-cron';
 
 export const login = async (req, res) => {
-  console.log("Api hit");
+  console.log("Api hit")
   const { id, email, password } = req.body;
   console.log(id, email, password);
+  console.log("-->", req.ip)
 
   try {
     let user;
     if (id) {
       user = await User.findOne({ id });
-    } else if (email) {
+    }
+    else if (email) {
       user = await User.findOne({ email });
     }
 
@@ -50,7 +54,19 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = await createToken({ id: user._id });
+    if (user.sessionId) {
+      return res.status(400).json({
+        message: "You are already logged in from another session.",
+        success: false,
+      });
+    }
+
+    const sessionId = uuidv4();
+    user.sessionId = sessionId;
+    user.lastLoginTime = new Date();
+    await user.save({ validateBeforeSave: false });
+
+    const token = await createToken({ id: user._id, sessionId: sessionId });
     const oneDay = 1000 * 60 * 60 * 24;
 
     return res
@@ -66,6 +82,7 @@ export const login = async (req, res) => {
         user,
         success: true,
         token,
+        sessionId,
       });
   } catch (error) {
     console.error("Login Error:", error);
@@ -76,13 +93,12 @@ export const login = async (req, res) => {
   }
 };
 
+
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
-      return res
-        .status(400)
-        .json({ message: "All fields are required.", success: false });
+      return res.status(400).json({ message: "All fields are required.", success: false });
     }
 
     let email = `${oldPassword.toLowerCase()}@charusat.edu.in`;
@@ -95,43 +111,24 @@ export const changePassword = async (req, res) => {
     }
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found.", success: false });
+      return res.status(404).json({ message: "User not found.", success: false });
     }
 
     if (!user.isApproved) {
-      return res
-        .status(404)
-        .json({ message: "You are not approved yet.", success: false });
+      return res.status(404).json({ message: "You are not approved yet.", success: false });
     }
 
-    const isPasswordValid = await user.comparePassword(
-      oldPassword,
-      user.password
-    );
+    const isPasswordValid = await user.comparePassword(oldPassword, user.password);
     if (!isPasswordValid) {
-      return res
-        .status(401)
-        .json({ message: "Old password is not valid.", success: false });
+      return res.status(401).json({ message: "Old password is not valid.", success: false });
     }
 
     if (newPassword === oldPassword) {
-      return res
-        .status(400)
-        .json({
-          message: "New password cannot be the same as the old password.",
-          success: false,
-        });
+      return res.status(400).json({ message: "New password cannot be the same as the old password.", success: false });
     }
 
     if (newPassword.length < 6) {
-      return res
-        .status(400)
-        .json({
-          message: "New password must be at least 6 characters long.",
-          success: false,
-        });
+      return res.status(400).json({ message: "New password must be at least 6 characters long.", success: false });
     }
 
     user.password = newPassword;
@@ -140,13 +137,14 @@ export const changePassword = async (req, res) => {
 
     return res.status(200).json({
       message: "Password changed successfully!",
-      success: true,
+      success: true
     });
+
   } catch (error) {
     console.error("PasswordChange error:", error);
     return res.status(500).json({
       message: "An error occurred while changing the password.",
-      success: false,
+      success: false
     });
   }
 };
@@ -156,47 +154,33 @@ export const register = async (req, res) => {
     const userData = req.body;
 
     if (!userData.id && !userData.email) {
-      return res
-        .status(400)
-        .json({ message: "ID or email is required.", success: false });
+      return res.status(400).json({ message: "ID or email is required.", success: false });
     }
 
-    console.log(userData);
-    let existingUser = "op";
-    if (userData.role === "student") {
+    console.log(userData)
+    let existingUser = 'op';
+    if (userData.role === 'student') {
       existingUser = await User.findOne({ id: userData.id });
-    } else if (userData.role === "faculty") {
+    } else if (userData.role === 'faculty') {
       existingUser = await User.findOne({ email: userData.email });
     }
 
-    console.log(existingUser + "hello");
+    console.log(existingUser + "hello")
 
     if (existingUser) {
-      if (existingUser.isApproved === false) {
-        return res.status(409).json({
-          message: `A ${userData.role} with this ${
-            userData.role === "student" ? "ID" : "email"
-          } request not Approved.`,
-          success: false,
-        });
-      }
       return res.status(409).json({
-        message: `A ${userData.role} with this ${
-          userData.role === "student" ? "ID" : "email"
-        } already exists.`,
+        message: `A ${userData.role} with this ${userData.role === 'student' ? 'ID' : 'email'} already exists.`,
         success: false,
       });
     }
 
     console.log(userData);
 
-    if (userData.role === "faculty") {
+    if (userData.role === 'faculty') {
       const facultyEmailPattern = /^[a-zA-Z0-9._%+-]+@charusat\.ac\.in$/;
 
       if (!facultyEmailPattern.test(userData.email)) {
-        throw new Error(
-          `Invalid email for faculty. Faculty email must match the pattern "name@charusat.ac.in".`
-        );
+        throw new Error(`Invalid email for faculty. Faculty email must match the pattern "name@charusat.ac.in".`);
       }
     }
 
@@ -227,13 +211,40 @@ export const verifyEmail = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  res.cookie("token", "logout", {
-    expires: new Date(Date.now()),
-    httpOnly: true,
-  });
-  res
-    .status(StatusCodes.OK)
-    .json({ status: "success", msg: "User logged out" });
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      success: false,
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid user",
+        success: false,
+      });
+    }
+
+    await User.updateOne({ _id: user._id }, { $set: { sessionId: null } });
+
+    res.cookie("token", "logout", {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ message: "Successfully logged out", success: true });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    return res.status(500).json({
+      message: "An error occurred while logging out.",
+      success: false,
+    });
+  }
 };
 
 export const getCurrentUser = async (req, res) => {
@@ -259,6 +270,13 @@ export const getCurrentUser = async (req, res) => {
       });
     }
 
+    if (user.sessionId !== decoded.sessionId) {
+      return res.status(401).json({
+        message: "Already authorised",
+        success: false,
+      });
+    }
+
     return res.status(200).json({
       user,
       success: true,
@@ -275,15 +293,13 @@ export const getCurrentUser = async (req, res) => {
 
 export const fetchSubjects = async (req, res) => {
   try {
-    const subjects = await User.find({
-      role: "faculty",
-      isApproved: true,
-    }).select("subject _id username");
+    const subjects = await User.find({ role: 'faculty', isApproved: true })
+      .select('subject _id username');
 
     if (!subjects || subjects.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No subjects found for faculty.",
+        message: "No subjects found for faculty."
       });
     }
 
@@ -308,3 +324,20 @@ export const fetchSubjects = async (req, res) => {
     });
   }
 };
+
+cron.schedule('* * * * *', async () => {
+  const currentTime = new Date();
+  const expirationTime = 1000 * 60 * 30;
+
+  const users = await User.find({
+    lastLoginTime: { $lt: new Date(currentTime - expirationTime) },
+  });
+
+  for (let user of users) {
+    user.sessionId = null;
+    await user.save();
+
+    console.log(`User ${user.username}'s session has been expired.`);
+  }
+});
+
