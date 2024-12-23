@@ -49,3 +49,12 @@ export const isFaculty = (req, res, next) => {
   // Deny access if the user is not an faculty
   throw new ForbiddenError("You are not allowed to access this route");
 };
+
+export const isAdminOrFaculty = (req, res, next) => {
+  console.log('=+-->', req.user);
+  if (req.user.role !== 'Faculty' || req.user.role !== 'Admin') {
+    console.log("hello5")
+    return next();
+  }
+  throw new ForbiddenError("You are not allowed to access this route");
+};

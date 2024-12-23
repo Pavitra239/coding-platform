@@ -71,6 +71,13 @@ const MakeProblem = () => {
     });
   };
 
+  const assignProblem = (problemId) => {
+    // Log problemId for debugging
+    console.log(problemId);
+    // Navigate to the assign problem page
+    navigate(`/assignProblem/${problemId}`);
+  };
+
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setProblemToDelete(null);
@@ -294,6 +301,13 @@ const MakeProblem = () => {
                           className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition"
                         >
                           Dashboard
+                        </button>
+
+                        <button
+                          onClick={() => assignProblem(problem._id)}
+                          className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                        >
+                          Assign
                         </button>
                       </>
                     )}

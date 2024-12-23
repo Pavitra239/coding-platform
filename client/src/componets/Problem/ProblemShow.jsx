@@ -6,6 +6,7 @@ import Submission from "./Submission";
 import Solution from "./Solution";
 import Statement from "./Statement";
 import CodeEditor from "../CodeEditor/CodeEditor";
+import toast from "react-hot-toast";
 
 const ProblemShow = () => {
   const { id } = useParams();
@@ -37,7 +38,8 @@ const ProblemShow = () => {
         const response = await axiosInstance.get(`/problems/${id}`);
         setProblem(response.data);
       } catch (error) {
-        console.error("Failed to load problem data", error);
+        toast.error("Failed to load problem data");
+        // console.error("Failed to load problem data", error);
       }
     };
 

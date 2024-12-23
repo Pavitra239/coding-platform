@@ -4,17 +4,28 @@ import {
   getProblems,
   getProblemById,
   updateProblem,
-  deleteProblem
+  deleteProblem,
+  assignProblemToStudents,
+  getProblemWithStudents,
+  getStudents,
+  getProblemWithUnassignedStudents,
+  unassignStudents
 } from '../controllers/problemController.js';
-import { isAdmin, isAuthorized } from '../middlewares/auth.js';
+import { isAdminOrFaculty, isAuthorized } from '../middlewares/auth.js';
 
 const router = express.Router();
 router.use(isAuthorized);
 
 // Admin routes
-router.post('/',  isAdmin, createProblem);
-router.put('/:id',  isAdmin, updateProblem);
-router.delete('/:id',  isAdmin, deleteProblem);
+router.post('/',  isAdminOrFaculty, createProblem);
+router.put('/:id',  isAdminOrFaculty, updateProblem);
+router.delete('/:id',  isAdminOrFaculty, deleteProblem);
+router.post('/:id/assign', isAdminOrFaculty, assignProblemToStudents);
+router.get('/:id/students', isAdminOrFaculty, getProblemWithStudents);
+router.get('/:id/unassignStudent', isAdminOrFaculty, getProblemWithUnassignedStudents);
+router.get('/getStudents', isAdminOrFaculty, getStudents);
+router.post('/:id/unassign-students', isAdminOrFaculty, unassignStudents);
+
 
 // Public routes
 router.get('/', getProblems);

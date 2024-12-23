@@ -19,6 +19,8 @@ import StudentRegister from './Faculty/StudentRegister';
 import FacultyRegister from './Faculty/FacultyRegister';
 import AdminRegister from './Admin/AdminRegister';
 import StudentList from './Admin/StudentList';
+import AssignProblem from './Problem/AssignProblem';
+import AssignedStudents from './Problem/assignedStudents';
 
 
 const Body = () => {
@@ -44,6 +46,8 @@ const Body = () => {
     { path: "/registerStudent", element: <FacultyRegister /> },
     { path: "/registerFaculty", element: <AdminRegister /> },
     { path:"/students/:facultyId", element: <StudentList /> },
+    { path:"/assignProblem/:problemId", element: <AssignProblem /> },
+    { path:"/assignedStudents/:problemId", element: <AssignedStudents /> },
   ]);
 
   return (

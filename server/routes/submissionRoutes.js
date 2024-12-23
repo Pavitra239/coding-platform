@@ -126,7 +126,7 @@ router.get('/user/submissions', async (req, res) => {
 
     if (submissions.length === 0) {
       console.log("hello2")
-      return res.status(404).json({ message: 'No submissions found for the given user ID.' });
+      return res.status(404).json({ message: 'No submissions found for the given user.' });
     }
 
     console.log("hello3")

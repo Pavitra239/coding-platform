@@ -145,21 +145,17 @@ export const changePassword = async (req, res) => {
     }
 
     if (newPassword === oldPassword) {
-      return res
-        .status(400)
-        .json({
-          message: "New password cannot be the same as the old password.",
-          success: false,
-        });
+      return res.status(400).json({
+        message: "New password cannot be the same as the old password.",
+        success: false,
+      });
     }
 
     if (newPassword.length < 6) {
-      return res
-        .status(400)
-        .json({
-          message: "New password must be at least 6 characters long.",
-          success: false,
-        });
+      return res.status(400).json({
+        message: "New password must be at least 6 characters long.",
+        success: false,
+      });
     }
 
     user.password = newPassword;
@@ -296,7 +292,7 @@ export const getCurrentUser = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, "ChauhanRutvik");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -315,13 +311,18 @@ export const getCurrentUser = async (req, res) => {
 
     return res.status(200).json({
       user: {
-        profile: user.profile, _id: user._id, username: user.username,
-        id: user.id,email: user.email,role: user.role,branch: user.branch,
-        semester: user.semester,batch: user.batch,
+        profile: user.profile,
+        _id: user._id,
+        username: user.username,
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        branch: user.branch,
+        semester: user.semester,
+        batch: user.batch,
       },
       success: true,
     });
-    
   } catch (error) {
     console.log("error found");
     console.error(error);
@@ -370,7 +371,7 @@ export const fetchSubjects = async (req, res) => {
 
 cron.schedule("* * * * *", async () => {
   const currentTime = new Date();
-  const expirationTime = 1000 * 60 * 30;
+  const expirationTime = 1000 * 60 * 60 * 24;
 
   const users = await User.find({
     lastLoginTime: { $lt: new Date(currentTime - expirationTime) },
@@ -378,6 +379,7 @@ cron.schedule("* * * * *", async () => {
 
   for (let user of users) {
     user.sessionId = null;
+    user.lastLoginTime = null;
     await user.save();
 
     console.log(`User ${user.username}'s session has been expired.`);

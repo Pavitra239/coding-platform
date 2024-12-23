@@ -44,6 +44,7 @@ const problemSchema = new Schema({
   },
   tags: [{ type: String }], // Array of tags
   score: { type: Number, default: 0 }, // Score field
+  assignedStudents: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Array of student IDs
 }, {
   timestamps: true
 });

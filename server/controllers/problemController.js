@@ -1,6 +1,9 @@
-import Problem from '../models/problem.js';
-import Code from '../models/Code.js';
-import Submission from '../models/submission.js';
+import Problem from "../models/problem.js";
+import Code from "../models/Code.js";
+import Submission from "../models/submission.js";
+import user from "../models/user.js";
+import mongoose from "mongoose";
+
 
 // Create problem
 export const createProblem = async (req, res) => {
@@ -11,11 +14,11 @@ export const createProblem = async (req, res) => {
     inputFormat,
     outputFormat,
     sampleIO,
-    testCases = [],  // Default to an empty array if undefined
+    testCases = [], // Default to an empty array if undefined
     constraints,
     tags,
     createdBy,
-    score
+    score,
   } = req.body;
 
   console.log("testCases", testCases);
@@ -28,18 +31,18 @@ export const createProblem = async (req, res) => {
       inputFormat,
       outputFormat,
       sampleIO,
-      testCases: testCases.map(testCase => ({
+      testCases: testCases.map((testCase) => ({
         inputs: testCase.inputs.map((input, index) => ({
           value: input,
-          type: testCase.inputTypes[index] // Use index to get corresponding type
+          type: testCase.inputTypes[index], // Use index to get corresponding type
         })),
         outputs: testCase.outputs.map((output, index) => ({
           value: output,
-          type: testCase.outputTypes[index] // Use index to get corresponding type
+          type: testCase.outputTypes[index], // Use index to get corresponding type
         })),
         // Assuming timeLimit and memoryLimit are included in testCase
         timeLimit: testCase.timeLimit,
-        memoryLimit: testCase.memoryLimit
+        memoryLimit: testCase.memoryLimit,
       })),
       constraints,
       tags,
@@ -55,16 +58,96 @@ export const createProblem = async (req, res) => {
   }
 };
 
-
-
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
   try {
-    const problems = await Problem.find({}).sort({ createdAt: -1 });
-    const totalProblems = problems.length; 
+    let problems;
+    console.log("req.user3", req.user);
+    if (req.user.isAdmin === "admin") {
+      problems = await Problem.find({}).sort({ createdAt: -1 });
+    } else if (req.user.isAdmin === "faculty") {
+      problems = await Problem.find({ createdBy: req.user.id }).sort({
+        createdAt: -1,
+      });
+    } else if (req.user.isAdmin === "student") {
+      console.log("req.user.id", req.user.id);
+      problems = await Problem.find({ assignedStudents: req.user.id }).sort({
+        createdAt: -1,
+      });
+    } else {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
 
-    res.json({ problems, totalProblems,succes:true });
+    res.json({ problems, totalProblems: problems.length, success: true });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const assignProblemToStudents = async (req, res) => {
+  const { id } = req.params;
+  const { studentIds } = req.body; // Array of student IDs
+
+  try {
+    const problem = await Problem.findById(id);
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    // Add students to the assigned list
+    problem.assignedStudents.push(...studentIds);
+    await problem.save();
+
+    res
+      .status(200)
+      .json({ message: "Students assigned successfully", problem });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+export const unassignStudents = async (req, res) => {
+  const { id } = req.params; // Problem ID
+  const { studentIds } = req.body; // Array of student IDs to unassign
+  console.log(studentIds)
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    return res.status(400).json({ message: "No student IDs provided." });
+  }
+
+  try {
+    // Fetch the problem by ID
+    const problem = await Problem.findById(id);
+
+    if (!problem) {
+      console.error(`Problem with ID ${id} not found.`);
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    // Filter out the students to be unassigned
+    const updatedAssignedStudents = problem.assignedStudents.filter(
+      (studentId) => !studentIds.includes(studentId.toString())
+    );
+
+    // Update the problem with the new list of assigned students
+    problem.assignedStudents = updatedAssignedStudents;
+    await problem.save();
+
+    console.log(`Unassigned Students: ${studentIds}`);
+
+    // Optionally, verify the unassignment
+    const remainingAssignedStudents = await user.find({
+      _id: { $in: problem.assignedStudents },
+    });
+
+    // Return success response
+    res.status(200).json({
+      message: "Students unassigned successfully",
+      remainingAssignedStudents,
+    });
+  } catch (error) {
+    console.error(`Error unassigning students: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 };
@@ -73,16 +156,213 @@ export const getProblems = async (req, res) => {
 
 
 
+export const getProblemWithStudents = async (req, res) => {
+  const { id } = req.params; // Problem ID
+
+  try {
+    // Fetch the problem by ID
+    const problem = await Problem.findById(id);
+
+    if (!problem) {
+      console.error(`Problem with ID ${id} not found.`);
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    // Fetch all students assigned to this problem
+    const assignedStudents = problem.assignedStudents.map(
+      (studentId) => new mongoose.Types.ObjectId(studentId) // Ensure consistent ObjectId type
+    );
+
+    console.log(`Assigned Students IDs: ${assignedStudents}`);
+
+    // Find users corresponding to the assigned student IDs
+    const assignedStudentData = await user.find({
+      _id: { $in: assignedStudents }, // Fetch matching users
+    });
+
+    if (!assignedStudentData.length) {
+      console.warn(`No assigned students found for Problem ID ${id}.`);
+    }
+
+    // Return the problem and assigned student data
+    res.status(200).json({
+      message: "Problem and assigned students fetched successfully",
+      assignedStudents: assignedStudentData,
+    });
+  } catch (error) {
+    console.error(`Error fetching problem and students: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getProblemWithUnassignedStudents = async (req, res) => {
+  const { id } = req.params; // Problem ID
+  console.log("Problem ID:", id);
+
+  try {
+    // Fetch the problem by ID
+    const problem = await Problem.findById(id);
+
+    if (!problem) {
+      console.error(`Problem with ID ${id} not found.`);
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    // Fetch all students assigned to this problem
+    const assignedStudents = problem.assignedStudents.map(
+      (studentId) => new mongoose.Types.ObjectId(studentId) // Ensure consistent ObjectId type
+    );
+
+    console.log(`Assigned Students IDs: ${assignedStudents}`);
+
+    // Fetch all users who are NOT assigned to the problem and have the role of "student"
+    const unassignedStudentData = await user
+      .find({
+        _id: { $nin: assignedStudents }, // Exclude assigned students
+        role: "student", // Include only users with role "student"
+      })
+      .select("username semester batch branch id _id") // Include only specific fields
+      .sort({ id: 1 }); // Sort by ID in ascending order
+
+    if (!unassignedStudentData.length) {
+      console.warn(`No unassigned students found for Problem ID ${id}.`);
+    }
+
+    // Return the problem and unassigned student data
+    res.status(200).json({
+      message: "Problem and unassigned students fetched successfully",
+      unassignedStudents: unassignedStudentData,
+    });
+  } catch (error) {
+    console.error(`Error fetching problem and unassigned students: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+export const getStudents = async (req, res) => {
+  try {
+    // Fetching all students
+    const students = await user.find({ role: 'student' })
+      .select('username semester batch branch id _id') 
+      .sort({ id: 1 });
+
+    // Calculate total number of students
+    const totalStudents = students.length;
+
+    // Aggregate data for branch-wise count
+    const branchWiseCount = await user.aggregate([
+      { $match: { role: 'student' } },
+      { $group: { _id: '$branch', count: { $sum: 1 } } }
+    ]);
+
+    // Aggregate data for semester, branch, and batch-wise count
+    const semesterBranchBatchWiseCount = await user.aggregate([
+      { $match: { role: 'student' } },
+      { $group: { 
+          _id: { semester: '$semester', branch: '$branch', batch: '$batch' }, 
+          count: { $sum: 1 }
+        } 
+      },
+      { $sort: { "_id.semester": 1, "_id.branch": 1, "_id.batch": 1 } } // Sort by semester, branch, and batch
+    ]);
+
+    // Prepare a structured response to include semester, branch, and batch-wise breakdowns
+    const semesterBranchBatchWiseCountResult = semesterBranchBatchWiseCount.reduce((acc, { _id, count }) => {
+      const { semester, branch, batch } = _id;
+      if (!acc[semester]) {
+        acc[semester] = {}; // Initialize object for each semester
+      }
+      if (!acc[semester][branch]) {
+        acc[semester][branch] = {}; // Initialize object for each branch within the semester
+      }
+      if (!acc[semester][branch][batch]) {
+        acc[semester][branch][batch] = 0; // Initialize count for each batch within the branch and semester
+      }
+      acc[semester][branch][batch] += count; // Aggregate the count for each batch in each branch and semester
+      return acc;
+    }, {});
+
+    // Send the students data along with total and counts
+    console.log("semesterBranchBatchWiseCountResult", semesterBranchBatchWiseCountResult);
+    console.log("branchWiseCount", branchWiseCount);
+    console.log("students", totalStudents);
+    res.status(200).json({
+      totalStudents,
+      branchWiseCount,
+      semesterBranchBatchWiseCount: semesterBranchBatchWiseCountResult,
+      students
+    });
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    res.status(500).json({ message: "Server error while fetching students", error: error.message });
+  }
+};
+
+
 // Get problem by ID
 export const getProblemById = async (req, res) => {
   try {
-    const problem = await Problem.findById(req.params.id);
+    const { id } = req.params;
+
+    // Fetch the problem from the database
+    const problem = await Problem.findById(id);
 
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
-    res.json(problem);
+    // Ensure req.user is properly populated
+    if (!req.user) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+
+    const { id: userId, isAdmin } = req.user;
+    console.log("req.user", req.user);
+
+    // Admins have unrestricted access
+    if (isAdmin === "admin") {
+      return res.json(problem);
+    }
+
+    // Faculty can access only the problems they created
+    if (isAdmin === "faculty") {
+      console.log("problem.createdBy", problem.createdBy.toString());
+      console.log("userId", userId.toString());
+
+      if (problem.createdBy.toString() !== userId.toString()) {
+        return res
+          .status(403)
+          .json({ message: "You are not allowed to access this problem" });
+      }
+      return res.json(problem);
+    }
+
+    // Students can only access problems assigned to them
+    if (isAdmin === "student") {
+      const isAssigned = problem.assignedStudents.some(
+        (student) => student.toString() === userId.toString()
+      );
+      if (!isAssigned) {
+        return res
+          .status(403)
+          .json({ message: "You are not allowed to access this problem" });
+      }
+      return res.json(problem);
+    }
+
+    // Default deny for other roles
+    return res
+      .status(403)
+      .json({ message: "You are not allowed to access this problem" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -94,14 +374,14 @@ export const updateProblem = async (req, res) => {
     const problem = await Problem.findById(req.params.id);
 
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
     const updates = req.body;
 
     // If sampleIO is provided, ensure it's correctly formatted as an array of objects
     if (updates.sampleIO) {
-      problem.sampleIO = updates.sampleIO.map(sample => ({
+      problem.sampleIO = updates.sampleIO.map((sample) => ({
         input: sample.input,
         output: sample.output,
       }));
@@ -109,14 +389,14 @@ export const updateProblem = async (req, res) => {
 
     // If testCases are provided, ensure they are correctly formatted
     if (updates.testCases) {
-      problem.testCases = updates.testCases.map(testCase => ({
+      problem.testCases = updates.testCases.map((testCase) => ({
         inputs: testCase.inputs.map((input, index) => ({
           value: input, // Ensure input has a value
-          type: testCase.inputTypes[index] // Corresponding input type
+          type: testCase.inputTypes[index], // Corresponding input type
         })),
         outputs: testCase.outputs.map((output, index) => ({
           value: output, // Ensure output has a value
-          type: testCase.outputTypes[index] // Corresponding output type
+          type: testCase.outputTypes[index], // Corresponding output type
         })),
         // Assuming timeLimit and memoryLimit are included in testCase
         timeLimit: testCase.timeLimit,
@@ -125,8 +405,8 @@ export const updateProblem = async (req, res) => {
     }
 
     // Update other fields if they exist in the updates
-    Object.keys(updates).forEach(key => {
-      if (!['sampleIO', 'testCases'].includes(key)) {
+    Object.keys(updates).forEach((key) => {
+      if (!["sampleIO", "testCases"].includes(key)) {
         problem[key] = updates[key];
       }
     });
@@ -140,15 +420,13 @@ export const updateProblem = async (req, res) => {
   }
 };
 
-
-
 // Delete problem
 export const deleteProblem = async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);
 
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
     // Delete the problem
@@ -160,7 +438,7 @@ export const deleteProblem = async (req, res) => {
     // Delete all related submissions
     await Submission.deleteMany({ problem_id: req.params.id });
 
-    res.json({ message: 'Problem and all related data removed' });
+    res.json({ message: "Problem and all related data removed" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
