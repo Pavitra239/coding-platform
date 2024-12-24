@@ -1,37 +1,102 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUser, FaGithub, FaLinkedin, FaBirthdayCake, FaClipboardList } from "react-icons/fa";
+import axiosInstance from "../../utils/axiosInstance";
+import { ClipLoader } from 'react-spinners';
+import toast from "react-hot-toast";
 
 const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [profilePic, setProfilePic] = useState(null);
+  const [loading, setLoading] = useState(true); // Add loading state
   const [isBioExpanded, setIsBioExpanded] = useState(false);
+
   const githubURL = formData.github ? `https://github.com/${formData.github}` : null;
   const linkedInURL = formData.linkedIn || null;
+
+  useEffect(() => {
+    const fetchProfilePic = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get('/user/profile/upload-avatar', { responseType: 'blob' });
+        console.log("this is it: ", response.data);
+        const imageUrl = URL.createObjectURL(response.data);
+        setProfilePic(imageUrl);
+      } catch (error) {
+        console.error('Error fetching profile picture:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfilePic();
+  }, []);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-   
+
     return `${day}-${month}-${year}`;
   };
 
-  // Function to limit the bio length
-  // const getShortBio = (bio) => {
-  //   return bio && bio.length > 50 ? bio.slice(0, 120) + "..." : bio;
-  // };
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUpdateProfilePic = async () => {
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append('avatar', selectedFile);
+
+    try {
+      setLoading(true);
+      const response = await axiosInstance.post('/user/upload-avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (response.status == 200) {
+        toast.success(response.data.message);
+        setProfilePic(URL.createObjectURL(selectedFile));
+      }
+      setLoading(false);
+    } catch (error) {
+      toast.error('upload Error');
+      console.error('Upload Error:', error);
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center sticky top-20">
-      <FaUser size={200} className="text-primary mb-3" />
-      <p className="pb-5">{formData.name}</p>
+    <div className="flex flex-col items-center sticky top-20 bg-gray-900 text-white rounded-lg shadow-lg p-6">
+      {/* Profile Image */}
+      {loading ? (
+        <ClipLoader size={150} color={"#ffffff"} loading={loading} />
+      ) : selectedFile ? (
+        <img src={imagePreview} alt="Selected" className="w-48 h-48 rounded-full mb-3" />
+      ) : profilePic ? (
+        <img src={profilePic} alt="Profile" className="w-48 h-48 rounded-full mb-3" />
+      ) : (
+        <FaUser size={200} className="text-primary mb-3" />
+      )}
 
-      {/* Social Links */}
+      <p className="text-xl font-semibold pb-5">{formData.name}</p>
+
       <div className="flex items-center space-x-2">
         <a
           href={githubURL}
           target="_blank"
           rel="noopener noreferrer"
-          className={`transition-all ${githubURL ? "text-white" : "text-black"} hover:text-white`}
+          className={`transition-all ${githubURL ? "text-white" : "text-gray-400"} hover:text-gray-200`}
         >
           <FaGithub size={30} />
         </a>
@@ -39,7 +104,7 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           href={linkedInURL}
           target="_blank"
           rel="noopener noreferrer"
-          className={`transition-all ${linkedInURL ? "text-white" : "text-black"} hover:text-white`}
+          className={`transition-all ${linkedInURL ? "text-white" : "text-gray-400"} hover:text-gray-200`}
         >
           <FaLinkedin size={30} />
         </a>
@@ -47,34 +112,50 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
 
       <button
         onClick={toggleEdit}
-        className={`px-4 py-2 rounded-md mt-4 transition ${
-          isEditing ? "bg-red-500 hover:bg-red-700" : "bg-blue-500 hover:bg-blue-700"
-        } text-white`}
+        className={`px-4 py-2 rounded-md mt-4 transition ${isEditing ? "bg-red-500 hover:bg-red-700" : "bg-blue-500 hover:bg-blue-700"} text-white`}
       >
         {isEditing ? "Cancel Edit" : "Edit Details"}
       </button>
 
-      {/* Always display additional user details */}
-      <div className="mt-4 space-y-3 p-2" style={{ width: "100%" }}>
-        {/* {formData.bio && (
-          <div>
-            <label className="font-semibold flex items-center justify-center">
-              <FaClipboardList className="mr-1" /> Bio:
+      {isEditing && (
+        <>
+          <div className="mt-2 w-full">
+            <label htmlFor="fileInput" className="block text-sm font-medium text-gray-300">
+              Choose a profile picture:
             </label>
-            <p className="text-gray-400 whitespace-pre-wrap flex items-center justify-center text-justify">
-              {isBioExpanded ? formData.bio : getShortBio(formData.bio)}
-            </p>
-            {formData.bio.length > 50 && (
-              <button
-                onClick={() => setIsBioExpanded(!isBioExpanded)}
-                className="text-blue-500 mt-1"
-              >
-                {isBioExpanded ? "See Less" : "See More"}
-              </button>
-            )}
+            <input
+              id="fileInput"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => document.getElementById("fileInput").click()}
+              className="mt-2 w-full bg-blue-600 text-white rounded px-4 py-2 shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+            >
+              Select Image
+            </button>
           </div>
-        )} */}
 
+          {selectedFile && (
+            <>
+              <div className="mt-2 text-sm text-gray-400">
+                <span className="font-medium">Selected File: </span>
+                <span>{selectedFile.name}</span>
+              </div>
+              <button
+                onClick={handleUpdateProfilePic}
+                className="mt-4 w-full bg-green-500 text-white rounded px-4 py-2 shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all"
+              >
+                Upload Profile Picture
+              </button>
+            </>
+          )}
+        </>
+      )}
+
+      <div className="mt-4 space-y-3 w-full">
         {formData.birthday && (
           <div>
             <label className="font-semibold flex items-center justify-center">

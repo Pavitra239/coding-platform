@@ -9,6 +9,7 @@ const AssignProblem = () => {
   const { problemId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [assignLoading, setAssignLoading] = useState(false); // For button-specific loading
   const [unassignedStudents, setUnassignedStudents] = useState([]);
   const [totalUnassigned, setTotalUnassigned] = useState(0);
   const [selectedStudents, setSelectedStudents] = useState([]);
@@ -19,13 +20,13 @@ const AssignProblem = () => {
   });
   const [error, setError] = useState("");
 
-  // Fetch unassigned students
   const fetchUnassignedStudents = async () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(
         `/problems/${problemId}/unassignStudent`
       );
+      // console.log(response.data);
       setUnassignedStudents(response.data.unassignedStudents);
       setTotalUnassigned(response.data.unassignedStudents.length);
     } catch (err) {
@@ -40,7 +41,6 @@ const AssignProblem = () => {
     fetchUnassignedStudents();
   }, [problemId]);
 
-  // Filtered users based on filters
   const filteredUsers = unassignedStudents.filter((student) => {
     const { branch, semester, batch } = filters;
     return (
@@ -50,7 +50,6 @@ const AssignProblem = () => {
     );
   });
 
-  // Handle individual student selection
   const handleSelectStudent = (id) => {
     setSelectedStudents((prev) =>
       prev.includes(id)
@@ -59,7 +58,6 @@ const AssignProblem = () => {
     );
   };
 
-  // Handle select all for filtered users
   const handleSelectAll = () => {
     setSelectedStudents(
       selectedStudents.length === filteredUsers.length
@@ -68,43 +66,35 @@ const AssignProblem = () => {
     );
   };
 
-  // Handle assigning students
   const handleAssign = async () => {
+    setAssignLoading(true); // Start loading
     try {
-      await axiosInstance.post(`/problems/${problemId}/assign`, {
+      const res = await axiosInstance.post(`/problems/${problemId}/assign`, {
         studentIds: selectedStudents,
       });
-      toast.success("Problem assigned successfully!");
+      toast.success(res.data.message);
       fetchUnassignedStudents();
       setSelectedStudents([]); // Clear selection after assigning
     } catch (err) {
       console.error("Error assigning problem:", err);
-      toast.error("Failed to assign problem. Please try again.");
+      toast.error(res.data.message);
+    } finally {
+      setAssignLoading(false); // Stop loading
     }
   };
 
-  // Update filter values
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-          <p className="mt-4 text-blue-500 text-lg font-medium">
-            Loading, please wait...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
       <div className="pt-20 ml-4">
+        <h1 className="text-2xl font-bold mb-4 justify-center flex items-center">
+          Students Unassigned to the Problem
+        </h1>
+
         <button
           onClick={() => navigate(`/assignedStudents/${problemId}`)}
           className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition mb-4"
@@ -125,6 +115,34 @@ const AssignProblem = () => {
         </p>
       </div>
 
+      {assignLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="flex flex-col items-center">
+            <svg
+              className="animate-spin h-12 w-12 text-blue-500 mb-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              ></path>
+            </svg>
+            <p className="text-white text-lg font-semibold">Assigning...</p>
+          </div>
+        </div>
+      )}
+
       <StudentTable
         users={filteredUsers}
         selectedStudents={selectedStudents}
@@ -133,6 +151,7 @@ const AssignProblem = () => {
         handleAssign={handleAssign}
         filters={filters}
         updateFilter={updateFilter}
+        loading={loading}
       />
     </div>
   );

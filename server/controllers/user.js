@@ -1,7 +1,9 @@
 import User from "../models/user.js";
 import { StatusCodes } from "http-status-codes";
-import { BadRequestError, NotFoundError } from "../utils/errors.js";
+import { NotFoundError } from "../utils/errors.js";
 import { createToken } from "../utils/jwt.js";
+import { GridFSBucket } from "mongodb";
+import { mongoose } from "../app.js";
 
 // Get all users
 export const getUsers = async (req, res) => {
@@ -34,7 +36,7 @@ import jwt from "jsonwebtoken";
 export const updateUser = async (req, res) => {
   try {
     const {
-      username,
+      fullName,
       gender,
       location,
       birthday,
@@ -44,7 +46,7 @@ export const updateUser = async (req, res) => {
       linkedIn,
       name,
       bio,
-      email
+      email,
     } = req.body;
 
     console.log(req.body);
@@ -71,15 +73,14 @@ export const updateUser = async (req, res) => {
     }
 
     // Ensure fullName and name are not empty strings
-    if (!username?.trim()) {
+    if (!fullName?.trim() || !name?.trim()) {
       return res.status(400).json({
         message: "Username and profile name cannot be empty.",
         success: false,
       });
     }
 
-    // Update only the allowed fields
-    user.username = username;
+    user.username = fullName;
     user.profile.name = name;
     user.email = email;
     user.profile = Object.assign(user.profile, {
@@ -93,7 +94,7 @@ export const updateUser = async (req, res) => {
       linkedIn: linkedIn,
     });
 
-    console.log("--> ",user);
+    console.log("--> ", user);
 
     await user.save({ validateBeforeSave: false });
 
@@ -120,4 +121,90 @@ export const deleteUser = async (req, res) => {
   if (!user) throw new NotFoundError("User not found");
 
   res.status(StatusCodes.OK).json({ status: "success", msg: "User deleted" });
+};
+
+export const uploadProfilePic = async (req, res) => {
+  console.log("Api is hit");
+  try {
+    const userId = req.user.id;
+    console.log("this is profileUSer: ", userId);
+    const file = req.file;
+
+    if (!userId || !file) {
+      return res.status(400).json({ error: "User ID and file are required" });
+    }
+
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        "profile.avatar": file.id,
+      },
+    });
+
+    res.json({
+      message: "Avatar uploaded successfully",
+      fileId: file.id,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+export const getProfilePic = async (req, res) => {
+  console.log("API hit OK");
+
+  try {
+    const userId = req.user.id;
+    console.log("User ID:", userId);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const fileId = user.profile?.avatar;
+    console.log("Profile File ID:", fileId);
+
+    if (!fileId) {
+      return res.status(404).json({ error: "Profile picture not found" });
+    }
+
+    // Ensure fileId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(fileId)) {
+      return res.status(400).json({ error: "Invalid file ID" });
+    }
+
+    const fileIdObject =
+      fileId instanceof mongoose.Types.ObjectId
+        ? fileId
+        : new mongoose.Types.ObjectId(fileId);
+
+    const bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: "uploads",
+    });
+
+    const fileStream = bucket.openDownloadStream(fileIdObject);
+    res.set("Content-Type", "image/jpeg");
+
+    fileStream.on("error", (error) => {
+      console.error("Error streaming file:", error);
+      if (!res.headersSent) {
+        return res
+          .status(500)
+          .json({ error: "Failed to retrieve profile picture" });
+      }
+    });
+
+    fileStream.on("end", () => {
+      console.log("Profile picture stream completed.");
+    });
+
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error("Error fetching profile picture:", error);
+
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to retrieve profile picture" });
+    }
+  }
 };

@@ -4,7 +4,6 @@ import Submission from "../models/submission.js";
 import user from "../models/user.js";
 import mongoose from "mongoose";
 
-
 // Create problem
 export const createProblem = async (req, res) => {
   const {
@@ -106,11 +105,10 @@ export const assignProblemToStudents = async (req, res) => {
   }
 };
 
-
 export const unassignStudents = async (req, res) => {
   const { id } = req.params; // Problem ID
   const { studentIds } = req.body; // Array of student IDs to unassign
-  console.log(studentIds)
+  console.log(studentIds);
 
   if (!Array.isArray(studentIds) || studentIds.length === 0) {
     return res.status(400).json({ message: "No student IDs provided." });
@@ -136,25 +134,15 @@ export const unassignStudents = async (req, res) => {
 
     console.log(`Unassigned Students: ${studentIds}`);
 
-    // Optionally, verify the unassignment
-    const remainingAssignedStudents = await user.find({
-      _id: { $in: problem.assignedStudents },
-    });
-
     // Return success response
     res.status(200).json({
       message: "Students unassigned successfully",
-      remainingAssignedStudents,
     });
   } catch (error) {
     console.error(`Error unassigning students: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 };
-
-
-
-
 
 export const getProblemWithStudents = async (req, res) => {
   const { id } = req.params; // Problem ID
@@ -173,12 +161,15 @@ export const getProblemWithStudents = async (req, res) => {
       (studentId) => new mongoose.Types.ObjectId(studentId) // Ensure consistent ObjectId type
     );
 
-    console.log(`Assigned Students IDs: ${assignedStudents}`);
+    // console.log(`Assigned Students IDs: ${assignedStudents}`);
 
     // Find users corresponding to the assigned student IDs
-    const assignedStudentData = await user.find({
-      _id: { $in: assignedStudents }, // Fetch matching users
-    });
+    const assignedStudentData = await user
+      .find(
+        { _id: { $in: assignedStudents } } // Fetch matching users
+      )
+      .select("username semester batch branch id _id") // Include only specific fields
+      .sort({ id: 1 }); // Sort by `id` in ascending order
 
     if (!assignedStudentData.length) {
       console.warn(`No assigned students found for Problem ID ${id}.`);
@@ -234,25 +225,19 @@ export const getProblemWithUnassignedStudents = async (req, res) => {
       unassignedStudents: unassignedStudentData,
     });
   } catch (error) {
-    console.error(`Error fetching problem and unassigned students: ${error.message}`);
+    console.error(
+      `Error fetching problem and unassigned students: ${error.message}`
+    );
     res.status(500).json({ message: error.message });
   }
 };
 
-
-
-
-
-
-
-
-
-
 export const getStudents = async (req, res) => {
   try {
     // Fetching all students
-    const students = await user.find({ role: 'student' })
-      .select('username semester batch branch id _id') 
+    const students = await user
+      .find({ role: "student" })
+      .select("username semester batch branch id _id")
       .sort({ id: 1 });
 
     // Calculate total number of students
@@ -260,53 +245,64 @@ export const getStudents = async (req, res) => {
 
     // Aggregate data for branch-wise count
     const branchWiseCount = await user.aggregate([
-      { $match: { role: 'student' } },
-      { $group: { _id: '$branch', count: { $sum: 1 } } }
+      { $match: { role: "student" } },
+      { $group: { _id: "$branch", count: { $sum: 1 } } },
     ]);
 
     // Aggregate data for semester, branch, and batch-wise count
     const semesterBranchBatchWiseCount = await user.aggregate([
-      { $match: { role: 'student' } },
-      { $group: { 
-          _id: { semester: '$semester', branch: '$branch', batch: '$batch' }, 
-          count: { $sum: 1 }
-        } 
+      { $match: { role: "student" } },
+      {
+        $group: {
+          _id: { semester: "$semester", branch: "$branch", batch: "$batch" },
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { "_id.semester": 1, "_id.branch": 1, "_id.batch": 1 } } // Sort by semester, branch, and batch
+      { $sort: { "_id.semester": 1, "_id.branch": 1, "_id.batch": 1 } }, // Sort by semester, branch, and batch
     ]);
 
     // Prepare a structured response to include semester, branch, and batch-wise breakdowns
-    const semesterBranchBatchWiseCountResult = semesterBranchBatchWiseCount.reduce((acc, { _id, count }) => {
-      const { semester, branch, batch } = _id;
-      if (!acc[semester]) {
-        acc[semester] = {}; // Initialize object for each semester
-      }
-      if (!acc[semester][branch]) {
-        acc[semester][branch] = {}; // Initialize object for each branch within the semester
-      }
-      if (!acc[semester][branch][batch]) {
-        acc[semester][branch][batch] = 0; // Initialize count for each batch within the branch and semester
-      }
-      acc[semester][branch][batch] += count; // Aggregate the count for each batch in each branch and semester
-      return acc;
-    }, {});
+    const semesterBranchBatchWiseCountResult = semesterBranchBatchWiseCount.reduce(
+      (acc, { _id, count }) => {
+        const { semester, branch, batch } = _id;
+        if (!acc[semester]) {
+          acc[semester] = {}; // Initialize object for each semester
+        }
+        if (!acc[semester][branch]) {
+          acc[semester][branch] = {}; // Initialize object for each branch within the semester
+        }
+        if (!acc[semester][branch][batch]) {
+          acc[semester][branch][batch] = 0; // Initialize count for each batch within the branch and semester
+        }
+        acc[semester][branch][batch] += count; // Aggregate the count for each batch in each branch and semester
+        return acc;
+      },
+      {}
+    );
 
     // Send the students data along with total and counts
-    console.log("semesterBranchBatchWiseCountResult", semesterBranchBatchWiseCountResult);
+    console.log(
+      "semesterBranchBatchWiseCountResult",
+      semesterBranchBatchWiseCountResult
+    );
     console.log("branchWiseCount", branchWiseCount);
     console.log("students", totalStudents);
     res.status(200).json({
       totalStudents,
       branchWiseCount,
       semesterBranchBatchWiseCount: semesterBranchBatchWiseCountResult,
-      students
+      students,
     });
   } catch (error) {
     console.error("Error fetching students:", error);
-    res.status(500).json({ message: "Server error while fetching students", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Server error while fetching students",
+        error: error.message,
+      });
   }
 };
-
 
 // Get problem by ID
 export const getProblemById = async (req, res) => {

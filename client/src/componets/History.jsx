@@ -87,7 +87,7 @@ const History = () => {
               <div>
                 {/* Add responsive overflow behavior */}
                 <div className="p-4 overflow-x-auto">
-                  <table className="min-w-full text-sm sm:text-lg text-left text-gray-500">
+                  <table className="min-w-full text-left text-gray-500">
                     <thead className="bg-gray-900 text-gray-400">
                       <tr>
                         <th className="py-3 px-4 sm:px-6 text-center border border-gray-600">
