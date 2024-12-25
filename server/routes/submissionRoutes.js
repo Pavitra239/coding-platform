@@ -18,7 +18,8 @@ router.post('/', async (req, res) => {
       memory_usage,
       testCaseResults,
       numberOfTestCase,
-      numberOfTestCasePass // Added to capture the test case results from the body
+      numberOfTestCasePass, // Added to capture the test case results from the body
+      totalMarks
     } = req.body;
 
     if (!testCaseResults || !Array.isArray(testCaseResults)) {
@@ -35,7 +36,8 @@ router.post('/', async (req, res) => {
       memory_usage,
       testCaseResults,
       numberOfTestCase,
-      numberOfTestCasePass // Save the test case results as part of the submission
+      numberOfTestCasePass, // Save the test case results as part of the submission
+      totalMarks
     });
 
     // Save the submission to the database

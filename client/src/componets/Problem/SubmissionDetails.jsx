@@ -46,6 +46,12 @@ const SubmissionDetails = ({ submission, onBack }) => {
         </span>
       </div>
 
+      <div className="mb-6 bg-gray-800 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <span className="text-white font-semibold text-lg">
+          Total Marks: {submission?.totalMarks ?? "Not Available"}
+        </span>
+      </div>
+
       {/* Submission Details */}
       <div className="mb-6 p-4 sm:p-6 rounded-lg shadow-md bg-gray-800 text-gray-300 space-y-6">
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">

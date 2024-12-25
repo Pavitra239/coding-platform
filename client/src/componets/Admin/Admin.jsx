@@ -128,8 +128,7 @@ const Admin = () => {
   return (
     <>
       <div className="bg-gray-900 text-gray-100 min-h-screen overflow-hidden">
-        
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-4 p-6 pt-[100px]">        
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0 mb-4 p-6 pt-[100px]">
           <h1 className="text-2xl font-bold">Pending User Requests</h1>
           <div className="flex flex-col sm:flex-row gap-2">
             <button
@@ -155,14 +154,20 @@ const Admin = () => {
               )}
             </button>
           </div>
-
-          
         </div>
 
         <div className="p-4">
-          <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-          onClick={() => navigate("/registerFaculty")}>
-            Register Faculty 
+          <button
+            className="bg-blue-500 hover:bg-blue-600 mr-4 text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+            onClick={() => navigate("/registerFaculty")}
+          >
+            Register Faculty
+          </button>
+          <button
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+            onClick={() => navigate("/studentinformation")}
+          >
+            Student Information
           </button>
         </div>
 

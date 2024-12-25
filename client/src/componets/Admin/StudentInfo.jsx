@@ -4,19 +4,13 @@ import Header from "../Header";
 import axiosInstance from "../../utils/axiosInstance";
 
 const StudentInfo = () => {
-  const { problemId } = useParams();
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [totalStudents, setTotalStudents] = useState(0);
   const [branchWiseCount, setBranchWiseCount] = useState([]);
   const [semesterWiseCount, setSemesterWiseCount] = useState({});
   const [error, setError] = useState("");
-
-  const handleAssignStudentsNavigation = () => {
-    navigate(`/assignedStudents/${problemId}`);
-  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -41,7 +35,9 @@ const StudentInfo = () => {
 
   const handleSelectStudent = (id) => {
     setSelectedStudents((prev) =>
-      prev.includes(id) ? prev.filter((studentId) => studentId !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((studentId) => studentId !== id)
+        : [...prev, id]
     );
   };
 
@@ -53,70 +49,53 @@ const StudentInfo = () => {
     }
   };
 
-  const handleAssign = async () => {
-    try {
-      const response = await axiosInstance.post(
-        `/problems/${problemId}/assign`,
-        { studentIds: selectedStudents }
-      );
-      console.log("Assignment successful:", response.data);
-      alert("Problem assigned successfully!");
-    } catch (error) {
-      console.error("Error assigning problem:", error);
-      alert("Failed to assign problem.");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
-          <p className="mt-4 text-blue-500 text-lg font-medium">
-            Loading, please wait...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
-      <div className="pt-20 ml-4">
+      <div className="pt-20 ml-4 px-4">
         <button
-          onClick={handleAssignStudentsNavigation}
-          className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition w-full sm:w-auto mb-4"
+          className="py-2 px-6 bg-gradient-to-r mb-4 from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition transform duration-200"
+          onClick={() => navigate(-1)}
         >
-          View Assigned Students
+          Back
         </button>
+
+        {loading ? (
+          <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+              <p className="mt-4 text-blue-500 text-lg font-medium">
+                Loading, please wait...
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-xl font-medium">
+              Total Students: {totalStudents}
+            </p>
+            <BranchWiseCount branches={branchWiseCount} />
+            <SemesterWiseCount semesters={semesterWiseCount} />
+            {error && (
+              <div className="px-4 py-2 mb-4 bg-red-700 text-white rounded">
+                {error}
+              </div>
+            )}
+            <StudentTable
+              users={users}
+              selectedStudents={selectedStudents}
+              handleSelectStudent={handleSelectStudent}
+              handleSelectAll={handleSelectAll}
+            />
+          </>
+        )}
       </div>
-
-      {error && (
-        <div className="px-4 py-2 mb-4 bg-red-700 text-white rounded">
-          {error}
-        </div>
-      )}
-
-      <div className="px-4 mb-4">
-        <p className="text-xl font-medium">Total Students: {totalStudents}</p>
-        <BranchWiseCount branches={branchWiseCount} />
-        <SemesterWiseCount semesters={semesterWiseCount} />
-      </div>
-
-      <StudentTable
-        users={users}
-        selectedStudents={selectedStudents}
-        handleSelectStudent={handleSelectStudent}
-        handleSelectAll={handleSelectAll}
-        handleAssign={handleAssign}
-      />
     </div>
   );
 };
 
 const BranchWiseCount = ({ branches }) => (
-  <div className="mt-4">
+  <div className="mt-4 mb-4">
     <h3 className="text-lg font-medium text-white">Branch-wise Count:</h3>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
       {branches.map((branch, index) => (
@@ -135,7 +114,7 @@ const BranchWiseCount = ({ branches }) => (
 );
 
 const SemesterWiseCount = ({ semesters }) => (
-  <div className="px-4 mb-4">
+  <div className="mb-4">
     <h3 className="text-lg font-medium text-white">Semester-wise Count:</h3>
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
       {Object.entries(semesters).map(([semester, branches]) => (
@@ -172,9 +151,30 @@ const SemesterWiseCount = ({ semesters }) => (
   </div>
 );
 
-const StudentTable = ({ users }) => (
-  <div className="overflow-x-auto p-5">
-      <table className="w-full border-collapse border border-gray-700 text-sm sm:text-lg text-left text-gray-500">
+const StudentTable = ({ users }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
+  // Calculate total pages
+  const totalPages = Math.ceil(users.length / rowsPerPage);
+
+  // Get the data for the current page
+  const currentData = users.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  return (
+    <div className="overflow-x-auto p-5">
+      <table className="w-full border-collapse border border-gray-700 text-left text-gray-500">
         <thead className="bg-gray-900 text-gray-400">
           <tr>
             <th className="py-3 px-4 sm:px-6 text-center">ID</th>
@@ -185,8 +185,8 @@ const StudentTable = ({ users }) => (
           </tr>
         </thead>
         <tbody>
-          {users.length > 0 ? (
-            users.map((user, index) => (
+          {currentData.length > 0 ? (
+            currentData.map((user, index) => (
               <tr
                 key={user.id}
                 className={`${index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}`}
@@ -211,7 +211,7 @@ const StudentTable = ({ users }) => (
           ) : (
             <tr>
               <td
-                colSpan="6"
+                colSpan="5"
                 className="py-3 px-4 sm:px-6 text-center text-gray-300"
               >
                 No students found
@@ -220,10 +220,35 @@ const StudentTable = ({ users }) => (
           )}
         </tbody>
       </table>
-      <div className="mt-4 flex justify-end">
-       
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={handlePrev}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 rounded-lg ${
+            currentPage === 1
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
+        >
+          Previous
+        </button>
+        <span className="mx-4 mt-1 text-white">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 rounded-lg ${
+            currentPage === totalPages
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
+        >
+          Next
+        </button>
       </div>
     </div>
-);
+  );
+};
 
 export default StudentInfo;

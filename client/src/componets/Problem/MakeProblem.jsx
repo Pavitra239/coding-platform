@@ -210,7 +210,7 @@ const MakeProblem = () => {
       </div>
 
       <div className="overflow-x-auto p-5">
-        <table className="w-full border-collapse border border-gray-700 text-sm sm:text-lg text-left text-gray-500">
+        <table className="w-full border-collapse border border-gray-700  text-left text-gray-500">
           <thead className="bg-gray-900 text-gray-400">
             <tr>
               <th

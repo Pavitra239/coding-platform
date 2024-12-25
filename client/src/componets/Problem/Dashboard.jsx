@@ -273,6 +273,9 @@ const Dashboard = () => {
                       <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                         Submission Date
                       </th>
+                      <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                        Marks
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -320,6 +323,9 @@ const Dashboard = () => {
                           </td>
                           <td className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                           {formatDate(submission?.createdAt)}
+                          </td>
+                          <td className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                          {submission?.totalMarks ?? "N/A"}
                           </td>
                         </tr>
                       ))

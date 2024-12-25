@@ -66,6 +66,11 @@ const submissionSchema = new Schema({
     type: Number,
     required: [true, 'numberOfTestCasePass is required'],
   },
+  totalMarks: {
+    type: Number,
+    required: [true, 'totalMarks is required'],
+    min:0,
+  },
   testCaseResults: [testCaseResultSchema], // Array to store multiple test case results
 }, {
   timestamps: true,

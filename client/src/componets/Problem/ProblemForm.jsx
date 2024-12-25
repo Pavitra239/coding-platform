@@ -27,13 +27,14 @@ const ProblemForm = () => {
     sampleIO: [{ input: "", output: "" }],
     constraints: "",
     tags: "",
-    score: 0,
+    totalMarks: 0,
     testCases: [
       {
         inputs: [""],
         inputTypes: ["string"],
         outputs: [""],
         outputTypes: ["string"],
+        marks: 0,
       },
     ],
   });
@@ -49,7 +50,6 @@ const ProblemForm = () => {
     if (id) {
       setIsEditing(true);
       const fetchProblem = async () => {
-        const token = localStorage.getItem("UserToken");
         try {
           const response = await axiosInstance.get(`/problems/${id}`);
           const fetchedData = response.data;
@@ -65,12 +65,13 @@ const ProblemForm = () => {
             sampleIO: fetchedData.sampleIO || [{ input: "", output: "" }],
             constraints: fetchedData.constraints,
             tags: fetchedData.tags,
-            score: fetchedData.score || 0,
+            totalMarks: fetchedData.totalMarks || 0,
             testCases: fetchedData.testCases.map((testCase) => ({
               inputs: testCase.inputs.map((input) => input.value), // Extracting only values
               inputTypes: testCase.inputs.map((input) => input.type), // Extracting types directly
               outputs: testCase.outputs.map((output) => output.value), // Extracting only values
               outputTypes: testCase.outputs.map((output) => output.type), // Extracting types directly
+              marks: testCase.marks,
             })),
           });
         } catch (error) {
@@ -125,46 +126,66 @@ const ProblemForm = () => {
     ) {
       newErrors.sampleIO = true;
     }
-
     if (!problemData.constraints) newErrors.constraints = true;
     if (!problemData.tags) newErrors.tags = true;
-    if (!problemData.score) newErrors.score = true;
     return newErrors;
   };
 
   // Handle dynamic test cases change
-  const handleTestCaseChange = (index, type, value, fieldIndex, inputType) => {
+  const handleTestCaseChange = (
+    index,
+    type,
+    value,
+    fieldIndex,
+    inputType,
+    field = "inputs"
+  ) => {
     const updatedTestCases = [...problemData.testCases];
 
-    if (type === "input") {
-      if (inputType === "int") {
-        // Allow float values for integer type inputs
-        const parsedValue = parseFloat(value);
-        updatedTestCases[index].inputs[fieldIndex] = isNaN(parsedValue)
-          ? ""
-          : parsedValue;
-      } else {
-        // Store as a string if the type is not "int"
-        updatedTestCases[index].inputs[fieldIndex] = value;
-      }
-    } else {
-      if (inputType === "int") {
-        const parsedValue = parseFloat(value);
-        updatedTestCases[index].outputs[fieldIndex] = isNaN(parsedValue)
-          ? ""
-          : parsedValue;
-      } else {
-        updatedTestCases[index].outputs[fieldIndex] = value;
-      }
-    }
+    if (type === "input" || type === "output") {
+      const targetArray =
+        type === "input"
+          ? updatedTestCases[index].inputs
+          : updatedTestCases[index].outputs;
+      const targetTypesArray =
+        type === "input"
+          ? updatedTestCases[index].inputTypes
+          : updatedTestCases[index].outputTypes;
 
-    setProblemData({ ...problemData, testCases: updatedTestCases });
+      if (inputType === "int") {
+        const parsedValue = parseFloat(value);
+        targetArray[fieldIndex] = isNaN(parsedValue) ? "" : parsedValue;
+      } else {
+        targetArray[fieldIndex] = value;
+      }
+
+      setProblemData({ ...problemData, testCases: updatedTestCases });
+    } else if (type === "marks") {
+      // Handle change for marks field
+      const newMarks = parseInt(value) || 0; // Ensure marks are an integer
+      updatedTestCases[index].marks = newMarks;
+
+      // Recalculate total marks
+      const totalMarks = updatedTestCases.reduce(
+        (sum, testCase) => sum + testCase.marks,
+        0
+      );
+
+      setProblemData({
+        ...problemData,
+        testCases: updatedTestCases,
+        totalMarks: totalMarks,
+      });
+    }
   };
 
   const addTestCase = () => {
     setProblemData({
       ...problemData,
-      testCases: [...problemData.testCases, { inputs: [], outputs: [] }],
+      testCases: [
+        ...problemData.testCases,
+        { inputs: [], outputs: [], marks: 0 },
+      ], // Initialize marks for new test cases
     });
   };
 
@@ -192,8 +213,25 @@ const ProblemForm = () => {
             Remove Test Case
           </button>
         </div>
-  
+
         <div className="space-y-4">
+          {/* Marks Section */}
+          <div>
+            <label className="block text-1xl font-medium text-white mb-2">
+              Marks
+            </label>
+            <input
+              type="number"
+              value={testCase.marks}
+              onChange={(e) =>
+                handleTestCaseChange(index, "marks", e.target.value)
+              }
+              className="w-full sm:w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter marks"
+              aria-label={`Marks for Test Case ${index + 1}`}
+            />
+          </div>
+
           {/* Inputs Section */}
           <div>
             <label className="block text-1xl font-medium text-white mb-2">
@@ -208,13 +246,14 @@ const ProblemForm = () => {
                   onChange={(e) => {
                     const inputType = e.target.value;
                     const updatedTestCases = [...problemData.testCases];
-  
+
                     if (
-                      updatedTestCases[index].inputTypes[inputIndex] !== inputType
+                      updatedTestCases[index].inputTypes[inputIndex] !==
+                      inputType
                     ) {
                       updatedTestCases[index].inputs[inputIndex] = ""; // Reset input value
                     }
-  
+
                     updatedTestCases[index].inputTypes[inputIndex] = inputType;
                     setProblemData({
                       ...problemData,
@@ -228,13 +267,17 @@ const ProblemForm = () => {
                   <option value="string">String</option>
                   <option value="int">Integer</option>
                 </select>
-  
+
                 <input
                   type={
-                    testCase.inputTypes[inputIndex] === "int" ? "number" : "text"
+                    testCase.inputTypes[inputIndex] === "int"
+                      ? "number"
+                      : "text"
                   }
                   step={
-                    testCase.inputTypes[inputIndex] === "int" ? "any" : undefined
+                    testCase.inputTypes[inputIndex] === "int"
+                      ? "any"
+                      : undefined
                   }
                   value={input}
                   onChange={(e) =>
@@ -250,12 +293,11 @@ const ProblemForm = () => {
                   placeholder={`Enter input ${inputIndex + 1}`}
                   aria-label={`Input value for input ${inputIndex + 1}`}
                 />
-  
                 <button
                   type="button"
                   onClick={() => removeInputField(index, inputIndex)}
                   className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  aria-label={`Remove Input ${inputIndex + 1}`}
+                  aria-label={`Remove Output ${inputIndex + 1}`}
                 >
                   Remove
                 </button>
@@ -269,7 +311,7 @@ const ProblemForm = () => {
               + Add Input
             </div>
           </div>
-  
+
           {/* Outputs Section */}
           <div>
             <label className="block text-1xl font-medium text-white mb-2">
@@ -284,15 +326,17 @@ const ProblemForm = () => {
                   onChange={(e) => {
                     const outputType = e.target.value;
                     const updatedTestCases = [...problemData.testCases];
-  
+
                     if (
                       updatedTestCases[index].outputTypes[outputIndex] !==
                       outputType
                     ) {
                       updatedTestCases[index].outputs[outputIndex] = ""; // Reset output value
                     }
-  
-                    updatedTestCases[index].outputTypes[outputIndex] = outputType;
+
+                    updatedTestCases[index].outputTypes[
+                      outputIndex
+                    ] = outputType;
                     setProblemData({
                       ...problemData,
                       testCases: updatedTestCases,
@@ -305,13 +349,17 @@ const ProblemForm = () => {
                   <option value="string">String</option>
                   <option value="int">Integer</option>
                 </select>
-  
+
                 <input
                   type={
-                    testCase.outputTypes[outputIndex] === "int" ? "number" : "text"
+                    testCase.outputTypes[outputIndex] === "int"
+                      ? "number"
+                      : "text"
                   }
                   step={
-                    testCase.outputTypes[outputIndex] === "int" ? "any" : undefined
+                    testCase.outputTypes[outputIndex] === "int"
+                      ? "any"
+                      : undefined
                   }
                   value={output}
                   onChange={(e) =>
@@ -327,7 +375,7 @@ const ProblemForm = () => {
                   placeholder={`Enter output ${outputIndex + 1}`}
                   aria-label={`Output value for output ${outputIndex + 1}`}
                 />
-  
+
                 <button
                   type="button"
                   onClick={() => removeOutputField(index, outputIndex)}
@@ -338,6 +386,7 @@ const ProblemForm = () => {
                 </button>
               </div>
             ))}
+
             <div
               onClick={() => addOutputField(index)}
               className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
@@ -350,7 +399,6 @@ const ProblemForm = () => {
       </div>
     ));
   };
-  
 
   const removeInputField = (testCaseIndex, inputIndex) => {
     const updatedTestCases = [...problemData.testCases];
@@ -672,17 +720,18 @@ const ProblemForm = () => {
               />
             </div>
 
-            {/* Score */}
             <div>
-              <label className="block text-1xl font-medium mb-2">Score</label>
+              <label className="block text-1xl font-medium mb-2">
+                Total Marks
+              </label>
               <input
                 type="number"
-                name="score"
-                value={problemData.score}
-                onChange={handleChange}
-                className="w-full p-4  bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 "
-                placeholder="Score for the problem"
+                name="totalMarks"
+                value={problemData.totalMarks}
+                className="w-full p-4 bg-gray-800 border border-gray-700 rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Total Marks for all test cases"
                 min={0}
+                readOnly
               />
             </div>
 

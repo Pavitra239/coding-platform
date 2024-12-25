@@ -17,8 +17,8 @@ export const createProblem = async (req, res) => {
     constraints,
     tags,
     createdBy,
-    score,
-  } = req.body;
+    totalMarks
+    } = req.body;
 
   console.log("testCases", testCases);
 
@@ -39,13 +39,13 @@ export const createProblem = async (req, res) => {
           value: output,
           type: testCase.outputTypes[index], // Use index to get corresponding type
         })),
-        // Assuming timeLimit and memoryLimit are included in testCase
-        timeLimit: testCase.timeLimit,
-        memoryLimit: testCase.memoryLimit,
+        marks: testCase.marks, // Assign marks for the test case
+        timeLimit: testCase.timeLimit, // Include timeLimit if provided
+        memoryLimit: testCase.memoryLimit, // Include memoryLimit if provided
       })),
       constraints,
       tags,
-      score,
+      totalMarks,
       createdBy: req.user?._id || createdBy,
     });
 
@@ -295,12 +295,10 @@ export const getStudents = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching students:", error);
-    res
-      .status(500)
-      .json({
-        message: "Server error while fetching students",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Server error while fetching students",
+      error: error.message,
+    });
   }
 };
 
@@ -373,46 +371,49 @@ export const updateProblem = async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    const updates = req.body;
+    const {
+      sampleIO,
+      testCases,
+      ...otherUpdates // Extract other fields for direct assignment
+    } = req.body;
 
-    // If sampleIO is provided, ensure it's correctly formatted as an array of objects
-    if (updates.sampleIO) {
-      problem.sampleIO = updates.sampleIO.map((sample) => ({
+    // Update sampleIO if provided
+    if (sampleIO) {
+      problem.sampleIO = sampleIO.map((sample) => ({
         input: sample.input,
         output: sample.output,
       }));
     }
 
-    // If testCases are provided, ensure they are correctly formatted
-    if (updates.testCases) {
-      problem.testCases = updates.testCases.map((testCase) => ({
+    // Update testCases if provided
+    if (testCases) {
+      problem.testCases = testCases.map((testCase) => ({
         inputs: testCase.inputs.map((input, index) => ({
-          value: input, // Ensure input has a value
-          type: testCase.inputTypes[index], // Corresponding input type
+          value: input,
+          type: testCase.inputTypes?.[index], // Safely access inputTypes
         })),
         outputs: testCase.outputs.map((output, index) => ({
-          value: output, // Ensure output has a value
-          type: testCase.outputTypes[index], // Corresponding output type
+          value: output,
+          type: testCase.outputTypes?.[index], // Safely access outputTypes
         })),
-        // Assuming timeLimit and memoryLimit are included in testCase
         timeLimit: testCase.timeLimit,
         memoryLimit: testCase.memoryLimit,
+        marks: testCase.marks || 0, // Default marks to 0 if not provided
       }));
     }
 
-    // Update other fields if they exist in the updates
-    Object.keys(updates).forEach((key) => {
-      if (!["sampleIO", "testCases"].includes(key)) {
-        problem[key] = updates[key];
-      }
-    });
+    // Assign other updates directly
+    Object.assign(problem, otherUpdates);
 
+    // Save updated problem
     const updatedProblem = await problem.save();
 
     res.json(updatedProblem);
   } catch (error) {
     console.error("Update Problem Error:", error); // Log the error for debugging
-    res.status(500).json({ message: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update problem. Please try again later." });
   }
 };
 

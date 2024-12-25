@@ -117,7 +117,7 @@ int main() {
             code: codeByLanguage[language],
             language,
             testCases: testcases,
-            allTestcase: true
+            allTestcase: true,
         });
 
         // Set the results for the frontend
@@ -132,7 +132,7 @@ int main() {
         console.log("Average Memory Usage:", averageMemoryUsage);
 
         // Check if all test cases passed
-        const allTestCasesPassed = response.data.testResults.every(test => test.passed);
+        const allTestCasesPassed = response.data.testResults.every((test) => test.passed);
 
         // Set submission status based on whether all test cases passed
         const status = allTestCasesPassed ? "completed" : "rejected";
@@ -140,22 +140,28 @@ int main() {
 
         // Calculate number of test cases and number of passed test cases
         const numberOfTestCase = response.data.testResults.length;
-        const numberOfTestCasePass = response.data.testResults.filter(test => test.passed).length;
+        const numberOfTestCasePass = response.data.testResults.filter((test) => test.passed).length;
 
         console.log("Number of Test Cases:", numberOfTestCase);
         console.log("Number of Test Cases Passed:", numberOfTestCasePass);
 
-        console.log("helllo")
+        // Calculate marks for each test case
+        const testCaseResults = response.data.testResults.map((test, index) => {
+            const marks = test.passed ? testcases[index].marks : 0; // Assuming testcases have a `marks` property
+            return {
+                inputs: test.inputs,
+                expectedOutputs: test.expectedOutputs,
+                output: test.output,
+                passed: test.passed,
+                time: test.time,
+                memory: test.memory,
+                marks,
+            };
+        });
 
-        // Prepare the test case results to send along with the submission
-        const testCaseResults = response.data.testResults.map(test => ({
-            inputs: test.inputs,
-            expectedOutputs: test.expectedOutputs,
-            output: test.output,
-            passed: test.passed,
-            time: test.time,
-            memory: test.memory
-        }));
+        // Calculate total marks for the submission
+        const totalMarks = testCaseResults.reduce((sum, test) => sum + test.marks, 0);
+        console.log("Total Marks:", totalMarks);
 
         // Send the submission to the backend
         const rk = await axiosInstance.post("/submissions", {
@@ -168,15 +174,14 @@ int main() {
             status: status,                // Set the status to either "completed" or "rejected"
             numberOfTestCase,              // Total number of test cases
             numberOfTestCasePass,          // Number of passed test cases
-            testCaseResults: testCaseResults // Pass test case results as well
+            totalMarks,                    // Total marks obtained
+            testCaseResults,               // Pass test case results as well
         });
-
 
         console.log("Submission response:", rk.data.submission);
         if (onSubmission) {
             onSubmission(rk.data.submission);
         }
-
     } catch (error) {
         setError(
             error.response?.data?.details ||
@@ -187,6 +192,7 @@ int main() {
         setSubmitLoading(false);
     }
 };
+
 
 
 
@@ -209,7 +215,7 @@ int main() {
       <ScoreAndLanguageSelector
         language={language}
         handleLanguageChange={handleLanguageChange}
-        score={problem.score}
+        score={problem.totalMarks}
       />
       <CodeEditorArea
         language={language}
