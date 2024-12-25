@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
     });
 
     // Save the submission to the database
-    console.log(req.body);  // Log the request body for debugging purposes
+    // console.log(req.body);  // Log the request body for debugging purposes
     await submission.save();
 
     res.status(201).json({
@@ -122,7 +122,7 @@ router.get('/user/submissions', async (req, res) => {
       .skip((page - 1) * limit) // Skip records for pagination
       .limit(parseInt(limit)); // Limit the number of records
 
-    console.log(submissions)
+    // console.log(submissions)
 
     const totalSubmissions = await Submission.countDocuments({ user_id }); // Count total submissions
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FaUser, FaGithub, FaLinkedin, FaBirthdayCake, FaClipboardList } from "react-icons/fa";
 import axiosInstance from "../../utils/axiosInstance";
 import { ClipLoader } from 'react-spinners';
@@ -14,23 +14,26 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
   const githubURL = formData.github ? `https://github.com/${formData.github}` : null;
   const linkedInURL = formData.linkedIn || null;
 
-  useEffect(() => {
-    const fetchProfilePic = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get('/user/profile/upload-avatar', { responseType: 'blob' });
-        console.log("this is it: ", response.data);
-        const imageUrl = URL.createObjectURL(response.data);
-        setProfilePic(imageUrl);
-      } catch (error) {
-        console.error('Error fetching profile picture:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProfilePic = useCallback(async () => {
+    console.log("Hello there");
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/user/profile/upload-avatar', { responseType: 'blob' });
+      console.log("this is it: ", response.data);
+      const imageUrl = URL.createObjectURL(response.data);
+      setProfilePic(imageUrl);
+    } catch (error) {
+      console.error('Error fetching profile picture:', error);
+    } finally {
+      setLoading(false);
+    }
+  })
 
-    fetchProfilePic();
-  }, []);
+  useEffect(() => {
+    if (!profilePic) {
+      fetchProfilePic();
+    }
+  }, [setProfilePic]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -72,6 +75,27 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
       console.error('Upload Error:', error);
       setLoading(false);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      setLoading(true);
+      toast.success("Remove successfully");
+      setSelectedFile(null);
+      setProfilePic(null);
+      setLoading(false);
+      const response = await axiosInstance.delete('/user/profile/remove-profile-pic');
+      if (response.status === 200) {
+        setSelectedFile(null);
+        setProfilePic(null);
+        setLoading(false);
+      }
+      setLoading(false);
+    } catch (error) {
+      toast.error('Remove Error');
+      console.error('Remove Error:', error);
       setLoading(false);
     }
   };
@@ -152,6 +176,22 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
               </button>
             </>
           )}
+        </>
+      )}
+
+      {isEditing && profilePic && !selectedFile && (
+        <>
+          <div className="mt-2 w-full">
+            <label htmlFor="fileInput" className="block text-sm font-medium text-gray-300">
+              Remove a profile picture:
+            </label>
+            <button
+              onClick={handleRemoveImage}
+              className="mt-2 w-full bg-green-600 text-white rounded px-4 py-2 shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+            >
+              Remove image
+            </button>
+          </div>
         </>
       )}
 

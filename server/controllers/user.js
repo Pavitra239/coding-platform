@@ -208,3 +208,54 @@ export const getProfilePic = async (req, res) => {
     }
   }
 };
+
+export const removeProfilePic = async (req, res, next) => {
+  console.log('removeProfilePic API called');
+  const startTime = Date.now();
+
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log('User not found');
+      return res.status(404).json({ message: 'User does not exist.' });
+    }
+
+    const fileId = user.profile?.avatar;
+    if (!fileId) {
+      console.log('Avatar not found');
+      return res.status(404).json({ message: 'Avatar does not exist.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(fileId)) {
+      console.log('Invalid file ID');
+      return res.status(400).json({ message: 'Invalid file ID' });
+    }
+
+    const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+    console.log('Starting delete process at:', startTime);
+
+    bucket.delete(new mongoose.Types.ObjectId(fileId), async (err) => {
+      if (err) {
+        console.error('Error removing file:', err);
+        return res.status(500).json({ message: 'Error removing avatar.' });
+      }
+
+      console.log("Till here");
+      try {
+        user.profile.avatar = null;
+        await user.save();
+      } catch (saveError) {
+        console.error('Error saving user:', saveError);
+        return res.status(500).json({ message: 'Error saving user.' });
+      }
+
+      const endTime = Date.now();
+      console.log(`Avatar removed successfully in ${endTime - startTime}ms`);
+
+      return res.status(200).json({ message: 'Avatar removed successfully.' });
+    });
+  } catch (error) {
+    console.error('Error removing profile picture:', error);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+};
