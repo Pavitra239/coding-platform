@@ -65,6 +65,7 @@ router.get('/', async (req, res) => {
       .populate('user_id', 'name') // Populate user's name
       .populate('problem_id', 'title') // Populate problem's title
 
+
     // If no submissions found, return a 404
     if (submissions.length === 0) {
       return res.status(404).json({ message: 'No submissions found for the given user and problem.' });
@@ -88,9 +89,17 @@ router.get('/problem', async (req, res) => {
 
   try {
     // Find submissions by problem_id and populate user and problem data
-    const submissions = await Submission.find({ problem_id })
-      .populate('user_id', 'batch branch id semester username _id') // Populate all fields of the user
-      .populate('problem_id', 'title description'); // Populate only title and description of the problem
+    // Find submissions by problem_id and populate user data, projecting specific fields
+    const submissions = await Submission.find({ problem_id }, {
+      language: 1,
+      status: 1,
+      numberOfTestCase: 1,
+      numberOfTestCasePass: 1,
+      _id: 1,
+      createdAt: 1,
+      totalMarks: 1
+    })
+      .populate('user_id', 'id username batch branch semester _id'); // Populate specific user field
 
     // If no submissions found, return a 404
     if (submissions.length === 0) {
@@ -142,6 +151,21 @@ router.get('/user/submissions', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+  try {
+    const submission = await Submission.findById(id);
+    if (!submission) {
+      return res.status(404).json({ error: "Submission not found" });
+    }
+    console.log(submission);
+    res.json(submission);
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
   }
 });
 

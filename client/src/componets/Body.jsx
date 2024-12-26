@@ -22,6 +22,7 @@ import StudentList from './Admin/StudentList';
 import AssignProblem from './Problem/AssignProblem';
 import AssignedStudents from './Problem/assignedStudents';
 import StudentInfo from './Admin/StudentInfo';
+import Details from './Problem/Details';
 
 
 const Body = () => {
@@ -50,6 +51,7 @@ const Body = () => {
     { path:"/assignProblem/:problemId", element: <AssignProblem /> },
     { path:"/assignedStudents/:problemId", element: <AssignedStudents /> },
     { path:"/studentinformation", element: <StudentInfo /> },
+    { path:"/submissions/:submissionId", element:<Details />}
   ]);
 
   return (

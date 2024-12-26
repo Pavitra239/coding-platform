@@ -24,6 +24,7 @@ const History = () => {
           params: { user_id: userId, page, limit: 9 },
         }
       );
+      console.log(response.data);
       setSubmissions(response.data.submissions);
       setTotalPages(response.data.totalPages);
     } catch (err) {
