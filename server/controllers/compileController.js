@@ -51,28 +51,47 @@ export const compileCode = async (req, res) => {
     }
 
     // const arraysEqual = (arr1, arr2) => arr1.length === arr2.length && arr1.every((value, index) => value === arr2[index]);
+    const normalizeValue = (value) => {
+      try {
+        return JSON.parse(value); // Attempt to parse as a number, boolean, etc.
+      } catch {
+        return value; // Fallback to the original value (string)
+      }
+    };
+    
+    const normalizeArray = (arr) => arr.map(normalizeValue);
+    
     const arraysEqual = (arr1, arr2) => {
-      if (arr1.length !== arr2.length) {
-        console.log("Arrays are of different lengths:", arr1.length, arr2.length);
+      const mergeArrayToString = (arr) => arr.map(String).join(' ');
+    
+      const mergedArr1 = mergeArrayToString(arr1);
+      const mergedArr2 = mergeArrayToString(arr2);
+
+      console.log("Merged arr1:", mergedArr1);
+      console.log("Merged arr2:", mergedArr2);
+    
+      if (mergedArr1 !== mergedArr2) {
+        console.log(
+          `Merged arr1: "${mergedArr1}" (type: string) vs Merged arr2: "${mergedArr2}" (type: string)`
+        );
         return false;
       }
-    
-      return arr1.every((value, index) => {
-        const isEqual = value === arr2[index];
-        console.log(`Comparing arr1[${index}] = ${value} with arr2[${index}] = ${arr2[index]}: ${isEqual ? "Equal" : "Not Equal"}`);
-        return isEqual;
-      });
+      return true;
     };
+    
     
 
     const executeWithTimeout = (inputs) => {
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error("Execution timed out")), TIME_LIMIT);
         const inputValues = inputs.map((input) => input.value);
+        console.log("Input Values:", inputValues);
         const inputString = inputValues.join(" ") + "\n";
+        console.log("Input String:", inputString);
 
         const child = exec(runCommand, { timeout: TIME_LIMIT }, (error, stdout, stderr) => {
           clearTimeout(timeout);
+
           if (error) {
             if (stderr.includes("invalid_argument") || stderr.includes("stoi")) {
               resolve({ output: ["Invalid input"], time: 0, memory: 0 });
@@ -80,7 +99,14 @@ export const compileCode = async (req, res) => {
               reject(new Error(`Execution Error: ${stderr || error.message}`));
             }
           } else {
-            const outputArray = stdout.trim().split(/\s+/).map((value) => (isNaN(value) ? value : Number(value)));
+            const outputArray = stdout.trim().split(/\s+/)
+            .map((line) => {
+              try {
+                return JSON.parse(line); // Attempt to parse numbers, booleans, etc.
+              } catch {
+                return line; // Fallback to treating as a string
+              }
+            });;
             const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024;
             console.log("Output Array:", outputArray);
             resolve({ output: outputArray, time: Date.now(), memory: memoryUsage });
@@ -104,6 +130,7 @@ export const compileCode = async (req, res) => {
       try {
         const { output, time, memory } = await executeWithTimeout(inputs);
         const expectedValues = expectedOutputs.map((output) => output.value);
+        console.log("Expected Values:", expectedValues);
         const passed = arraysEqual(output, expectedValues);
 
         testResults.push({ inputs, expectedOutputs, output, passed, time, memory });

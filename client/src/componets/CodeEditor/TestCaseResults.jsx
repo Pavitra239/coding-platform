@@ -100,7 +100,7 @@ const TestCaseResults = ({
                   <div>
                   
                   {Array.isArray(currentTestCase.output)
-                      ? currentTestCase.output.join(", ")
+                      ? currentTestCase.output.join(" ")
                       : currentTestCase.output || "No output available"}
                   </div>
                     
