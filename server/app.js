@@ -15,6 +15,8 @@ import compileRoutes from "./routes/compileRoutes.js"; // Import the compile rou
 import submissionRoutes from "./routes/submissionRoutes.js"; // Import the submission routes
 import adminRouter from "./routes/admin.router.js";
 import facultyRouter from "./routes/faculty.router.js";
+import compiler from "./routes/compiler.js";
+
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -36,6 +38,7 @@ app.use("/api/v1/compile", compileRoutes);
 app.use("/api/v1/submissions", submissionRoutes); // Use submission routes
 app.use("/api/v1/admin", adminRouter); // admin section
 app.use("/api/v1/faculty", facultyRouter);
+app.use("/api/v1/compiler", compiler);
 
 app.all("*", notFoundHandler);
 app.use(errorHandler);

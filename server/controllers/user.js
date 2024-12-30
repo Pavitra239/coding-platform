@@ -36,7 +36,7 @@ import jwt from "jsonwebtoken";
 export const updateUser = async (req, res) => {
   try {
     const {
-      fullName,
+      username,
       gender,
       location,
       birthday,
@@ -55,7 +55,7 @@ export const updateUser = async (req, res) => {
     if (!token) {
       return res.status(401).json({ message: "Unauthorized", success: false });
     }
-
+    console.log(token);
     let decoded;
     try {
       decoded = jwt.verify(token, "ChauhanRutvik");
@@ -65,7 +65,9 @@ export const updateUser = async (req, res) => {
         .json({ message: "Invalid or expired token", success: false });
     }
 
+    
     const user = await User.findById(decoded.id);
+    console.log(user);
     if (!user) {
       return res
         .status(404)
@@ -73,14 +75,17 @@ export const updateUser = async (req, res) => {
     }
 
     // Ensure fullName and name are not empty strings
-    if (!fullName?.trim() || !name?.trim()) {
+    console.log("Name: ", name);
+    console.log("Full Name: ", username);
+    if (!username?.trim() || !name?.trim()) {
       return res.status(400).json({
         message: "Username and profile name cannot be empty.",
         success: false,
       });
     }
 
-    user.username = fullName;
+    console.log("User: ", user);
+    user.username = username;
     user.profile.name = name;
     user.email = email;
     user.profile = Object.assign(user.profile, {

@@ -3,24 +3,16 @@ import { DIFFICULTY } from "../utils/constants.js"; // Ensure this path is corre
 
 const { Schema } = mongoose;
 
+// Sample input/output schema for your sequence strings
 const sampleSchema = new Schema({
-  input: { type: String, required: [true, "Sample input is required"] },
-  output: { type: String, required: [true, "Sample output is required"] },
+  input: { type: String, required: [true, "Sample input is required"] }, // Input as a string
+  output: { type: String, required: [true, "Sample output is required"] }, // Output as a string
 });
 
-const inputSchema = new mongoose.Schema({
-  value: { type: mongoose.Schema.Types.Mixed, required: true }, // Assuming mixed types for inputs
-  type: { type: String, required: true }, // For input types
-});
-
-const outputSchema = new mongoose.Schema({
-  value: { type: mongoose.Schema.Types.Mixed, required: true }, // Assuming mixed types for outputs
-  type: { type: String, required: true }, // For output types
-});
-
+// Schema for test cases
 const testCaseSchema = new Schema({
-  inputs: { type: [inputSchema], required: true }, // Array of inputs
-  outputs: { type: [outputSchema], required: true }, // Array of outputs
+  inputs: { type: String, required: true }, // Single input string
+  outputs: { type: String, required: true }, // Single output string
   marks: {
     type: Number,
     required: [true, "Marks for the test case are required"],
@@ -28,6 +20,7 @@ const testCaseSchema = new Schema({
   }, // Marks for the test case
 });
 
+// Main problem schema with test cases
 const problemSchema = new Schema(
   {
     title: { type: String, required: [true, "Title is required"] },
@@ -43,8 +36,8 @@ const problemSchema = new Schema(
       type: String,
       required: [true, "Output format is required"],
     },
-    sampleIO: [sampleSchema], // Array of sample input/output pairs
-    testCases: [testCaseSchema], // Array of actual test cases for evaluation
+    sampleIO: [sampleSchema], // Sample input/output pairs
+    testCases: [testCaseSchema], // Test cases for evaluation
     constraints: { type: String },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -56,10 +49,10 @@ const problemSchema = new Schema(
       required: [true, "Total marks are required"],
       min: 0,
     },
-    tags: [{ type: String, default: [] }], // Array of tags
+    tags: [{ type: String, default: [] }], // Tags for the problem
     assignedStudents: [
       { type: Schema.Types.ObjectId, ref: "User", default: [] },
-    ], // Array of student IDs
+    ], // Students assigned to the problem
   },
   {
     timestamps: true,
@@ -67,6 +60,3 @@ const problemSchema = new Schema(
 );
 
 export default mongoose.model("Problem", problemSchema);
-
-
-            

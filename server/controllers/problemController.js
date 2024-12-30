@@ -5,6 +5,58 @@ import user from "../models/user.js";
 import mongoose from "mongoose";
 
 // Create problem
+// export const createProblem = async (req, res) => {
+//   const {
+//     title,
+//     description,
+//     difficulty,
+//     inputFormat,
+//     outputFormat,
+//     sampleIO,
+//     testCases = [], // Default to an empty array if undefined
+//     constraints,
+//     tags,
+//     createdBy,
+//     totalMarks
+//     } = req.body;
+
+//   console.log("testCases", testCases);
+
+//   try {
+//     const problem = new Problem({
+//       title,
+//       description,
+//       difficulty,
+//       inputFormat,
+//       outputFormat,
+//       sampleIO,
+//       testCases: testCases.map((testCase) => ({
+//         inputs: testCase.inputs.map((input, index) => ({
+//           value: input,
+//           type: testCase.inputTypes[index], // Use index to get corresponding type
+//         })),
+//         outputs: testCase.outputs.map((output, index) => ({
+//           value: output,
+//           type: testCase.outputTypes[index], // Use index to get corresponding type
+//         })),
+//         marks: testCase.marks, // Assign marks for the test case
+//         timeLimit: testCase.timeLimit, // Include timeLimit if provided
+//         memoryLimit: testCase.memoryLimit, // Include memoryLimit if provided
+//       })),
+//       constraints,
+//       tags,
+//       totalMarks,
+//       createdBy: req.user?._id || createdBy,
+//     });
+
+//     const createdProblem = await problem.save();
+//     res.status(201).json(createdProblem);
+//   } catch (error) {
+//     console.log(error + " error");
+//     res.status(400).json({ message: error.message });
+//   }
+// };
+
 export const createProblem = async (req, res) => {
   const {
     title,
@@ -16,46 +68,58 @@ export const createProblem = async (req, res) => {
     testCases = [], // Default to an empty array if undefined
     constraints,
     tags,
-    createdBy,
-    totalMarks
-    } = req.body;
+    totalMarks,
+    createdBy
+  } = req.body;
 
-  console.log("testCases", testCases);
+  // Enhanced logging for testCases to check the raw input structure
+  console.log("Received testCases raw:", testCases);
+  if (Array.isArray(testCases)) {
+    testCases.forEach((testCase, index) => {
+      console.log(`TestCase ${index + 1}:`, JSON.stringify(testCase, null, 2));
+    });
+  } else {
+    console.error("Received testCases is not an array:", testCases);
+  }
 
   try {
+    // Create a new Problem document using the provided data
     const problem = new Problem({
       title,
       description,
       difficulty,
       inputFormat,
       outputFormat,
-      sampleIO,
+      sampleIO: sampleIO.map((sample) => ({
+        input: sample.input, // Input as a string (e.g., "3 3 1 2 3 4 5 6 7 8 9")
+        output: sample.output, // Output as a string (e.g., "6 15 24 12 15 18")
+      })),
       testCases: testCases.map((testCase) => ({
-        inputs: testCase.inputs.map((input, index) => ({
-          value: input,
-          type: testCase.inputTypes[index], // Use index to get corresponding type
-        })),
-        outputs: testCase.outputs.map((output, index) => ({
-          value: output,
-          type: testCase.outputTypes[index], // Use index to get corresponding type
-        })),
-        marks: testCase.marks, // Assign marks for the test case
-        timeLimit: testCase.timeLimit, // Include timeLimit if provided
-        memoryLimit: testCase.memoryLimit, // Include memoryLimit if provided
+        inputs: testCase.inputs, // Store the input as a single string (e.g., "1 2 3 4")
+        outputs: testCase.outputs, // Store the output as a single string (e.g., "10")
+        marks: testCase.marks || 0, // Ensure marks are set, defaulting to 0
       })),
       constraints,
       tags,
       totalMarks,
-      createdBy: req.user?._id || createdBy,
+      createdBy
     });
 
+    // Save the problem to the database
     const createdProblem = await problem.save();
+    console.log("Created Problem:", createdProblem);
+
+    // Respond with the created problem
     res.status(201).json(createdProblem);
   } catch (error) {
-    console.log(error + " error");
-    res.status(400).json({ message: error.message });
+    console.error("Error creating problem:", error);
+    res.status(400).json({ message: error.message }); // Return error message if something goes wrong
   }
 };
+
+
+
+
 
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
@@ -363,59 +427,121 @@ export const getProblemById = async (req, res) => {
 };
 
 // Update problem
+// export const updateProblem = async (req, res) => {
+//   try {
+//     const problem = await Problem.findById(req.params.id);
+
+//     if (!problem) {
+//       return res.status(404).json({ message: "Problem not found" });
+//     }
+
+//     const {
+//       sampleIO,
+//       testCases,
+//       ...otherUpdates // Extract other fields for direct assignment
+//     } = req.body;
+
+//     // Update sampleIO if provided
+//     if (sampleIO) {
+//       problem.sampleIO = sampleIO.map((sample) => ({
+//         input: sample.input,
+//         output: sample.output,
+//       }));
+//     }
+
+//     // Update testCases if provided
+//     if (testCases) {
+//       problem.testCases = testCases.map((testCase) => ({
+//         inputs: testCase.inputs.map((input, index) => ({
+//           value: input,
+//           type: testCase.inputTypes?.[index], // Safely access inputTypes
+//         })),
+//         outputs: testCase.outputs.map((output, index) => ({
+//           value: output,
+//           type: testCase.outputTypes?.[index], // Safely access outputTypes
+//         })),
+//         timeLimit: testCase.timeLimit,
+//         memoryLimit: testCase.memoryLimit,
+//         marks: testCase.marks || 0, // Default marks to 0 if not provided
+//       }));
+//     }
+
+//     // Assign other updates directly
+//     Object.assign(problem, otherUpdates);
+
+//     // Save updated problem
+//     const updatedProblem = await problem.save();
+
+//     res.json(updatedProblem);
+//   } catch (error) {
+//     console.error("Update Problem Error:", error); // Log the error for debugging
+//     res
+//       .status(500)
+//       .json({ message: "Failed to update problem. Please try again later." });
+//   }
+// };
+
+
 export const updateProblem = async (req, res) => {
   try {
+    // Find the problem by its ID
     const problem = await Problem.findById(req.params.id);
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
 
+    // Extract the fields from the request body for updating
     const {
       sampleIO,
       testCases,
       ...otherUpdates // Extract other fields for direct assignment
     } = req.body;
 
+    // Log the received test cases for debugging
+    console.log("Received testCases raw:", testCases);
+    if (Array.isArray(testCases)) {
+      testCases.forEach((testCase, index) => {
+        console.log(`TestCase ${index + 1}:`, JSON.stringify(testCase, null, 2));
+      });
+    } else {
+      console.error("Received testCases is not an array:", testCases);
+    }
+
     // Update sampleIO if provided
     if (sampleIO) {
       problem.sampleIO = sampleIO.map((sample) => ({
-        input: sample.input,
-        output: sample.output,
+        input: sample.input, // Ensure input is a string
+        output: sample.output, // Ensure output is a string
       }));
     }
 
     // Update testCases if provided
     if (testCases) {
       problem.testCases = testCases.map((testCase) => ({
-        inputs: testCase.inputs.map((input, index) => ({
-          value: input,
-          type: testCase.inputTypes?.[index], // Safely access inputTypes
-        })),
-        outputs: testCase.outputs.map((output, index) => ({
-          value: output,
-          type: testCase.outputTypes?.[index], // Safely access outputTypes
-        })),
-        timeLimit: testCase.timeLimit,
-        memoryLimit: testCase.memoryLimit,
+        inputs: testCase.inputs, // Ensure inputs are a string
+        outputs: testCase.outputs, // Ensure outputs are a string
         marks: testCase.marks || 0, // Default marks to 0 if not provided
       }));
     }
 
-    // Assign other updates directly
+    // Assign other updates directly to the problem object
     Object.assign(problem, otherUpdates);
 
-    // Save updated problem
+    // Save the updated problem to the database
     const updatedProblem = await problem.save();
+    console.log("Updated Problem:", updatedProblem);
 
+    // Send the updated problem back as a response
     res.json(updatedProblem);
   } catch (error) {
-    console.error("Update Problem Error:", error); // Log the error for debugging
-    res
-      .status(500)
-      .json({ message: "Failed to update problem. Please try again later." });
+    console.error("Update Problem Error:", error); // Log error for debugging
+    res.status(500).json({
+      message: "Failed to update the problem. Please try again later.",
+    });
   }
 };
+
 
 // Delete problem
 export const deleteProblem = async (req, res) => {

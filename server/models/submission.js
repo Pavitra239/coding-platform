@@ -2,29 +2,16 @@ import mongoose from 'mongoose';
 import { STATUS } from '../utils/constants.js';  // Ensure this path is correct
 const { Schema } = mongoose;
 
-// Define the structure for inputs, expected outputs, and test case results
-const inputSchema = new mongoose.Schema({
-  value: { type: mongoose.Schema.Types.Mixed, required: true }, // Mixed types for inputs
-  type: { type: String, required: true }, // For input types (e.g., "int")
-  _id: { type: mongoose.Schema.Types.ObjectId, required: true }, // Assuming _id is passed in the input data
-});
-
-const outputSchema = new mongoose.Schema({
-  value: { type: mongoose.Schema.Types.Mixed, required: true }, // Mixed types for outputs
-  type: { type: String, required: true }, // For output types (e.g., "int")
-  _id: { type: mongoose.Schema.Types.ObjectId, required: true }, // Assuming _id is passed in the output data
-});
 
 const testCaseResultSchema = new Schema({
-  inputs: { type: [inputSchema], required: true }, // Array of inputs for the test case
-  expectedOutputs: { type: [outputSchema], required: true }, // Expected outputs for the test case
-  output: { type: [String], required: true }, // Actual output (array of strings, as shown in your example)
+  input: { type: String, required: true }, // Single input string
+  output: { type: String, required: true }, // Single output string
+  expectedOutput: { type: String, required: true }, // Expected outputs for the test case
   passed: { type: Boolean, required: true }, // Pass or fail status
-  time: { type: Number, required: true }, // Execution time (in milliseconds or another unit)
-  memory: { type: Number, required: true }, // Memory usage (in MB or another unit)
+  time: { type: Number, required: true }, // Execution time (in seconds or another unit)
+  memory: { type: Number, required: true }, // Memory usage (in KB or another unit)
 });
 
-// Main submission schema
 const submissionSchema = new Schema({
   user_id: {
     type: Schema.Types.ObjectId,
@@ -51,25 +38,25 @@ const submissionSchema = new Schema({
     required: [true, 'Status is required'],
   },
   execution_time: {
-    type: Number,
+    type: Number, // Execution time in miliseconds
     required: [true, 'Execution time is required'],
   },
   memory_usage: {
-    type: Number,
+    type: Number, // Memory usage in MB
     required: [true, 'Memory usage is required'],
   },
   numberOfTestCase: {
     type: Number,
-    required: [true, 'numberOfTestCase is required'],
+    required: [true, 'Number of test cases is required'],
   },
   numberOfTestCasePass: {
     type: Number,
-    required: [true, 'numberOfTestCasePass is required'],
+    required: [true, 'Number of test cases passed is required'],
   },
   totalMarks: {
     type: Number,
-    required: [true, 'totalMarks is required'],
-    min:0,
+    required: [true, 'Total marks are required'],
+    min: 0,
   },
   testCaseResults: [testCaseResultSchema], // Array to store multiple test case results
 }, {

@@ -6,7 +6,7 @@ import {
     updateContest,
     deleteContest,
   } from '../controllers/contestController.js';
-import { isAuthorized, isAdmin } from "../middlewares/auth.js";
+import { isAuthorized, isAdmin,isAdminOrFaculty } from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const router = express.Router();
 router.use(isAuthorized);
 
 // Create a new contest
-router.post('/create', isAdmin,createContest);
+router.post('/create', isAdminOrFaculty,createContest);
 
 // Get All Contests
 router.get('/', getAllContests);
@@ -23,9 +23,9 @@ router.get('/', getAllContests);
 router.get('/:id', getContestById);
 
 // Update Contest
-router.put('/:id', isAdmin,updateContest);
+router.put('/:id', isAdminOrFaculty,updateContest);
 
 // Delete Contest
-router.delete('/:id', isAdmin,deleteContest);
+router.delete('/:id', isAdminOrFaculty,deleteContest);
 
 export default router;

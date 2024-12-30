@@ -6,8 +6,9 @@ import TestCaseResults from "./TestCaseResults";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-const CodeEditor = ({ language, setLanguage, problem, onSubmission  }) => {
+const CodeEditor = ({ language, setLanguage, problem, onSubmission }) => {
   const user = useSelector((state) => state.app.user);
+  const [assignLoading, setAssignLoading] = useState(false); // For button-specific loading
   const userId = user._id;
   const testcases = problem.testCases;
 
@@ -18,8 +19,8 @@ const CodeEditor = ({ language, setLanguage, problem, onSubmission  }) => {
 import java.lang.*;
 import java.io.*;
 
-class Solution {
-    public static void main(String[] args) throws java.lang.Exception {
+class Main {
+    public static void main(String[] args){
         // Your code goes here
         System.out.println("Hello, World!");
     }
@@ -86,11 +87,11 @@ int main() {
     setResults(null);
     setError(null);
     try {
-      const response = await axiosInstance.post("/compile", {
+      const response = await axiosInstance.post("/compiler/run-code", {
         code: codeByLanguage[language],
         language,
-        testCases : testcases,
-        allTestcase : false
+        testCases: testcases,
+        allTestCases: false,
       });
       setResults(response.data.testResults);
       console.log("Submission response:", response.data.testResults);
@@ -104,97 +105,107 @@ int main() {
     }
   };
 
-
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitLoading(true);
     setResults(null);
     setError(null);
+    setAssignLoading(true); // Start loading
 
     try {
-        // Send the code, language, and test cases to the backend for compilation
-        const response = await axiosInstance.post("/compile", {
-            code: codeByLanguage[language],
-            language,
-            testCases: testcases,
-            allTestcase: true,
-        });
+      // Prepare data for compilation request
+      const compilePayload = {
+        code: codeByLanguage[language],
+        language,
+        testCases: testcases,
+        allTestCases: true, // Ensures backend processes all test cases
+      };
 
-        // Set the results for the frontend
-        setResults(response.data.testResults);
-        console.log("Submission response:", response.data.testResults);
+      // Send code and test cases to the backend for compilation
+      const compileResponse = await axiosInstance.post(
+        "/compiler/run-code",
+        compilePayload
+      );
+      let {
+        testResults,
+        overallTime,
+        averageMemory,
+        allPassed,
+      } = compileResponse.data;
 
-        // Collect overall performance data
-        const totalExecutionTime = response.data.overallTime;
-        const averageMemoryUsage = response.data.averageMemory;
+      console.log("Compilation Results:", testResults);
+      setResults(testResults);
 
-        console.log("Total Execution Time:", totalExecutionTime);
-        console.log("Average Memory Usage:", averageMemoryUsage);
+      // Convert overallTime from seconds to milliseconds
+      overallTime = (overallTime * 1000).toFixed(2); // Now in ms
+      // Convert averageMemory from KB to MB
+      averageMemory = (averageMemory / 1024).toFixed(2); // Now in MB
 
-        // Check if all test cases passed
-        const allTestCasesPassed = response.data.testResults.every((test) => test.passed);
+      console.log(`Overall Time: ${overallTime} ms`);
+      console.log(`Average Memory: ${averageMemory} MB`);
 
-        // Set submission status based on whether all test cases passed
-        const status = allTestCasesPassed ? "completed" : "rejected";
-        console.log("Submission Status:", status);
+      // Calculate metrics and prepare test case results
+      const numberOfTestCase = testResults.length;
+      const numberOfTestCasePass = testResults.filter((test) => test.passed)
+        .length;
+      const testCaseResults = testResults.map((test, index) => {
+        const marks =
+          test.passed && testcases[index]?.marks ? testcases[index].marks : 0;
+        return { ...test, marks };
+      });
 
-        // Calculate number of test cases and number of passed test cases
-        const numberOfTestCase = response.data.testResults.length;
-        const numberOfTestCasePass = response.data.testResults.filter((test) => test.passed).length;
+      const totalMarks = testCaseResults.reduce(
+        (sum, test) => sum + test.marks,
+        0
+      );
+      const submissionStatus = allPassed ? "completed" : "rejected";
 
-        console.log("Number of Test Cases:", numberOfTestCase);
-        console.log("Number of Test Cases Passed:", numberOfTestCasePass);
+      console.log("Number of Test Cases:", numberOfTestCase);
+      console.log("Number of Test Cases Passed:", numberOfTestCasePass);
+      console.log("Total Marks Obtained:", totalMarks);
+      console.log("Submission Status:", submissionStatus);
 
-        // Calculate marks for each test case
-        const testCaseResults = response.data.testResults.map((test, index) => {
-            const marks = test.passed ? testcases[index].marks : 0; // Assuming testcases have a `marks` property
-            return {
-                inputs: test.inputs,
-                expectedOutputs: test.expectedOutputs,
-                output: test.output,
-                passed: test.passed,
-                time: test.time,
-                memory: test.memory,
-                marks,
-            };
-        });
+      // Prepare submission payload with time in ms and memory in MB
+      const submissionPayload = {
+        user_id: userId,
+        problem_id: problem._id,
+        code: codeByLanguage[language],
+        language,
+        execution_time: overallTime, // Now in ms
+        memory_usage: averageMemory, // Now in MB
+        status: submissionStatus,
+        numberOfTestCase,
+        numberOfTestCasePass,
+        totalMarks,
+        testCaseResults,
+      };
 
-        // Calculate total marks for the submission
-        const totalMarks = testCaseResults.reduce((sum, test) => sum + test.marks, 0);
-        console.log("Total Marks:", totalMarks);
+      // Send the submission to the backend
+      const submissionResponse = await axiosInstance.post(
+        "/submissions",
+        submissionPayload
+      );
+      const savedSubmission = submissionResponse.data.submission;
 
-        // Send the submission to the backend
-        const rk = await axiosInstance.post("/submissions", {
-            user_id: userId,               // assuming you have the user_id available
-            problem_id: problem._id,       // assuming you have the problem_id available
-            code: codeByLanguage[language],
-            language,
-            execution_time: totalExecutionTime,
-            memory_usage: averageMemoryUsage,
-            status: status,                // Set the status to either "completed" or "rejected"
-            numberOfTestCase,              // Total number of test cases
-            numberOfTestCasePass,          // Number of passed test cases
-            totalMarks,                    // Total marks obtained
-            testCaseResults,               // Pass test case results as well
-        });
+      console.log("Submission Saved Successfully:", savedSubmission);
 
-        console.log("Submission response:", rk.data.submission);
-        if (onSubmission) {
-            onSubmission(rk.data.submission);
-        }
+      // Trigger callback if provided
+      if (onSubmission) {
+        onSubmission(savedSubmission);
+      }
     } catch (error) {
-        setError(
-            error.response?.data?.details ||
-            "Failed to submit code. Please try again."
-        );
+      // Handle errors gracefully
+      const errorMessage =
+        error.response?.data?.details || "An error occurred. Please try again.";
+      console.error("Submission Error:", error);
+      setError(errorMessage);
     } finally {
-        setIsLoading(false);
-        setSubmitLoading(false);
+      // Reset loading states
+      setIsLoading(false);
+      setSubmitLoading(false);
+      setAssignLoading(false); // Start loading
     }
-};
-
-
-
+  };
 
   const handleSaveCode = async () => {
     try {
@@ -238,9 +249,34 @@ int main() {
         error={error}
       />
 
+      {assignLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="flex flex-col items-center">
+            <svg
+              className="animate-spin h-12 w-12 text-blue-500 mb-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              ></path>
+            </svg>
+            <p className="text-white text-lg font-semibold">Submitting...</p>
+          </div>
+        </div>
+      )}
     </div>
-
-    
   );
 };
 

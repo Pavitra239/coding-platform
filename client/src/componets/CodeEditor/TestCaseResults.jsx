@@ -84,26 +84,14 @@ const TestCaseResults = ({
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">Input</h4>
                   <div className="p-3 bg-gray-900 rounded-lg overflow-auto mb-2">
-                    {currentTestCase.inputs && currentTestCase.inputs.length > 0
-                      ? currentTestCase.inputs.map((input, i) => (
-                          <div key={i} className="mb-1">
-                            {input.value || "No input provided"}
-                          </div>
-                        ))
-                      : "No inputs available"}
+                    {currentTestCase.input || "No input provided"}
                   </div>
                 </div>
 
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">Output</h4>
                   <div className="p-3 bg-gray-900 rounded-lg overflow-auto">
-                  <div>
-                  
-                  {Array.isArray(currentTestCase.output)
-                      ? currentTestCase.output.join(" ")
-                      : currentTestCase.output || "No output available"}
-                  </div>
-                    
+                    {currentTestCase.output || "No output available"}
                   </div>
                 </div>
               </div>
@@ -111,16 +99,7 @@ const TestCaseResults = ({
               <div className="mt-4">
                 <h4 className="text-sm font-semibold text-gray-400 mb-2">Expected Output</h4>
                 <div className="p-3 bg-gray-900 rounded-lg overflow-auto">
-                  {currentTestCase.expectedOutputs &&
-                  currentTestCase.expectedOutputs.length > 0 ? (
-                    currentTestCase.expectedOutputs.map((expectedOutput, i) => (
-                      <div key={i} className="mb-1">
-                        {expectedOutput.value || "No expected output"}
-                      </div>
-                    ))
-                  ) : (
-                    "No expected outputs available"
-                  )}
+                  {currentTestCase.expectedOutput || "No expected output"}
                 </div>
               </div>
             </div>
@@ -129,7 +108,7 @@ const TestCaseResults = ({
       ) : (
         !error && (
           <div className="mt-4 text-gray-500">
-         
+            {/* No results available */}
           </div>
         )
       )}

@@ -14,10 +14,10 @@ const DIFFICULTY = {
 
 const ProblemForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get the problem ID from the URL
-  const user = useSelector((state) => state.app.user); // Get the logged-in user
+  const { id } = useParams();
+  const user = useSelector((state) => state.app.user);
+  const [assignLoading, setAssignLoading] = useState(false); // For button-specific loading
 
-  // Initial state for problem data
   const [problemData, setProblemData] = useState({
     title: "",
     description: "",
@@ -30,16 +30,14 @@ const ProblemForm = () => {
     totalMarks: 0,
     testCases: [
       {
-        inputs: [""],
-        inputTypes: ["string"],
-        outputs: [""],
-        outputTypes: ["string"],
+        inputs: "",
+        outputs: "",
         marks: 0,
       },
     ],
   });
 
-  const [isEditing, setIsEditing] = useState(false); // Check if we're in edit mode
+  const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState({});
   const [isModalOpenInternal, setIsModalOpenInternal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,15 +45,15 @@ const ProblemForm = () => {
 
   // Fetch problem if editing
   useEffect(() => {
+    setAssignLoading(true); // Start loading
     if (id) {
       setIsEditing(true);
+
       const fetchProblem = async () => {
         try {
           const response = await axiosInstance.get(`/problems/${id}`);
           const fetchedData = response.data;
-          console.log(fetchedData);
 
-          // Map fetched data to internal state structure
           setProblemData({
             title: fetchedData.title,
             description: fetchedData.description,
@@ -67,32 +65,31 @@ const ProblemForm = () => {
             tags: fetchedData.tags,
             totalMarks: fetchedData.totalMarks || 0,
             testCases: fetchedData.testCases.map((testCase) => ({
-              inputs: testCase.inputs.map((input) => input.value), // Extracting only values
-              inputTypes: testCase.inputs.map((input) => input.type), // Extracting types directly
-              outputs: testCase.outputs.map((output) => output.value), // Extracting only values
-              outputTypes: testCase.outputs.map((output) => output.type), // Extracting types directly
+              inputs: testCase.inputs,
+              outputs: testCase.outputs,
               marks: testCase.marks,
             })),
           });
+          setAssignLoading(false); // Start loading
         } catch (error) {
           toast.error("Failed to load problem data");
           console.error(error);
+          setAssignLoading(false); // Start loading
         }
       };
       fetchProblem();
     } else {
       setIsEditing(false);
+      setAssignLoading(false); // Start loading
     }
   }, [id]);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProblemData({ ...problemData, [name]: value });
     setErrors({ ...errors, [name]: false });
   };
 
-  // Handle dynamic sample input/output change
   const handleSampleChange = (index, e) => {
     const { name, value } = e.target;
     const newSampleIO = [...problemData.sampleIO];
@@ -100,7 +97,6 @@ const ProblemForm = () => {
     setProblemData({ ...problemData, sampleIO: newSampleIO });
   };
 
-  // Add new sample input/output pair
   const addSampleIO = () => {
     setProblemData({
       ...problemData,
@@ -108,15 +104,117 @@ const ProblemForm = () => {
     });
   };
 
-  // Remove a sample input/output pair
   const removeSampleIO = (index) => {
     const newSampleIO = problemData.sampleIO.filter((_, i) => i !== index);
     setProblemData({ ...problemData, sampleIO: newSampleIO });
   };
 
-  // Validate form
+  const handleTestCaseChange = (index, field, value) => {
+    const newTestCases = [...problemData.testCases];
+
+    if (field === "marks") {
+      const marks = parseInt(value, 10) || 0; // Ensure valid integer
+      if (marks < 0) return; // Prevent negative marks for individual test cases
+      newTestCases[index][field] = marks;
+    } else {
+      newTestCases[index][field] = value;
+    }
+
+    setProblemData({ ...problemData, testCases: newTestCases });
+    updateTotalMarks(newTestCases);
+  };
+
+  const addTestCase = () => {
+    setProblemData({
+      ...problemData,
+      testCases: [
+        ...problemData.testCases,
+        { inputs: "", outputs: "", marks: 0 },
+      ],
+    });
+  };
+
+  const handleRemoveTestCase = (index) => {
+    const newTestCases = problemData.testCases.filter((_, i) => i !== index);
+    setProblemData({ ...problemData, testCases: newTestCases });
+    updateTotalMarks(newTestCases);
+  };
+
+  const updateTotalMarks = (testCases) => {
+    const total = testCases.reduce((sum, tc) => sum + tc.marks, 0);
+    // Ensure totalMarks is not zero
+    setProblemData((prevData) => ({ ...prevData, totalMarks: total }));
+  };
+
+  const renderTestCases = () => {
+    return problemData.testCases.map((testCase, index) => {
+      // Determine if there's an error for this test case
+      const hasError =
+        errors[`testCase_${index}`] ||
+        (errors.totalMarks && problemData.totalMarks === 0);
+
+      return (
+        <div
+          key={index}
+          className={`mb-4 p-4 border rounded-md ${
+            hasError ? "border-red-600" : "border-gray-700"
+          } bg-gray-900`}
+        >
+          <h3 className="text-lg font-semibold text-gray-300 mb-4">
+            Test Case {index + 1}
+          </h3>
+          <textarea
+            placeholder="Input"
+            value={testCase.inputs}
+            onChange={(e) =>
+              handleTestCaseChange(index, "inputs", e.target.value)
+            }
+            className={`w-full p-4 bg-gray-800 border ${
+              hasError ? "border-red-600" : "border-gray-700"
+            } rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            rows="3"
+          />
+          <textarea
+            placeholder="Expected Output"
+            value={testCase.outputs}
+            onChange={(e) =>
+              handleTestCaseChange(index, "outputs", e.target.value)
+            }
+            className={`w-full p-4 bg-gray-800 border ${
+              hasError ? "border-red-600" : "border-gray-700"
+            } rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            rows="3"
+          />
+          <input
+            type="number"
+            placeholder="Marks"
+            value={testCase.marks}
+            onChange={(e) =>
+              handleTestCaseChange(index, "marks", e.target.value)
+            }
+            className={`w-full p-4 bg-gray-800 border ${
+              hasError ? "border-red-600" : "border-gray-700"
+            } rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          />
+          {problemData.testCases.length > 1 && (
+            <button
+              type="button"
+              onClick={() => handleRemoveTestCase(index)}
+              className="text-red-600 hover:text-red-800 mt-2"
+            >
+              Remove Test Case
+            </button>
+          )}
+        </div>
+      );
+    });
+  };
+
+  // Form validation
   const validateForm = () => {
     const newErrors = {};
+
+    // Validate problem fields
     if (!problemData.title) newErrors.title = true;
     if (!problemData.description) newErrors.description = true;
     if (!problemData.inputFormat) newErrors.inputFormat = true;
@@ -128,333 +226,28 @@ const ProblemForm = () => {
     }
     if (!problemData.constraints) newErrors.constraints = true;
     if (!problemData.tags) newErrors.tags = true;
+
+    // Validate test cases
+    problemData.testCases.forEach((testCase, index) => {
+      if (!testCase.inputs || !testCase.outputs || testCase.marks < 0) {
+        newErrors[`testCase_${index}`] = true;
+        console.log("Test case error", index);
+      }
+    });
+
+    if (problemData.totalMarks === 0) {
+      newErrors.totalMarks = true;
+      // Mark all test cases with an error if total marks is 0
+      problemData.testCases.forEach((_, index) => {
+        newErrors[`testCase_${index}`] = true;
+      });
+    }
+
+    setErrors(newErrors); // Store errors for styling
     return newErrors;
   };
 
-  // Handle dynamic test cases change
-  const handleTestCaseChange = (
-    index,
-    type,
-    value,
-    fieldIndex,
-    inputType,
-    field = "inputs"
-  ) => {
-    const updatedTestCases = [...problemData.testCases];
-
-    if (type === "input" || type === "output") {
-      const targetArray =
-        type === "input"
-          ? updatedTestCases[index].inputs
-          : updatedTestCases[index].outputs;
-      const targetTypesArray =
-        type === "input"
-          ? updatedTestCases[index].inputTypes
-          : updatedTestCases[index].outputTypes;
-
-      if (inputType === "int") {
-        const parsedValue = parseFloat(value);
-        targetArray[fieldIndex] = isNaN(parsedValue) ? "" : parsedValue;
-      } else {
-        targetArray[fieldIndex] = value;
-      }
-
-      setProblemData({ ...problemData, testCases: updatedTestCases });
-    } else if (type === "marks") {
-      // Handle change for marks field
-      const newMarks = parseInt(value) || 0; // Ensure marks are an integer
-      updatedTestCases[index].marks = newMarks;
-
-      // Recalculate total marks
-      const totalMarks = updatedTestCases.reduce(
-        (sum, testCase) => sum + testCase.marks,
-        0
-      );
-
-      setProblemData({
-        ...problemData,
-        testCases: updatedTestCases,
-        totalMarks: totalMarks,
-      });
-    }
-  };
-
-  const addTestCase = () => {
-    setProblemData({
-      ...problemData,
-      testCases: [
-        ...problemData.testCases,
-        { inputs: [], outputs: [], marks: 0 },
-      ], // Initialize marks for new test cases
-    });
-  };
-
-  const removeTestCase = (index) => {
-    const newTestCases = problemData.testCases.filter((_, i) => i !== index);
-    setProblemData({ ...problemData, testCases: newTestCases });
-  };
-
-  const renderTestCases = () => {
-    return problemData.testCases.map((testCase, index) => (
-      <div
-        key={index}
-        className="relative p-6 mb-8 bg-gray-900 rounded-lg shadow-lg border border-gray-600"
-      >
-        <div className="flex flex-wrap justify-between items-center mb-4">
-          <label className="text-1xl font-semibold text-white">
-            Test Case {index + 1}
-          </label>
-          <button
-            type="button"
-            onClick={() => removeTestCase(index)}
-            className="px-2 py-2 bg-red-600 text-white text-1xl font-medium rounded-lg hover:bg-red-700 transition-colors"
-            aria-label={`Remove Test Case ${index + 1}`}
-          >
-            Remove Test Case
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {/* Marks Section */}
-          <div>
-            <label className="block text-1xl font-medium text-white mb-2">
-              Marks
-            </label>
-            <input
-              type="number"
-              value={testCase.marks}
-              onChange={(e) =>
-                handleTestCaseChange(index, "marks", e.target.value)
-              }
-              className="w-full sm:w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter marks"
-              aria-label={`Marks for Test Case ${index + 1}`}
-            />
-          </div>
-
-          {/* Inputs Section */}
-          <div>
-            <label className="block text-1xl font-medium text-white mb-2">
-              Inputs
-            </label>
-            {testCase.inputs.map((input, inputIndex) => (
-              <div
-                key={inputIndex}
-                className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3"
-              >
-                <select
-                  onChange={(e) => {
-                    const inputType = e.target.value;
-                    const updatedTestCases = [...problemData.testCases];
-
-                    if (
-                      updatedTestCases[index].inputTypes[inputIndex] !==
-                      inputType
-                    ) {
-                      updatedTestCases[index].inputs[inputIndex] = ""; // Reset input value
-                    }
-
-                    updatedTestCases[index].inputTypes[inputIndex] = inputType;
-                    setProblemData({
-                      ...problemData,
-                      testCases: updatedTestCases,
-                    });
-                  }}
-                  value={testCase.inputTypes[inputIndex]}
-                  className="w-full sm:w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label={`Input type for input ${inputIndex + 1}`}
-                >
-                  <option value="string">String</option>
-                  <option value="int">Integer</option>
-                </select>
-
-                <input
-                  type={
-                    testCase.inputTypes[inputIndex] === "int"
-                      ? "number"
-                      : "text"
-                  }
-                  step={
-                    testCase.inputTypes[inputIndex] === "int"
-                      ? "any"
-                      : undefined
-                  }
-                  value={input}
-                  onChange={(e) =>
-                    handleTestCaseChange(
-                      index,
-                      "input",
-                      e.target.value,
-                      inputIndex,
-                      testCase.inputTypes[inputIndex]
-                    )
-                  }
-                  className="w-full sm:w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={`Enter input ${inputIndex + 1}`}
-                  aria-label={`Input value for input ${inputIndex + 1}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeInputField(index, inputIndex)}
-                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  aria-label={`Remove Output ${inputIndex + 1}`}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            <div
-              onClick={() => addInputField(index)}
-              className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
-              aria-label="Add Input"
-            >
-              + Add Input
-            </div>
-          </div>
-
-          {/* Outputs Section */}
-          <div>
-            <label className="block text-1xl font-medium text-white mb-2">
-              Outputs
-            </label>
-            {testCase.outputs.map((output, outputIndex) => (
-              <div
-                key={outputIndex}
-                className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-3"
-              >
-                <select
-                  onChange={(e) => {
-                    const outputType = e.target.value;
-                    const updatedTestCases = [...problemData.testCases];
-
-                    if (
-                      updatedTestCases[index].outputTypes[outputIndex] !==
-                      outputType
-                    ) {
-                      updatedTestCases[index].outputs[outputIndex] = ""; // Reset output value
-                    }
-
-                    updatedTestCases[index].outputTypes[
-                      outputIndex
-                    ] = outputType;
-                    setProblemData({
-                      ...problemData,
-                      testCases: updatedTestCases,
-                    });
-                  }}
-                  value={testCase.outputTypes[outputIndex]}
-                  className="w-full sm:w-1/4 p-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label={`Output type for output ${outputIndex + 1}`}
-                >
-                  <option value="string">String</option>
-                  <option value="int">Integer</option>
-                </select>
-
-                <input
-                  type={
-                    testCase.outputTypes[outputIndex] === "int"
-                      ? "number"
-                      : "text"
-                  }
-                  step={
-                    testCase.outputTypes[outputIndex] === "int"
-                      ? "any"
-                      : undefined
-                  }
-                  value={output}
-                  onChange={(e) =>
-                    handleTestCaseChange(
-                      index,
-                      "output",
-                      e.target.value,
-                      outputIndex,
-                      testCase.outputTypes[outputIndex]
-                    )
-                  }
-                  className="w-full sm:w-2/3 p-3 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={`Enter output ${outputIndex + 1}`}
-                  aria-label={`Output value for output ${outputIndex + 1}`}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => removeOutputField(index, outputIndex)}
-                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  aria-label={`Remove Output ${outputIndex + 1}`}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-
-            <div
-              onClick={() => addOutputField(index)}
-              className="text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"
-              aria-label="Add Output"
-            >
-              + Add Output
-            </div>
-          </div>
-        </div>
-      </div>
-    ));
-  };
-
-  const removeInputField = (testCaseIndex, inputIndex) => {
-    const updatedTestCases = [...problemData.testCases];
-    updatedTestCases[testCaseIndex].inputs.splice(inputIndex, 1); // Remove the input field
-    setProblemData({ ...problemData, testCases: updatedTestCases });
-  };
-
-  const removeOutputField = (testCaseIndex, outputIndex) => {
-    const updatedTestCases = [...problemData.testCases];
-    updatedTestCases[testCaseIndex].outputs.splice(outputIndex, 1); // Remove the output field
-    setProblemData({ ...problemData, testCases: updatedTestCases });
-  };
-
-  // Function to add an input field
-  const addInputField = (testCaseIndex) => {
-    const updatedTestCases = [...problemData.testCases];
-
-    // Ensure the inputs array exists and is initialized
-    if (!updatedTestCases[testCaseIndex].inputs) {
-      updatedTestCases[testCaseIndex].inputs = [];
-    }
-
-    // Ensure the inputTypes array exists and is initialized
-    if (!updatedTestCases[testCaseIndex].inputTypes) {
-      updatedTestCases[testCaseIndex].inputTypes = [];
-    }
-
-    // Push a default empty string for input and a default 'string' type
-    updatedTestCases[testCaseIndex].inputs.push("");
-    updatedTestCases[testCaseIndex].inputTypes.push("string");
-
-    setProblemData({ ...problemData, testCases: updatedTestCases });
-  };
-
-  // Function to add an output field
-  const addOutputField = (testCaseIndex) => {
-    const updatedTestCases = [...problemData.testCases];
-
-    // Ensure the outputs array exists and is initialized
-    if (!updatedTestCases[testCaseIndex].outputs) {
-      updatedTestCases[testCaseIndex].outputs = [];
-    }
-
-    // Ensure the outputTypes array exists and is initialized
-    if (!updatedTestCases[testCaseIndex].outputTypes) {
-      updatedTestCases[testCaseIndex].outputTypes = [];
-    }
-
-    // Push a default empty string for output and a default 'string' type
-    updatedTestCases[testCaseIndex].outputs.push("");
-    updatedTestCases[testCaseIndex].outputTypes.push("string");
-
-    setProblemData({ ...problemData, testCases: updatedTestCases });
-  };
-
-  // Handle form submission for both create and edit
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validateForm();
@@ -463,43 +256,40 @@ const ProblemForm = () => {
       toast.error("Please fill in all required fields!");
       return;
     }
-    setIsModalOpenInternal(true); // Show confirmation modal
+    setIsModalOpenInternal(true);
   };
 
   const confirmSubmit = async () => {
     const actionType = isEditing ? "edit" : "create";
-    const apiMethod =
-      actionType === "edit" ? axiosInstance.put : axiosInstance.post;
-    const apiEndpoint = actionType === "edit" ? `/problems/${id}` : "/problems";
+    const apiMethod = isEditing ? axiosInstance.put : axiosInstance.post;
+    const apiEndpoint = isEditing ? `/problems/${id}` : "/problems";
 
-    // Only split and update tags if the user has made changes to the tags field
     const tags =
       typeof problemData.tags === "string" && problemData.tags.trim() !== ""
         ? problemData.tags.split(",").map((tag) => tag.trim())
-        : problemData.tags; // Keep the original tags if unchanged
+        : problemData.tags;
 
     try {
-      console.log(problemData);
       const response = await apiMethod(apiEndpoint, {
         ...problemData,
-        tags, // Use the processed tags
+        tags,
         createdBy: user._id,
       });
 
       if (response.status === 200 || response.status === 201) {
         toast.success(
-          actionType === "edit"
+          isEditing
             ? "Problem updated successfully!"
             : "Problem created successfully!"
         );
         setTimeout(() => {
           setIsModalOpenInternal(false);
           navigate("/make-problem");
-        }, 100); // Redirect after 1 second
+        }, 100);
       }
     } catch (error) {
       toast.error(
-        actionType === "edit"
+        isEditing
           ? "Failed to update problem. Please try again."
           : "Failed to create problem. Please try again."
       );
@@ -511,17 +301,16 @@ const ProblemForm = () => {
   };
 
   const handleBackClick = () => {
-    setIsModalOpen(true); // Open the modal when the "Back" button is clicked
+    setIsModalOpen(true);
   };
 
   const handleConfirmBack = () => {
-    setIsModalOpen(false); // Close the modal
-    toast.success("Back to the previous page");
-    navigate(-1); // Go back to the previous page
+    setIsModalOpen(false);
+    navigate(-1);
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false); // Close the modal without navigating
+    setIsModalOpen(false);
   };
 
   return (
@@ -546,6 +335,34 @@ const ProblemForm = () => {
             onClose={handleCloseModal}
             onConfirm={handleConfirmBack}
           />
+
+          {assignLoading && (
+            <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+              <div className="flex flex-col items-center">
+                <svg
+                  className="animate-spin h-12 w-12 text-blue-500 mb-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  ></path>
+                </svg>
+                <p className="text-white text-lg font-semibold">Submitting...</p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}

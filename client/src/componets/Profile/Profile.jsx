@@ -72,6 +72,7 @@ const Profile = () => {
       );
       if (response.data.success) {
         toast.success("Profile updated successfully");
+        console.log(response.data);
         setUser(response.data.user);
         setIsEditing(false); // Exit editing mode after successful submission
       }
