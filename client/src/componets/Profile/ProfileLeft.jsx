@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FaUser, FaGithub, FaLinkedin, FaBirthdayCake, FaClipboardList } from "react-icons/fa";
+import {
+  FaUser,
+  FaGithub,
+  FaLinkedin,
+  FaBirthdayCake,
+  FaClipboardList,
+} from "react-icons/fa";
 import axiosInstance from "../../utils/axiosInstance";
-import { ClipLoader } from 'react-spinners';
+import { ClipLoader } from "react-spinners";
 import toast from "react-hot-toast";
 
 const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
@@ -11,23 +17,27 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
   const [loading, setLoading] = useState(true); // Add loading state
   const [isBioExpanded, setIsBioExpanded] = useState(false);
 
-  const githubURL = formData.github ? `https://github.com/${formData.github}` : null;
+  const githubURL = formData.github
+    ? `https://github.com/${formData.github}`
+    : null;
   const linkedInURL = formData.linkedIn || null;
 
   const fetchProfilePic = useCallback(async () => {
     console.log("Hello there");
     try {
       setLoading(true);
-      const response = await axiosInstance.get('/user/profile/upload-avatar', { responseType: 'blob' });
+      const response = await axiosInstance.get("/user/profile/upload-avatar", {
+        responseType: "blob",
+      });
       console.log("this is it: ", response.data);
       const imageUrl = URL.createObjectURL(response.data);
       setProfilePic(imageUrl);
     } catch (error) {
-      console.error('Error fetching profile picture:', error);
+      console.error("Error fetching profile picture:", error);
     } finally {
       setLoading(false);
     }
-  })
+  });
 
   useEffect(() => {
     if (!profilePic) {
@@ -56,23 +66,27 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
     if (!selectedFile) return;
 
     const formData = new FormData();
-    formData.append('avatar', selectedFile);
+    formData.append("avatar", selectedFile);
 
     try {
       setLoading(true);
-      const response = await axiosInstance.post('/user/upload-avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axiosInstance.post(
+        "/user/upload-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       if (response.status == 200) {
         toast.success(response.data.message);
         setProfilePic(URL.createObjectURL(selectedFile));
       }
       setLoading(false);
     } catch (error) {
-      toast.error('upload Error');
-      console.error('Upload Error:', error);
+      toast.error("upload Error");
+      console.error("Upload Error:", error);
       setLoading(false);
     } finally {
       setLoading(false);
@@ -86,7 +100,9 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
       setSelectedFile(null);
       setProfilePic(null);
       setLoading(false);
-      const response = await axiosInstance.delete('/user/profile/remove-profile-pic');
+      const response = await axiosInstance.delete(
+        "/user/profile/remove-profile-pic"
+      );
       if (response.status === 200) {
         setSelectedFile(null);
         setProfilePic(null);
@@ -94,8 +110,8 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
       }
       setLoading(false);
     } catch (error) {
-      toast.error('Remove Error');
-      console.error('Remove Error:', error);
+      toast.error("Remove Error");
+      console.error("Remove Error:", error);
       setLoading(false);
     }
   };
@@ -106,9 +122,17 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
       {loading ? (
         <ClipLoader size={150} color={"#ffffff"} loading={loading} />
       ) : selectedFile ? (
-        <img src={imagePreview} alt="Selected" className="w-48 h-48 rounded-full mb-3" />
+        <img
+          src={imagePreview}
+          alt="Selected"
+          className="w-48 h-48 rounded-full mb-3"
+        />
       ) : profilePic ? (
-        <img src={profilePic} alt="Profile" className="w-48 h-48 rounded-full mb-3" />
+        <img
+          src={profilePic}
+          alt="Profile"
+          className="w-48 h-48 rounded-full mb-3"
+        />
       ) : (
         <FaUser size={200} className="text-primary mb-3" />
       )}
@@ -120,7 +144,9 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           href={githubURL}
           target="_blank"
           rel="noopener noreferrer"
-          className={`transition-all ${githubURL ? "text-white" : "text-gray-400"} hover:text-gray-200`}
+          className={`transition-all ${
+            githubURL ? "text-white" : "text-gray-400"
+          } hover:text-gray-200`}
         >
           <FaGithub size={30} />
         </a>
@@ -128,7 +154,9 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           href={linkedInURL}
           target="_blank"
           rel="noopener noreferrer"
-          className={`transition-all ${linkedInURL ? "text-white" : "text-gray-400"} hover:text-gray-200`}
+          className={`transition-all ${
+            linkedInURL ? "text-white" : "text-gray-400"
+          } hover:text-gray-200`}
         >
           <FaLinkedin size={30} />
         </a>
@@ -136,7 +164,11 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
 
       <button
         onClick={toggleEdit}
-        className={`px-4 py-2 rounded-md mt-4 transition ${isEditing ? "bg-red-500 hover:bg-red-700" : "bg-blue-500 hover:bg-blue-700"} text-white`}
+        className={`px-4 py-2 rounded-md mt-4 transition ${
+          isEditing
+            ? "bg-red-500 hover:bg-red-700"
+            : "bg-blue-500 hover:bg-blue-700"
+        } text-white`}
       >
         {isEditing ? "Cancel Edit" : "Edit Details"}
       </button>
@@ -144,7 +176,10 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
       {isEditing && (
         <>
           <div className="mt-2 w-full">
-            <label htmlFor="fileInput" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="fileInput"
+              className="block text-sm font-medium text-gray-300"
+            >
               Choose a profile picture:
             </label>
             <input
@@ -182,7 +217,10 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
       {isEditing && profilePic && !selectedFile && (
         <>
           <div className="mt-2 w-full">
-            <label htmlFor="fileInput" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="fileInput"
+              className="block text-sm font-medium text-gray-300"
+            >
               Remove a profile picture:
             </label>
             <button
@@ -194,28 +232,6 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           </div>
         </>
       )}
-
-      <div className="mt-4 space-y-3 w-full">
-        {formData.birthday && (
-          <div>
-            <label className="font-semibold flex items-center justify-center">
-              <FaBirthdayCake className="mr-1" /> Birthday:
-            </label>
-            <p className="text-gray-400 flex items-center justify-center">{formatDate(formData.birthday)}</p>
-          </div>
-        )}
-
-        {formData.skills && (
-          <div>
-            <label className="font-semibold flex items-center justify-center">
-              <FaClipboardList className="mr-1" /> Skills:
-            </label>
-            <p className="text-gray-400 whitespace-pre-wrap flex items-center justify-center">
-              {formData.skills}
-            </p>
-          </div>
-        )}
-      </div>
     </div>
   );
 };

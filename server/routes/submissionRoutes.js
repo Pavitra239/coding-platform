@@ -26,11 +26,9 @@ router.post("/", async (req, res) => {
     console.log("hello22");
     // Validate testCaseResults
     if (!testCaseResults || !Array.isArray(testCaseResults)) {
-      return res
-        .status(400)
-        .json({
-          message: "Test case results are required and must be an array.",
-        });
+      return res.status(400).json({
+        message: "Test case results are required and must be an array.",
+      });
     }
 
     console.log("hello1");
@@ -46,12 +44,10 @@ router.post("/", async (req, res) => {
           typeof tc.passed === "boolean"
       )
     ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Each test case result must include inputs, outputs, expectedOutputs, and passed.",
-        });
+      return res.status(400).json({
+        message:
+          "Each test case result must include inputs, outputs, expectedOutputs, and passed.",
+      });
     }
 
     console.log("hello2");
@@ -102,11 +98,9 @@ router.get("/", async (req, res) => {
 
     // If no submissions found, return a 404
     if (submissions.length === 0) {
-      return res
-        .status(404)
-        .json({
-          message: "No submissions found for the given user and problem.",
-        });
+      return res.status(404).json({
+        message: "No submissions found for the given user and problem.",
+      });
     }
 
     res.status(200).json(submissions);
@@ -164,11 +158,20 @@ router.get("/user/submissions", async (req, res) => {
 
   try {
     console.log("hello");
-    const submissions = await Submission.find({ user_id })
-      .populate("problem_id", "title description") // Populate only title and description of the problem
-      .sort({ createdAt: -1 }) // Sort by createdAt field in descending order
+    const submissions = await Submission.find({ user_id }) // Filter by user_id
+      .populate("problem_id", "title") // Populate problem details: title and description
+      .sort({ createdAt: -1 }) // Sort by creation time, descending
       .skip((page - 1) * limit) // Skip records for pagination
-      .limit(parseInt(limit)); // Limit the number of records
+      .limit(parseInt(limit)) // Limit the number of records
+      .select({
+        language: 1,
+        status: 1,
+        numberOfTestCase: 1,
+        numberOfTestCasePass: 1,
+        _id: 1,
+        createdAt: 1,
+        totalMarks: 1,
+      }) // Include only these fields in the final output
 
     // console.log(submissions)
 
@@ -199,7 +202,7 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   console.log(id);
   try {
-    const submission = await Submission.findById(id);
+    const submission = await Submission.findById(id).populate("problem_id", "title");
     if (!submission) {
       return res.status(404).json({ error: "Submission not found" });
     }

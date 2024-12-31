@@ -476,7 +476,18 @@ router.post("/run-code", async (req, res) => {
           break;
         }
       }
-      return result;
+    
+      // Adding compilationError and standardError logic here
+      const compilationError = result.compile_output
+        ? decodeBase64(result.compile_output)
+        : null;
+      const standardError = result.stderr ? decodeBase64(result.stderr) : null;
+    
+      return {
+        ...result,
+        compilationError,
+        standardError,
+      };
     };
 
     const results = await Promise.all(tokens.map(fetchResults));
@@ -486,18 +497,18 @@ router.post("/run-code", async (req, res) => {
       const expectedOutput = normalizeOutput(
         selectedTestCases[index]?.outputs || ""
       );
-      const errorDetails = result.stderr ? decodeBase64(result.stderr) : null;
-
+    
       return {
         input: selectedTestCases[index]?.inputs || "",
         expectedOutput: selectedTestCases[index]?.outputs || "",
         output: decodedOutput,
-        error: errorDetails,
-        passed: normalizedOutput === expectedOutput && !errorDetails,
+        error: result.compilationError || result.standardError,
+        passed: normalizedOutput === expectedOutput && !result.error,
         time: result.time,
         memory: result.memory,
       };
     });
+    
 
     const overallTime = testResults.reduce(
       (sum, test) => sum + parseFloat(test.time || 0),

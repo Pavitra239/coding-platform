@@ -86,6 +86,8 @@ int main() {
     setRunLoading(true);
     setResults(null);
     setError(null);
+    setAssignLoading(true); // Start loading
+  
     try {
       const response = await axiosInstance.post("/compiler/run-code", {
         code: codeByLanguage[language],
@@ -93,17 +95,29 @@ int main() {
         testCases: testcases,
         allTestCases: false,
       });
-      setResults(response.data.testResults);
-      console.log("Submission response:", response.data.testResults);
+  
+      const testResults = response.data.testResults;
+      console.log(testResults)
+  
+      // Check if any test case contains an error
+      const errorTestCase = testResults.find((test) => test.error);
+      if (errorTestCase) {
+        setError(errorTestCase.error); // Set the first error encountered
+        setResults(null); // Optionally clear results if you don't want partial results
+      } else {
+        setResults(testResults);
+      }
     } catch (error) {
       setError(
         error.response?.data?.details || "Failed to run code. Please try again."
       );
     } finally {
+      setAssignLoading(false); // Start loading
       setIsLoading(false);
       setRunLoading(false);
     }
   };
+  
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -111,7 +125,7 @@ int main() {
     setResults(null);
     setError(null);
     setAssignLoading(true); // Start loading
-
+  
     try {
       // Prepare data for compilation request
       const compilePayload = {
@@ -120,30 +134,37 @@ int main() {
         testCases: testcases,
         allTestCases: true, // Ensures backend processes all test cases
       };
-
+  
       // Send code and test cases to the backend for compilation
       const compileResponse = await axiosInstance.post(
         "/compiler/run-code",
         compilePayload
       );
+  
       let {
         testResults,
         overallTime,
         averageMemory,
         allPassed,
       } = compileResponse.data;
-
+  
       console.log("Compilation Results:", testResults);
       setResults(testResults);
-
-      // Convert overallTime from seconds to milliseconds
+  
+      // Check for errors in test results
+      const errorTestCase = testResults.find((test) => test.error);
+      if (errorTestCase) {
+        setError(errorTestCase.error); // Display the first error encountered
+        console.error("Compilation Error:", errorTestCase.error);
+        return; 
+      }
+  
       overallTime = (overallTime * 1000).toFixed(2); // Now in ms
-      // Convert averageMemory from KB to MB
       averageMemory = (averageMemory / 1024).toFixed(2); // Now in MB
-
+  
       console.log(`Overall Time: ${overallTime} ms`);
       console.log(`Average Memory: ${averageMemory} MB`);
-
+  
       // Calculate metrics and prepare test case results
       const numberOfTestCase = testResults.length;
       const numberOfTestCasePass = testResults.filter((test) => test.passed)
@@ -153,18 +174,18 @@ int main() {
           test.passed && testcases[index]?.marks ? testcases[index].marks : 0;
         return { ...test, marks };
       });
-
+  
       const totalMarks = testCaseResults.reduce(
         (sum, test) => sum + test.marks,
         0
       );
       const submissionStatus = allPassed ? "completed" : "rejected";
-
+  
       console.log("Number of Test Cases:", numberOfTestCase);
       console.log("Number of Test Cases Passed:", numberOfTestCasePass);
       console.log("Total Marks Obtained:", totalMarks);
       console.log("Submission Status:", submissionStatus);
-
+  
       // Prepare submission payload with time in ms and memory in MB
       const submissionPayload = {
         user_id: userId,
@@ -179,16 +200,16 @@ int main() {
         totalMarks,
         testCaseResults,
       };
-
+  
       // Send the submission to the backend
       const submissionResponse = await axiosInstance.post(
         "/submissions",
         submissionPayload
       );
       const savedSubmission = submissionResponse.data.submission;
-
+  
       console.log("Submission Saved Successfully:", savedSubmission);
-
+  
       // Trigger callback if provided
       if (onSubmission) {
         onSubmission(savedSubmission);
@@ -203,9 +224,10 @@ int main() {
       // Reset loading states
       setIsLoading(false);
       setSubmitLoading(false);
-      setAssignLoading(false); // Start loading
+      setAssignLoading(false);
     }
   };
+  
 
   const handleSaveCode = async () => {
     try {

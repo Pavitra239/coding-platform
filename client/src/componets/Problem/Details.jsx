@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import SubmissionDetails from "./SubmissionDetails"; // Adjust the import path as necessary.
+import Header from "../Header";
 
 const Details = () => {
   const { submissionId } = useParams();
@@ -13,11 +14,15 @@ const Details = () => {
   useEffect(() => {
     const fetchSubmissionDetails = async () => {
       try {
-        const response = await axiosInstance.get(`/submissions/${submissionId}`);
+        const response = await axiosInstance.get(
+          `/submissions/${submissionId}`
+        );
         setSubmission(response.data);
         console.log(response.data);
       } catch (err) {
-        setError(err.response?.data?.error || "Failed to fetch submission details");
+        setError(
+          err.response?.data?.error || "Failed to fetch submission details"
+        );
       } finally {
         setLoading(false);
       }
@@ -27,14 +32,10 @@ const Details = () => {
   }, [submissionId]);
 
   return (
-    <div className="bg-gray-900 min-h-screen p-4 text-white">
+    <div className="bg-gray-900 min-h-screen text-white">
       {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-      >
-        Back
-      </button>
+      <Header />
+      <div className="pt-20"></div>
 
       {/* Show loading spinner or message */}
       {loading && (
@@ -46,7 +47,13 @@ const Details = () => {
 
       {/* Show error message */}
       {error && (
-        <div className="text-red-500 text-center mt-4">
+        <div className="text-red-500 text-center mt-4 pt-20">
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-4 px-4 py-2  bg-blue-600 hover:bg-blue-700 text-white rounded"
+          >
+            Back
+          </button>
           {error}
         </div>
       )}

@@ -118,9 +118,6 @@ export const createProblem = async (req, res) => {
 };
 
 
-
-
-
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
   try {

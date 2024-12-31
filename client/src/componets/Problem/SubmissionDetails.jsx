@@ -31,7 +31,12 @@ const SubmissionDetails = ({ submission, onBack }) => {
         Back to Submissions
       </button>
 
-      <h3 className="font-bold text-xl text-white mb-4">Submission Details</h3>
+      <h3 className="font-bold text-xl text-white mb-4">
+        Submission Details :{" "}
+        <span className="text-blue-400">
+          {safeAccess(submission, ["problem_id", "title"], "Problem Title Unavailable")}
+        </span>
+      </h3>
 
       {isLoaded ? (
         <>
@@ -146,6 +151,9 @@ const SubmissionDetails = ({ submission, onBack }) => {
 
 SubmissionDetails.propTypes = {
   submission: PropTypes.shape({
+    problem_id: PropTypes.shape({
+      title: PropTypes.string,
+    }),
     numberOfTestCasePass: PropTypes.number,
     numberOfTestCase: PropTypes.number,
     totalMarks: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
