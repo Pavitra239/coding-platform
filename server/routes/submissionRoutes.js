@@ -115,11 +115,9 @@ router.get("/problem", async (req, res) => {
   const { problem_id } = req.query;
 
   console.log(problem_id);
-  console.log("hello123");
 
   try {
-    // Find submissions by problem_id and populate user and problem data
-    // Find submissions by problem_id and populate user data, projecting specific fields
+    // Fetch all submissions for the given problem_id
     const submissions = await Submission.find(
       { problem_id },
       {
@@ -131,24 +129,47 @@ router.get("/problem", async (req, res) => {
         createdAt: 1,
         totalMarks: 1,
       }
-    ).populate("user_id", "id username batch branch semester _id"); // Populate specific user field
+    )
+      .populate({
+        path: "user_id",
+        select: "id username batch branch semester _id role",
+        match: { role: "student" }, // Only include users with role 'student'
+      });
 
-    // If no submissions found, return a 404
-    if (submissions.length === 0) {
+    // Filter out submissions where user_id is null (non-students)
+    const filteredSubmissions = submissions.filter(submission => submission.user_id);
+
+    if (filteredSubmissions.length === 0) {
       return res
         .status(404)
         .json({ message: "No submissions found for the given problem ID." });
     }
 
+    // Create a map to store the highest marks submission for each student
+    const highestMarksSubmissions = {};
+
+    // Loop through filtered submissions and select the highest marks submission for each user
+    filteredSubmissions.forEach((submission) => {
+      const userId = submission.user_id._id.toString(); // Convert user_id to string to use as key in map
+      if (!highestMarksSubmissions[userId] || submission.totalMarks > highestMarksSubmissions[userId].totalMarks) {
+        highestMarksSubmissions[userId] = submission;
+      }
+    });
+
+    // Get the values from the highestMarksSubmissions map (these are the highest marks submissions for each student)
+    const highestMarksSubmissionsArray = Object.values(highestMarksSubmissions);
+
     res.status(200).json({
       message: "Submissions retrieved successfully",
-      submissions,
+      submissions: highestMarksSubmissionsArray,
     });
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: error.message });
   }
 });
+
+
 
 // Route to get all submissions for specific user
 router.get("/user/submissions", async (req, res) => {

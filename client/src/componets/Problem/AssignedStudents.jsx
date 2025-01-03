@@ -157,7 +157,7 @@ const AssignedStudents = () => {
                 d="M4 12a8 8 0 018-8v8H4z"
               ></path>
             </svg>
-            <p className="text-white text-lg font-semibold">Assigning...</p>
+            <p className="text-white text-lg font-semibold">UnAssigning...</p>
           </div>
         </div>
       )}

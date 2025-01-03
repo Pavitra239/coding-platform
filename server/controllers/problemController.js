@@ -138,7 +138,17 @@ export const getProblems = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
-    res.json({ problems, totalProblems: problems.length, success: true });
+    res.json({
+      problems: problems.map(({ _id, title, difficulty, createdAt}) => ({
+        _id,
+        title,
+        difficulty,
+        createdAt,
+      })),
+      totalProblems: problems.length,
+      success: true,
+    });
+    
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -148,15 +158,19 @@ export const assignProblemToStudents = async (req, res) => {
   const { id } = req.params;
   const { studentIds } = req.body; // Array of student IDs
 
-  try {
+  try { 
     const problem = await Problem.findById(id);
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
 
+    console.log("hello")
+
     // Add students to the assigned list
     problem.assignedStudents.push(...studentIds);
+    console.log("problem.assignedStudents", problem.assignedStudents);
     await problem.save();
+    console.log("problem", problem);
 
     res
       .status(200)
@@ -249,7 +263,7 @@ export const getProblemWithStudents = async (req, res) => {
 
 export const getProblemWithUnassignedStudents = async (req, res) => {
   const { id } = req.params; // Problem ID
-  console.log("Problem ID:", id);
+  console.log("Problem ID:22", id);
 
   try {
     // Fetch the problem by ID

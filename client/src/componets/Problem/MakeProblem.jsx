@@ -88,6 +88,7 @@ const MakeProblem = () => {
       setLoading(true);
       const response = await axiosInstance.get(`/problems`);
       const { problems: allProblems } = response.data;
+      console.log(response.data);
       setProblems(allProblems);
     } catch (error) {
       toast.error("Error fetching problems!");

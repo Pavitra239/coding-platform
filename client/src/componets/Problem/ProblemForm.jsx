@@ -359,7 +359,7 @@ const ProblemForm = () => {
                     d="M4 12a8 8 0 018-8v8H4z"
                   ></path>
                 </svg>
-                <p className="text-white text-lg font-semibold">Submitting...</p>
+                <p className="text-white text-lg font-semibold">Loading...</p>
               </div>
             </div>
           )}

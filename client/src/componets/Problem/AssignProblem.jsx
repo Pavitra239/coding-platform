@@ -26,7 +26,6 @@ const AssignProblem = () => {
       const response = await axiosInstance.get(
         `/problems/${problemId}/unassignStudent`
       );
-      // console.log(response.data);
       setUnassignedStudents(response.data.unassignedStudents);
       setTotalUnassigned(response.data.unassignedStudents.length);
     } catch (err) {
@@ -73,11 +72,12 @@ const AssignProblem = () => {
         studentIds: selectedStudents,
       });
       toast.success(res.data.message);
+      console.log(res.data)
       fetchUnassignedStudents();
       setSelectedStudents([]); // Clear selection after assigning
     } catch (err) {
       console.error("Error assigning problem:", err);
-      toast.error(res.data.message);
+      toast.error("Error assigning problem");
     } finally {
       setAssignLoading(false); // Stop loading
     }

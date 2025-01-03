@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import SubmissionDetails from "./SubmissionDetails";
 import Header from "../Header";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const Dashboard = () => {
   const { problemId } = useParams();
@@ -11,6 +13,7 @@ const Dashboard = () => {
   const [submissions, setSubmissions] = useState([]);
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [TotalSubmission, setTotalSubmission] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortField, setSortField] = useState(null);
@@ -21,6 +24,7 @@ const Dashboard = () => {
     semester: "ALL",
     language: "ALL",
     status: "ALL",
+    batch: "ALL",
   });
 
   const { problemTitle, difficulty, createdAt } = location.state || {};
@@ -32,6 +36,7 @@ const Dashboard = () => {
           params: { problem_id: problemId },
         });
         setSubmissions(response.data.submissions);
+        setTotalSubmission(response.data.submissions.length);
         setFilteredSubmissions(response.data.submissions);
         console.log(response.data);
       } catch (err) {
@@ -103,6 +108,12 @@ const Dashboard = () => {
         (submission) => submission.status?.toUpperCase() === filters.status
       );
     }
+    if (filters.batch !== "ALL") {
+      console.log(filters.batch);
+      filtered = filtered.filter((submission) => {
+        return submission.user_id.batch?.toUpperCase() === filters.batch;
+      });
+    }
 
     setFilteredSubmissions(filtered);
   };
@@ -121,14 +132,80 @@ const Dashboard = () => {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
 
-  // if (selectedSubmission) {
-  //   return (
-  //     <SubmissionDetails
-  //       submission={selectedSubmission}
-  //       onBack={() => setSelectedSubmission(null)}
-  //     />
-  //   );
-  // }
+  const downloadExcel = () => {
+    const totalSubmissions = filteredSubmissions.length;
+
+    // Add a header row for the total number of submissions
+    const headerRow = [
+      { ID: `Total Submissions: ${totalSubmissions}` },
+      {}, // Blank cells to adjust layout
+    ];
+
+    const dataToExport = filteredSubmissions.map((submission) => ({
+      ID: submission.user_id.id,
+      Username: submission.user_id.username,
+      Branch: submission.user_id.branch?.toUpperCase() || "N/A",
+      Batch: submission.user_id.batch?.toUpperCase() || "N/A",
+      Semester: submission.user_id.semester || "N/A",
+      "Test Cases Passed": `${submission.numberOfTestCasePass || 0}/${
+        submission.numberOfTestCase || 0
+      }`,
+      "Submission Date": formatDate(submission.createdAt),
+      Marks: submission.totalMarks ?? "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet([]);
+    XLSX.utils.sheet_add_aoa(worksheet, [
+      [`Total Submissions: ${totalSubmissions}`],
+    ]);
+    XLSX.utils.sheet_add_json(worksheet, dataToExport, { origin: "A3" });
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+
+    XLSX.writeFile(workbook, "Submissions.xlsx");
+  };
+
+  const downloadPDF = () => {
+    const totalSubmissions = filteredSubmissions.length;
+
+    const doc = new jsPDF();
+    const tableColumnHeaders = [
+      "ID",
+      "Username",
+      "Branch",
+      "Batch",
+      "Semester",
+      "Test Cases Passed",
+      "Submission Date",
+      "Marks",
+    ];
+    const tableRows = filteredSubmissions.map((submission) => [
+      submission.user_id.id,
+      submission.user_id.username,
+      submission.user_id.branch?.toUpperCase() || "N/A",
+      submission.user_id.batch?.toUpperCase() || "N/A",
+      submission.user_id.semester || "N/A",
+      `${submission.numberOfTestCasePass || 0}/${
+        submission.numberOfTestCase || 0
+      }`,
+      formatDate(submission.createdAt),
+      submission.totalMarks ?? "N/A",
+    ]);
+
+    // Add a title and the total submissions
+    doc.text("Submissions Report", 14, 15);
+    doc.text(`Total Submissions: ${totalSubmissions}`, 14, 25);
+
+    // Generate the table
+    doc.autoTable({
+      head: [tableColumnHeaders],
+      body: tableRows,
+      startY: 30,
+    });
+
+    doc.save("Submissions.pdf");
+  };
 
   return (
     <>
@@ -147,13 +224,16 @@ const Dashboard = () => {
                 </p>
                 <p className="font-semibold text-gray-300">
                   Created on:{" "}
-                  <span className="text-gray-400">
-                    {new Date(createdAt).toLocaleDateString()}
-                  </span>
+                  <span className="text-gray-400">{formatDate(createdAt)}</span>
                 </p>
               </div>
             </div>
           )}
+
+          <div className="mb-4 font-medium text-xl  text-gray-300">
+            Total Number of Submissions :{" "}
+            {TotalSubmission ? TotalSubmission : "0"}
+          </div>
 
           {/* Filters */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:justify-between items-center">
@@ -181,7 +261,7 @@ const Dashboard = () => {
                   </option>
                 ))}
               </select>
-              <select
+              {/* <select
                 value={filters.language}
                 onChange={(e) => updateFilter("language", e.target.value)}
                 className="bg-gray-700 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -190,8 +270,8 @@ const Dashboard = () => {
                 <option value="CPP">C++</option>
                 <option value="PYTHON">Python</option>
                 <option value="JAVA">Java</option>
-              </select>
-              <select
+              </select> */}
+              {/* <select
                 value={filters.status}
                 onChange={(e) => updateFilter("status", e.target.value)}
                 className="bg-gray-700 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -199,6 +279,21 @@ const Dashboard = () => {
                 <option value="ALL">All Statuses</option>
                 <option value="COMPLETED">Completed</option>
                 <option value="REJECTED">Rejected</option>
+              </select> */}
+
+              <select
+                value={filters.batch}
+                onChange={(e) => updateFilter("batch", e.target.value)}
+                className="bg-gray-700 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">All Batches</option>
+                {["A", "B", "C", "D"].map((letter) =>
+                  [1, 2].map((num) => (
+                    <option key={`${letter}${num}`} value={`${letter}${num}`}>
+                      {`${letter}${num}`}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -222,8 +317,30 @@ const Dashboard = () => {
             </div>
           </div>
 
+          <div className="flex justify-end gap-4 mb-4">
+            <button
+              onClick={downloadExcel}
+              className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded shadow transition-all duration-200"
+            >
+              Download Excel
+            </button>
+            <button
+              onClick={downloadPDF}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded shadow transition-all duration-200"
+            >
+              Download PDF
+            </button>
+          </div>
+
           {/* Submissions Table */}
           <div className="overflow-x-auto">
+            <div className="mb-4 font-medium text-xl text-gray-300">
+              Total After Filter of Submissions:{" "}
+              {filteredSubmissions.length > 0
+                ? filteredSubmissions.length
+                : "0"}
+            </div>
+
             <table className="w-full min-w-max text-sm text-left text-gray-400 border-collapse border border-gray-600">
               <thead className="bg-gray-800 text-gray-300">
                 <tr>
@@ -254,12 +371,12 @@ const Dashboard = () => {
                   >
                     Semester
                   </th>
-                  <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                  {/* <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                     Language
-                  </th>
-                  <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                  </th> */}
+                  {/* <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                     Status
-                  </th>
+                  </th> */}
                   <th className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                     TestCase Pass
                   </th>
@@ -307,10 +424,10 @@ const Dashboard = () => {
                       <td className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                         {submission.user_id.semester || "N/A"}
                       </td>
-                      <td className="py-3 px-6 border border-gray-600 text-sm md:text-base">
+                      {/* <td className="py-3 px-6 border border-gray-600 text-sm md:text-base">
                         {submission.language || "N/A"}
-                      </td>
-                      <td
+                      </td> */}
+                      {/* <td
                         className={`py-3 px-6 border border-gray-600 capitalize text-sm md:text-base ${
                           submission.status === "completed"
                             ? "text-green-500"
@@ -318,7 +435,7 @@ const Dashboard = () => {
                         }`}
                       >
                         {submission.status}
-                      </td>
+                      </td> */}
                       <td className="py-3 px-6 border border-gray-600 capitalize text-sm md:text-base">
                         {submission.numberOfTestCasePass != null &&
                         submission.numberOfTestCase != null
@@ -336,7 +453,7 @@ const Dashboard = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan="8"
+                      colSpan="10"
                       className="py-3 px-6 text-center text-gray-400 border border-gray-600"
                     >
                       No submissions found
