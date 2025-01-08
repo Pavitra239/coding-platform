@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import Header from "../Header";
+import toast from "react-hot-toast";
 
 const StudentList = () => {
   const { facultyId } = useParams();
@@ -62,6 +63,24 @@ const StudentList = () => {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
 
+  const handleExpireSession = async (userId) => {
+    try {
+      console.log("Expiring session for user:", userId);
+      const response = await axiosInstance.post("/faculty/expire-session", {
+        userId,
+      });
+
+      if (response.data.success) {
+        toast.success("Session expired successfully. The user has been logged out.");
+      } else {
+        toast.error(response.data.message || "Failed to expire session.");
+      }
+    } catch (error) {
+      console.error("Error expiring session:", error);
+      toast.error("An error occurred while expiring the session.");
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <Header />
@@ -106,13 +125,14 @@ const StudentList = () => {
                   <th className="py-3 px-6">Branch</th>
                   <th className="py-3 px-6">Batch</th>
                   <th className="py-3 px-6">Create Date</th>
+                  <th className="py-3 px-6">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {students.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="7" 
+                      colSpan="7"
                       className="py-3 px-6 text-center text-gray-400"
                     >
                       Data not available
@@ -145,6 +165,14 @@ const StudentList = () => {
 
                       <td className="py-3 px-6">
                         {formatDate(student?.createdAt)}{" "}
+                      </td>
+                      <td className="py-3 px-6">
+                        <button
+                          onClick={() => handleExpireSession(student._id)}
+                          className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+                        >
+                          Expire Session
+                        </button>
                       </td>
                     </tr>
                   ))

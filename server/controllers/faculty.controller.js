@@ -374,6 +374,40 @@ const facultyController = {
       }
     },
 
+    expireSession: async (req, res) => {
+      const { userId } = req.body;
+    
+      console.log("User ID received:", userId);
+    
+      if (!userId) {
+        return res.status(400).json({ success: false, message: "User ID is required." });
+      }
+    
+      try {
+        // Find the user by ID and clear their sessionId
+        const user = await User.findOneAndUpdate(
+          { _id: userId },
+          { sessionId: null },
+          { new: true }
+        );
+
+        console.log("User found:", user);
+    
+        if (!user) {
+          return res.status(404).json({ success: false, message: "User not found or already logged out." });
+        }
+    
+        res.status(200).json({
+          success: true,
+          message: "Session expired successfully. User has been logged out.",
+        });
+      } catch (error) {
+        console.error("Error expiring session:", error);
+        res.status(500).json({ success: false, message: "Internal server error." });
+      }
+    },
+    
+
     removeUser: async (req, res) => {
       const { userId } = req.params;
     

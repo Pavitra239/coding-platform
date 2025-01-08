@@ -66,18 +66,18 @@ const CodeEditorArea = ({
         value={code}
         onChange={handleEditorChange}
         theme={theme}
-        options={{
-          fontSize: 14,
-          automaticLayout: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          wordWrap: "on",
-          lineNumbers: "on",
-          smoothScrolling: true,
-          cursorSmoothCaretAnimation: true,
-          suggestOnTriggerCharacters: true, // Enable auto-suggestions
-        }}
-        onMount={onMount}
+        // options={{
+        //   fontSize: 14,
+        //   automaticLayout: true,
+        //   minimap: { enabled: false },
+        //   scrollBeyondLastLine: false,
+        //   wordWrap: "on",
+        //   lineNumbers: "on",
+        //   smoothScrolling: true,
+        //   cursorSmoothCaretAnimation: true,
+        //   suggestOnTriggerCharacters: true, // Enable auto-suggestions
+        // }}
+        // onMount={onMount}
       />
     </div>
   );

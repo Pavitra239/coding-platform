@@ -5,7 +5,6 @@ import { createToken } from "../utils/jwt.js";
 import { GridFSBucket } from "mongodb";
 import { mongoose } from "../app.js";
 
-
 export const updateUser = async (req, res) => {
   try {
     const {
@@ -86,30 +85,38 @@ export const updateUser = async (req, res) => {
   }
 };
 
-
 export const uploadProfilePic = async (req, res) => {
-  console.log("Api is hit");
+  console.log("API is hit");
+
   try {
-    const userId = req.user.id;
-    console.log("this is profileUSer: ", userId);
+    const userId = req.user?.id;
     const file = req.file;
 
-    if (!userId || !file) {
-      return res.status(400).json({ error: "User ID and file are required" });
+    if (!userId || !file || !file.id) {
+      return res
+        .status(400)
+        .json({ error: "User ID and valid file are required." });
     }
 
-    await User.findByIdAndUpdate(userId, {
-      $set: {
-        "profile.avatar": file.id,
-      },
-    });
+    console.log("Uploading avatar for user:", userId);
 
-    res.json({
-      message: "Avatar uploaded successfully",
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { "profile.avatar": file.id } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.status(200).json({
+      message: "Avatar uploaded successfully.",
       fileId: file.id,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error uploading profile picture:", error);
+    res.status(500).json({ error: "Failed to upload profile picture." });
   }
 };
 
@@ -117,44 +124,42 @@ export const getProfilePic = async (req, res) => {
   console.log("API hit OK");
 
   try {
-    const userId = req.user.id;
-    console.log("User ID:", userId);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required." });
+    }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "User not found." });
     }
 
     const fileId = user.profile?.avatar;
-    console.log("Profile File ID:", fileId);
-
     if (!fileId) {
-      return res.status(404).json({ error: "Profile picture not found" });
+      return res.status(404).json({ error: "Profile picture not found." });
     }
 
-    // Ensure fileId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(fileId)) {
-      return res.status(400).json({ error: "Invalid file ID" });
+      return res.status(400).json({ error: "Invalid file ID." });
     }
-
-    const fileIdObject =
-      fileId instanceof mongoose.Types.ObjectId
-        ? fileId
-        : new mongoose.Types.ObjectId(fileId);
 
     const bucket = new GridFSBucket(mongoose.connection.db, {
       bucketName: "uploads",
     });
 
-    const fileStream = bucket.openDownloadStream(fileIdObject);
+    const fileStream = bucket.openDownloadStream(
+      new mongoose.Types.ObjectId(fileId)
+    );
+
     res.set("Content-Type", "image/jpeg");
 
     fileStream.on("error", (error) => {
-      console.error("Error streaming file:", error);
+      console.error("Error streaming profile picture:", error);
       if (!res.headersSent) {
         return res
           .status(500)
-          .json({ error: "Failed to retrieve profile picture" });
+          .json({ error: "Error retrieving profile picture." });
       }
     });
 
@@ -165,60 +170,61 @@ export const getProfilePic = async (req, res) => {
     fileStream.pipe(res);
   } catch (error) {
     console.error("Error fetching profile picture:", error);
-
     if (!res.headersSent) {
-      res.status(500).json({ error: "Failed to retrieve profile picture" });
+      res.status(500).json({ error: "Server error." });
     }
   }
 };
 
-export const removeProfilePic = async (req, res, next) => {
-  console.log('removeProfilePic API called');
-  const startTime = Date.now();
+export const removeProfilePic = async (req, res) => {
+  console.log("removeProfilePic API called");
 
   try {
-    const user = await User.findById(req.user.id);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required." });
+    }
+
+    const user = await User.findById(userId);
     if (!user) {
-      console.log('User not found');
-      return res.status(404).json({ message: 'User does not exist.' });
+      console.log("User not found");
+      return res.status(404).json({ message: "User does not exist." });
     }
 
     const fileId = user.profile?.avatar;
     if (!fileId) {
-      console.log('Avatar not found');
-      return res.status(404).json({ message: 'Avatar does not exist.' });
+      console.log("Avatar not found");
+      return res.status(404).json({ message: "Avatar does not exist." });
     }
 
     if (!mongoose.Types.ObjectId.isValid(fileId)) {
-      console.log('Invalid file ID');
-      return res.status(400).json({ message: 'Invalid file ID' });
+      console.log("Invalid file ID");
+      return res.status(400).json({ message: "Invalid file ID." });
     }
 
-    const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
-    console.log('Starting delete process at:', startTime);
-
-    bucket.delete(new mongoose.Types.ObjectId(fileId), async (err) => {
-      if (err) {
-        console.error('Error removing file:', err);
-        return res.status(500).json({ message: 'Error removing avatar.' });
-      }
-
-      console.log("Till here");
-      try {
-        user.profile.avatar = null;
-        await user.save();
-      } catch (saveError) {
-        console.error('Error saving user:', saveError);
-        return res.status(500).json({ message: 'Error saving user.' });
-      }
-
-      const endTime = Date.now();
-      console.log(`Avatar removed successfully in ${endTime - startTime}ms`);
-
-      return res.status(200).json({ message: 'Avatar removed successfully.' });
+    const bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: "uploads",
     });
+
+    await new Promise((resolve, reject) => {
+      bucket.delete(new mongoose.Types.ObjectId(fileId), (err) => {
+        if (err) {
+          console.error("Error removing avatar:", err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    user.profile.avatar = null;
+    await user.save();
+
+    console.log("Avatar removed successfully.");
+    res.status(200).json({ message: "Avatar removed successfully." });
   } catch (error) {
-    console.error('Error removing profile picture:', error);
-    return res.status(500).json({ message: 'Server error.' });
+    console.error("Error removing profile picture:", error);
+    res.status(500).json({ message: "Server error." });
   }
 };
