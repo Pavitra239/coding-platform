@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Header from "./Header";
 import axiosInstance from "../utils/axiosInstance";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -62,7 +61,6 @@ const History = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <div className="mx-auto px-5 pt-20">
         <h1 className="text-2xl font-bold mb-4">Submission History</h1>
 

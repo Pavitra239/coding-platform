@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import axiosInstance from "../../utils/axiosInstance";
-import Header from "../Header";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -175,7 +174,6 @@ const StudentRegister = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
 
       <div className="pl-10 pt-[6%]">
         <button

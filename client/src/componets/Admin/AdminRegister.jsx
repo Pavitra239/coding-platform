@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../Header";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
 
@@ -59,7 +58,6 @@ const AdminRegister = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <div className="flex justify-center pt-[6%]">
         <h1 className="text-2xl font-bold mb-4">Faculty Register</h1>
       </div>

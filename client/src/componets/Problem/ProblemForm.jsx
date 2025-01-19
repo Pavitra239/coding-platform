@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import Header from "../Header";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance"; // Custom axios instance for API calls
 import ConfirmationModal from "../ConfirmationModal"; // Import the modal component
@@ -316,7 +315,6 @@ const ProblemForm = () => {
   return (
     <>
       <div className="relative min-h-screen bg-gray-900 text-white">
-        <Header />
 
         <div className="mx-auto p-[5%] bg-gray-900 text-white rounded-lg shadow-lg">
           <h1 className="text-2xl font-bold mt-10 mb-6 text-center">

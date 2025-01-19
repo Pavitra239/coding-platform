@@ -46,8 +46,6 @@ const ProblemShow = () => {
     fetchProblem();
   }, [id]);
 
- 
-
   useEffect(() => {
     setCode(codeTemplates[language]);
   }, [language]);
@@ -64,13 +62,17 @@ const ProblemShow = () => {
 
   if (!problem) {
     return (
-      <div className="text-white text-center">Loading problem details...</div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-900">
+        <div className="loader border-t-4 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
+        <span className="ml-4 text-white text-lg">
+          Loading problem details...
+        </span>
+      </div>
     );
   }
 
   return (
     <div className="problem-container">
-      {/* Left Column: Problem Statement */}
       <div
         ref={resizableRef}
         className="resizable bg-gray-900 p-4 flex flex-col"

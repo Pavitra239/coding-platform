@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setLoading, setUser } from "../redux/userSlice";
-import Header from "./Header";
 import axiosInstance from "../utils/axiosInstance";
 import { SEM, BRANCH } from "../../../server/utils/constants";
 import PasswordChange from "./PassWordChange";
@@ -99,10 +98,10 @@ const Login = () => {
   const handleRegistration = async (e) => {
     e.preventDefault();
     if (!validateRegistration()) return;
-  
+
     const selectedSubject = subjects.find((subj) => subj.id === subject);
     console.log(selectedSubject);
-  
+
     const newUser = {
       username,
       id: userType === "student" ? idOrEmail.toLowerCase() : undefined, // Convert id to lowercase
@@ -111,19 +110,19 @@ const Login = () => {
       mobileNo,
       branch: branch.toLowerCase(), // Convert branch to lowercase
       semester: sem,
-      batch : batch.toLowerCase(),
+      batch: batch.toLowerCase(),
       subject: userType === "student" ? selectedSubject.subject : subject,
       role: userType,
       profile: { name: fullName },
     };
-  
+
     console.log(newUser);
-  
+
     try {
       dispatch(setLoading(true));
-  
+
       const res = await axiosInstance.post("auth/register", newUser);
-  
+
       if (res.data.success) {
         toast.success(res.data.message);
         setIsLogin(true);
@@ -134,7 +133,6 @@ const Login = () => {
       dispatch(setLoading(false));
     }
   };
-  
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -142,7 +140,7 @@ const Login = () => {
 
     dispatch(setLoading(true));
     const user = {
-      [idOrEmail.includes("@") ? "email" : "id"]: idOrEmail,
+      [idOrEmail.includes("@") ? "email" : "id"]: idOrEmail.toLowerCase(),
       password,
     };
 
@@ -187,7 +185,6 @@ const Login = () => {
   return (
     <>
       <div style={{ backgroundColor: "black" }}>
-        <Header />
         <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-r overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
           {isFirstTime ? (
             <PasswordChange id={idOrEmail} />
@@ -267,13 +264,24 @@ const Login = () => {
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <input
+                    <select
                       value={batch}
                       onChange={(e) => setBatch(e.target.value)}
-                      type="text"
-                      placeholder="Batch"
                       className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
+                    >
+                      <option value="" disabled>
+                        Select Batch
+                      </option>
+                      <option value="a1">A1</option>
+                      <option value="b1">B1</option>
+                      <option value="c1">C1</option>
+                      <option value="d1">D1</option>
+                      <option value="a2">A2</option>
+                      <option value="b2">B2</option>
+                      <option value="c2">C2</option>
+                      <option value="d2">D2</option>
+                    </select>
+
                     {userType === "student" ? (
                       <input
                         value={idOrEmail}

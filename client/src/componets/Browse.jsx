@@ -21,7 +21,7 @@ const Browse = () => {
   return (
     <>
       <div className="relative min-h-screen bg-gray-900 text-white">
-        <Header />
+      <Header />
         {/* Center content both vertically and horizontally */}
         <div className="flex flex-col justify-center items-center px-4 lg:px-20 pt-20 md:pt-[14%] min-h-[70vh]">
           <div className="w-full  bg-white text-black p-8 lg:p-16 rounded-lg shadow-lg bg-opacity-80">

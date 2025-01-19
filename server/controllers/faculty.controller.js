@@ -350,7 +350,7 @@ const facultyController = {
     
         const students = await User.find({ facultyId, role: "student", isApproved: true })
           .select("username batch branch semester id createdAt")
-          .sort({ createdAt: -1 }) 
+          .sort({ id : 1 }) 
           .skip(skip)
           .limit(limit);
     

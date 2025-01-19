@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Header from "../Header";
 import axiosInstance from "../../utils/axiosInstance";
 
 const StudentInfo = () => {
@@ -51,7 +50,6 @@ const StudentInfo = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <div className="pt-20 ml-4 px-4">
         <button
           className="py-2 px-6 bg-gradient-to-r mb-4 from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition transform duration-200"

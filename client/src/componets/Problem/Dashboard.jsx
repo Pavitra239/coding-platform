@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import Header from "../Header";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -210,7 +209,6 @@ const Dashboard = () => {
   return (
     <>
       <div className="relative min-h-screen bg-gray-900 text-white">
-        <Header />
         <div className="mx-auto px-5 pt-20 pb-5">
           {problemTitle && (
             <div className="mb-6 bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 border-blue-500">

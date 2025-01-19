@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Header from "../Header";
 import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
 import StudentTable from "./StudentTable";
@@ -89,7 +88,6 @@ const AssignProblem = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <div className="pt-20 ml-4">
         <h1 className="text-2xl font-bold mb-4 justify-center flex items-center">
           Students Unassigned to the Problem

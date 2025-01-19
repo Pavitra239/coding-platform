@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { BeatLoader } from "react-spinners";
 
 const Admin = () => {
-  const user = useSelector((store) => store.app.user);
+  const user = useSelector((store) => store?.app?.user);
   const navigate = useNavigate();
 
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -29,10 +29,10 @@ const Admin = () => {
       const response = await axiosInstance.get(
         `/admin/get-pending-users?page=${page}`
       );
-      console.log(response.data);
-      if (response.data.success) {
-        setPendingUsers(response.data.data);
-        setTotalPages(response.data.totalPages);
+      console.log(response?.data);
+      if (response?.data?.success) {
+        setPendingUsers(response?.data?.data);
+        setTotalPages(response?.data?.totalPages);
         // toast.success('Data successfully fetched.');
       }
     } catch (error) {
@@ -54,9 +54,9 @@ const Admin = () => {
       const response = await axiosInstance.post(`/admin/accept-request`, {
         userId,
       });
-      if (response.data.success) {
+      if (response?.data?.success) {
         toast.success("User accepted successfully.");
-        setPendingUsers((prev) => prev.filter((user) => user._id !== userId));
+        setPendingUsers((prev) => prev?.filter((user) => user?._id !== userId));
       } else {
         toast.error("Failed to accept user.");
       }
@@ -74,9 +74,9 @@ const Admin = () => {
       const response = await axiosInstance.post(`/admin/decline-request`, {
         userId,
       });
-      if (response.data.success) {
+      if (response?.data?.success) {
         toast.success("User declined successfully.");
-        setPendingUsers((prev) => prev.filter((user) => user._id !== userId));
+        setPendingUsers((prev) => prev?.filter((user) => user?._id !== userId));
       } else {
         toast.error("Failed to decline user.");
       }
@@ -92,8 +92,8 @@ const Admin = () => {
     setActionLoading(true);
     try {
       const response = await axiosInstance.post(`/admin/accept-all-requests`);
-      if (response.data.success) {
-        toast.success(response.data.message);
+      if (response?.data?.success) {
+        toast.success(response?.data?.message);
         setPendingUsers([]);
         fetchUsers(currentPage);
       } else {
@@ -111,8 +111,8 @@ const Admin = () => {
     setActionLoading(true);
     try {
       const response = await axiosInstance.post(`/admin/decline-all-requests`);
-      if (response.data.success) {
-        toast.success(response.data.message);
+      if (response?.data?.success) {
+        toast.success(response?.data?.message);
         setPendingUsers([]);
         fetchUsers(currentPage);
       } else {
@@ -133,7 +133,7 @@ const Admin = () => {
           <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={handleAcceptAll}
-              disabled={pendingUsers.length === 0}
+              disabled={pendingUsers?.length === 0}
               className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
             >
               {actionLoading ? (
@@ -144,7 +144,7 @@ const Admin = () => {
             </button>
             <button
               onClick={handleDeclineAll}
-              disabled={pendingUsers.length === 0}
+              disabled={pendingUsers?.length === 0}
               className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
             >
               {actionLoading ? (
@@ -192,10 +192,10 @@ const Admin = () => {
                 </tr>
               </thead>
               <tbody>
-                {pendingUsers.length > 0 ? (
-                  pendingUsers.map((user, index) => (
+                {pendingUsers?.length > 0 ? (
+                  pendingUsers?.map((user, index) => (
                     <tr
-                      key={user._id}
+                      key={user?._id}
                       className={`${
                         index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                       }`}
@@ -203,35 +203,35 @@ const Admin = () => {
                       <td className="py-3 px-6">
                         {(currentPage - 1) * PAGE_SIZE + index + 1}
                       </td>
-                      <td className="py-3 px-6 text-gray-300">{user.email}</td>
-                      <td className="capitalize py-3 px-6">{user.username}</td>
+                      <td className="py-3 px-6 text-gray-300">{user?.email}</td>
+                      <td className="capitalize py-3 px-6">{user?.username}</td>
                       <td className="py-3 px-6 text-gray-300">
-                        {user.mobileNo}
+                        {user?.mobileNo}
                       </td>
-                      <td className="py-3 px-6">{user.branch}</td>
+                      <td className="py-3 px-6">{user?.branch}</td>
                       <td className="py-3 px-6 text-gray-300">
-                        {user.semester}
+                        {user?.semester}
                       </td>
-                      <td className="py-3 px-6">{user.batch}</td>
-                      <td className="py-3 px-6">{user.subject}</td>
+                      <td className="py-3 px-6">{user?.batch}</td>
+                      <td className="py-3 px-6">{user?.subject}</td>
                       <td className="py-3 px-6 flex gap-2">
                         <button
-                          onClick={() => handleAcceptUser(user._id)}
-                          disabled={actionLoading === user._id}
+                          onClick={() => handleAcceptUser(user?._id)}
+                          disabled={actionLoading === user?._id}
                           className="bg-green-600 text-white py-1 px-3 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                         >
-                          {actionLoading === user._id ? (
+                          {actionLoading === user?._id ? (
                             <BeatLoader size={10} color="#fff" />
                           ) : (
                             "Accept"
                           )}
                         </button>
                         <button
-                          onClick={() => handleDeclineUser(user._id)}
-                          disabled={actionLoading === user._id}
+                          onClick={() => handleDeclineUser(user?._id)}
+                          disabled={actionLoading === user?._id}
                           className="bg-red-600 text-white py-1 px-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                         >
-                          {actionLoading === user._id ? (
+                          {actionLoading === user?._id ? (
                             <BeatLoader size={10} color="#fff" />
                           ) : (
                             "Decline"
@@ -266,7 +266,7 @@ const Admin = () => {
           <span className="mx-4 mt-1 text-white">{`Page ${currentPage} of ${totalPages}`}</span>
           <button
             onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              setCurrentPage((prev) => Math?.min(prev + 1, totalPages))
             }
             disabled={currentPage === totalPages}
             className="cursor-pointer bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"

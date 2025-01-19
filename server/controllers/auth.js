@@ -10,6 +10,7 @@ export const login = async (req, res) => {
   console.log("Api hit");
   const { id, email, password } = req.body;
   console.log(id, email, password);
+  console.log("-->", req.body);
   console.log("-->", req.ip);
 
   try {

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import Header from "../Header";
 import toast from "react-hot-toast";
 
 const StudentList = () => {
@@ -83,7 +82,6 @@ const StudentList = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
 
       <div className="flex justify-center pt-[6%]">
         <h1 className="text-2xl font-bold mb-4">Student List</h1>

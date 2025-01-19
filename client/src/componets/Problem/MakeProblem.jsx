@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Header from "../Header";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
@@ -152,7 +151,6 @@ const MakeProblem = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <div className="mx-auto p-4">
         {/* Show the Add Problem button only if the user is not a student */}
         {userRole !== "student" && (
@@ -238,7 +236,10 @@ const MakeProblem = () => {
               >
                 Created Date
               </th>
-              <th className="py-3 px-4 sm:px-6 text-center">Actions</th>
+
+              {userRole !== "student" && (
+                <th className="py-3 px-4 sm:px-6 text-center">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -275,8 +276,8 @@ const MakeProblem = () => {
                   <td className="py-3 px-4 sm:px-4 text-center text-gray-300">
                     {formatDate(problem.createdAt)}
                   </td>
-                  <td className="py-3 px-4 sm:px-6 text-center flex justify-center gap-2">
-                    {userRole !== "student" && (
+                  {userRole !== "student" && (
+                    <td className="py-3 px-4 sm:px-6 text-center flex justify-center gap-2">
                       <>
                         <button
                           onClick={() => handleEditProblem(problem._id)}
@@ -311,8 +312,8 @@ const MakeProblem = () => {
                           Assign
                         </button>
                       </>
-                    )}
-                  </td>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (

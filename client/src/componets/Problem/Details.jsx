@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import SubmissionDetails from "./SubmissionDetails"; // Adjust the import path as necessary.
-import Header from "../Header";
 
 const Details = () => {
   const { submissionId } = useParams();
@@ -34,7 +33,6 @@ const Details = () => {
   return (
     <div className="bg-gray-900 min-h-screen text-white">
       {/* Back button */}
-      <Header />
       <div className="pt-20"></div>
 
       {/* Show loading spinner or message */}

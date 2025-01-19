@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import Header from "../Header";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -127,7 +126,6 @@ const AssignedStudents = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <h1 className="text-2xl font-bold mb-4 pt-20 justify-center flex items-center">
         Students Assigned to the Problem
       </h1>
