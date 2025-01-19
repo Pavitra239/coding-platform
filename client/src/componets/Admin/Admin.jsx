@@ -183,10 +183,6 @@ const Admin = () => {
                   <th className="py-3 px-6">#</th>
                   <th className="py-3 px-6">Email</th>
                   <th className="py-3 px-6">Name</th>
-                  <th className="py-3 px-6">Mobile No</th>
-                  <th className="py-3 px-6">Branch</th>
-                  <th className="py-3 px-6">Semester</th>
-                  <th className="py-3 px-6">Batch</th>
                   <th className="py-3 px-6">Subject</th>
                   <th className="py-3 px-6">Actions</th>
                 </tr>
@@ -205,14 +201,7 @@ const Admin = () => {
                       </td>
                       <td className="py-3 px-6 text-gray-300">{user?.email}</td>
                       <td className="capitalize py-3 px-6">{user?.username}</td>
-                      <td className="py-3 px-6 text-gray-300">
-                        {user?.mobileNo}
-                      </td>
-                      <td className="py-3 px-6">{user?.branch}</td>
-                      <td className="py-3 px-6 text-gray-300">
-                        {user?.semester}
-                      </td>
-                      <td className="py-3 px-6">{user?.batch}</td>
+                     
                       <td className="py-3 px-6">{user?.subject}</td>
                       <td className="py-3 px-6 flex gap-2">
                         <button

@@ -179,6 +179,7 @@ export const changePassword = async (req, res) => {
 export const register = async (req, res) => {
   try {
     const userData = req.body;
+    console.log(userData);
 
     if (!userData.id && !userData.email) {
       return res

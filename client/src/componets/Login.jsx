@@ -64,33 +64,24 @@ const Login = () => {
   }, [userType]);
 
   const validateRegistration = () => {
-    if (
-      !username ||
-      !idOrEmail ||
-      !mobileNo ||
-      !branch ||
-      !sem ||
-      !batch ||
-      !subject
-    ) {
-      toast.error("All fields are required for registration.");
+    if (!username || !idOrEmail || !userType || !subject) {
+      toast.error("Username, ID/Email, User Type, and Subject are required.");
       return false;
     }
-    if (mobileNo.length !== 10 || !/^\d+$/.test(mobileNo)) {
-      toast.error("Mobile number must be 10 digits.");
-      return false;
-    }
-    if (userType === "faculty" && !/\S+@\S+\.\S+/.test(idOrEmail)) {
-      toast.error("Please enter a valid email for faculty.");
-      return false;
-    }
-    return true;
-  };
-
-  const validateLogin = () => {
-    if (!idOrEmail || !password) {
-      toast.error("ID/Email and password are required for login.");
-      return false;
+    if (userType === "student") {
+      if (!mobileNo || !branch || !sem || !batch) {
+        toast.error("All fields are required for student registration.");
+        return false;
+      }
+      if (mobileNo.length !== 10 || !/^\d+$/.test(mobileNo)) {
+        toast.error("Mobile number must be 10 digits.");
+        return false;
+      }
+    } else if (userType === "faculty") {
+      if (!/\S+@\S+\.\S+/.test(idOrEmail)) {
+        toast.error("Please enter a valid email for faculty.");
+        return false;
+      }
     }
     return true;
   };
@@ -100,20 +91,17 @@ const Login = () => {
     if (!validateRegistration()) return;
 
     const selectedSubject = subjects.find((subj) => subj.id === subject);
-    console.log(selectedSubject);
-
     const newUser = {
       username,
-      id: userType === "student" ? idOrEmail.toLowerCase() : undefined, // Convert id to lowercase
-      email: userType === "faculty" ? idOrEmail.toLowerCase() : undefined, // Convert email to lowercase
+      id: userType === "student" ? idOrEmail.toLowerCase() : undefined, // Convert ID to lowercase
       facultyId: userType === "student" ? selectedSubject.id : undefined,
-      mobileNo,
-      branch: branch.toLowerCase(), // Convert branch to lowercase
-      semester: sem,
-      batch: batch.toLowerCase(),
+      email: userType === "faculty" ? idOrEmail.toLowerCase() : undefined, // Convert email to lowercase
+      mobileNo: userType === "student" ? mobileNo : undefined,
+      branch: userType === "student" ? branch.toLowerCase() : undefined, // Convert branch to lowercase
+      semester: userType === "student" ? sem : undefined,
+      batch: userType === "student" ? batch.toLowerCase() : undefined,
       subject: userType === "student" ? selectedSubject.subject : subject,
       role: userType,
-      profile: { name: fullName },
     };
 
     console.log(newUser);
@@ -132,6 +120,14 @@ const Login = () => {
     } finally {
       dispatch(setLoading(false));
     }
+  };
+
+  const validateLogin = () => {
+    if (!idOrEmail || !password) {
+      toast.error("ID/Email and password are required for login.");
+      return false;
+    }
+    return true;
   };
 
   const handleLogin = async (e) => {
@@ -198,6 +194,7 @@ const Login = () => {
               </h1>
               {!isLogin && (
                 <>
+                  {/* username */}
                   <input
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -205,14 +202,19 @@ const Login = () => {
                     placeholder="Username"
                     className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full"
                   />
+
+                  {/* idOrEmail and userType */}
                   <div className="grid grid-cols-2 gap-4">
                     <input
-                      value={mobileNo}
-                      onChange={(e) => setMobileNo(e.target.value)}
-                      type="text"
-                      placeholder="Mobile No"
+                      value={idOrEmail}
+                      onChange={(e) => setIdOrEmail(e.target.value)}
+                      type={userType === "faculty" ? "email" : "text"}
+                      placeholder={
+                        userType === "faculty" ? "Faculty Email" : "Student ID"
+                      }
                       className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
+
                     <select
                       id="userType"
                       value={userType}
@@ -225,124 +227,101 @@ const Login = () => {
                       <option value="" disabled>
                         -- Select User Type --
                       </option>
-                      <option value="student" onSelect={() => setSubject("")}>
-                        Student
-                      </option>
-                      <option value="faculty" onSelect={() => setSubject("")}>
-                        Faculty
-                      </option>
+                      <option value="student">Student</option>
+                      <option value="faculty">Faculty</option>
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <select
-                      value={branch}
-                      onChange={(e) => setBranch(e.target.value)}
-                      className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    >
-                      <option value="">Select Branch</option>
-                      {Object.values(BRANCH).map((branchOption, index) => (
-                        <option key={index} value={branchOption}>
-                          {branchOption}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={sem}
-                      onChange={(e) => setSem(e.target.value)}
-                      className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    >
-                      <option value="">Select Semester</option>
-                      {Object.values(SEM).map((semOption, index) => (
-                        <option
-                          key={index}
-                          value={semOption}
-                          className="cursor-pointer"
-                        >
-                          Semester {semOption}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <select
-                      value={batch}
-                      onChange={(e) => setBatch(e.target.value)}
-                      className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    >
-                      <option value="" disabled>
-                        Select Batch
-                      </option>
-                      <option value="a1">A1</option>
-                      <option value="b1">B1</option>
-                      <option value="c1">C1</option>
-                      <option value="d1">D1</option>
-                      <option value="a2">A2</option>
-                      <option value="b2">B2</option>
-                      <option value="c2">C2</option>
-                      <option value="d2">D2</option>
-                    </select>
 
-                    {userType === "student" ? (
-                      <input
-                        value={idOrEmail}
-                        onChange={(e) => setIdOrEmail(e.target.value)}
-                        type="text"
-                        disabled={userType !== "student"}
-                        placeholder="Student ID"
-                        className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      />
-                    ) : (
-                      <input
-                        value={idOrEmail}
-                        onChange={(e) => setIdOrEmail(e.target.value)}
-                        disabled={userType !== "faculty"}
-                        type="email"
-                        placeholder="Faculty Email"
-                        className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      />
-                    )}
-                  </div>
+                  {/* For Students: branch, semester, batch, mobileNo */}
                   {userType === "student" && (
-                    <select
-                      value={isLoad ? "" : subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      disabled={isLoad}
-                    >
-                      <option value="" disabled>
-                        {isLoad ? (
-                          <div className="flex justify-center items-center">
-                            <ClipLoader color="#36D7B7" size={15} />
-                            <span className="ml-2">Loading...</span>
-                          </div>
-                        ) : subjects.length === 0 ? (
-                          "Subjects not available"
-                        ) : (
-                          "-- Select Subject --"
-                        )}
-                      </option>
-                      {!isLoad &&
-                        subjects.map((subj, index) => (
-                          <option
-                            key={index}
-                            value={subj.id}
-                            className="cursor-pointer"
-                          >
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <select
+                          value={branch}
+                          onChange={(e) => setBranch(e.target.value)}
+                          className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        >
+                          <option value="">Select Branch</option>
+                          {Object.values(BRANCH).map((branchOption, index) => (
+                            <option key={index} value={branchOption}>
+                              {branchOption}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={sem}
+                          onChange={(e) => setSem(e.target.value)}
+                          className="p-4 cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        >
+                          <option value="">Select Semester</option>
+                          {Object.values(SEM).map((semOption, index) => (
+                            <option key={index} value={semOption}>
+                              Semester {semOption}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <select
+                          value={batch}
+                          onChange={(e) => setBatch(e.target.value)}
+                          className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        >
+                          <option value="" disabled>
+                            Select Batch
+                          </option>
+                          <option value="a1">A1</option>
+                          <option value="b1">B1</option>
+                          <option value="c1">C1</option>
+                          <option value="d1">D1</option>
+                          <option value="a2">A2</option>
+                          <option value="b2">B2</option>
+                          <option value="c2">C2</option>
+                          <option value="d2">D2</option>
+                        </select>
+
+                        <input
+                          value={mobileNo}
+                          onChange={(e) => setMobileNo(e.target.value)}
+                          type="text"
+                          placeholder="Mobile No"
+                          className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Subject */}
+                  <div className="mt-4">
+                    {userType === "student" && (
+                      <select
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        className="p-4 w-full cursor-pointer rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      >
+                        <option value="" disabled>
+                          -- Select Subject --
+                        </option>
+                        {subjects.map((subj, index) => (
+                          <option key={index} value={subj.id}>
                             {subj.subject} ({subj.teacher})
                           </option>
                         ))}
-                    </select>
-                  )}
+                      </select>
+                    )}
 
-                  {userType === "faculty" && (
-                    <input
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      type="text"
-                      placeholder="Enter Subject"
-                      className="p-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  )}
+                    {userType === "faculty" && (
+                      <input
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        type="text"
+                        placeholder="Enter Subject"
+                        className="p-4 w-full rounded-md bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    )}
+                  </div>
                 </>
               )}
               {isLogin && (

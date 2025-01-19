@@ -50,7 +50,7 @@ const userSchema = new Schema(
     batch: {
       type: String,
       lowercase: true,
-      required: [true, "batch is required"],
+      default: "a1",
     },
     subject: {
       type: String,
