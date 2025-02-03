@@ -7,10 +7,9 @@ import { v4 as uuidv4 } from "uuid";
 import cron from "node-cron";
 
 export const login = async (req, res) => {
-  console.log("Api hit");
+  console.log("login Api hit");
   const { id, email, password } = req.body;
-  console.log(id, email, password);
-  console.log("-->", req.body);
+  // console.log(id, email, password);
   console.log("-->", req.ip);
 
   try {
@@ -78,23 +77,14 @@ export const login = async (req, res) => {
       })
       .json({
         message: "Welcome back!",
-        firstTimeLogin: isFirstTime,
         user: {
           _id: user._id,
           username: user.username,
           id: user.id,
           role: user.role,
           isApproved: user.isApproved,
-          firstTimeLogin: user.firstTimeLogin,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-          sessionId: user.sessionId,
-          isAlreadyLogged: user.isAlreadyLogged,
-          lastLoginTime: user.lastLoginTime,
         },
         success: true,
-        token,
-        sessionId,
       });
   } catch (error) {
     console.error("Login Error:", error);

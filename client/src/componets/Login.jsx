@@ -49,7 +49,7 @@ const Login = () => {
           setIsLoad(true);
           const res = await axiosInstance.get("auth/fetch-subjects");
           if (res.data.success) {
-            console.log(res.data.subjects);
+            // console.log(res.data.subjects);
             setSubjects(res.data.subjects);
           }
           setIsLoad(false);
@@ -140,11 +140,11 @@ const Login = () => {
       password,
     };
 
-    console.log("This is user: ", user);
+    // console.log("This is user: ", user);
     try {
       const url = `auth/login`;
       const res = await axiosInstance.post(url, user);
-      console.log(res.data);
+      // console.log(res.data);
       if (res.data.success) {
         const { firstTimeLogin, message } = res.data;
         if (firstTimeLogin) {
@@ -153,9 +153,9 @@ const Login = () => {
           return;
         }
 
-        const { user: loggedInUser, token } = res.data;
+        const { user: loggedInUser } = res.data;
         toast.success(message || "Login successful!");
-        localStorage.setItem("UserToken", token);
+        // localStorage.setItem("UserToken", token);
         dispatch(setUser(loggedInUser));
         navigate("/browse");
       } else {
@@ -347,9 +347,9 @@ const Login = () => {
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-500 focus:outline-none"
                     >
                       {showPassword ? (
-                        <span>👁️</span>
+                        <span>🔓</span>
                       ) : (
-                        <span>🙈</span> //
+                        <span>🔒</span> //
                       )}
                     </button>
                   </div>

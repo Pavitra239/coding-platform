@@ -14,7 +14,7 @@ class Auth {
           return { authStatus: false };
         }
       } catch (err) {
-        console.error("An error occurred:", err);
+        console.error("An error occurred");
         return { authStatus: false };
       }
     };

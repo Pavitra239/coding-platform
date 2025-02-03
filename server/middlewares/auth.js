@@ -17,7 +17,7 @@ export const isAuthorized = async (req, res, next) => {
   const decoded = await verifyToken(token);
   const user = await User.findById(decoded.id, { password: 0 });
 
-  console.log("-->", user.sessionId, "-->", decoded.sessionId)
+  // console.log("-->", user.sessionId, "-->", decoded.sessionId)
   if (!user || user.sessionId !== decoded.sessionId) {
     throw new UnauthorizedError("Invalid or expired session. Please log in again.");
   }

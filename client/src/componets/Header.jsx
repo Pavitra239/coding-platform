@@ -50,7 +50,7 @@ const Header = () => {
       await axiosInstance.get(`auth/logout`);
 
       dispatch(setUser(null));
-      localStorage.removeItem("authToken");
+      localStorage.removeItem("UserToken");
       dispatch(logout());
 
       toast.success("Logged out successfully");

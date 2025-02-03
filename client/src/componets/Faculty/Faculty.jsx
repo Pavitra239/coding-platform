@@ -25,7 +25,7 @@ const Faculty = () => {
   // Fetch users with pagination
   const fetchUsers = async (page = 1) => {
     let facultyId = user._id;
-    console.log("This is faculty id: ", facultyId);
+    // console.log("This is faculty id: ", facultyId);
 
     if (!facultyId) {
       toast.error("Faculty ID is required.");
@@ -37,7 +37,7 @@ const Faculty = () => {
       const response = await axiosInstance.get(
         `/faculty/get-pending-users?page=${page}&facultyId=${facultyId}`
       );
-      console.log(response.data);
+      // console.log(response.data);
 
       if (response.data.success) {
         setPendingUsers(response.data.data);
@@ -209,11 +209,11 @@ const Faculty = () => {
         </div>
 
         <div className="p-4">
-          <button class="bg-blue-500 hover:bg-blue-600 text-white mr-2 font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+          <button className="bg-blue-500 hover:bg-blue-600 text-white mr-2 font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
           onClick={() => navigate("/add-student-using-file")}>
             Add Student Using File
           </button>
-          <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
           onClick={() => navigate("/registerStudent")}>
             Register Student 
           </button>
