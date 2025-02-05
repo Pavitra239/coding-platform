@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import User from './models/user.js'; // Adjust the path to your User schema file
 import { ROLES } from './utils/constants.js';
 
-dotenv.config();
+import { config } from "dotenv";
+config({ path: "../.env"});
 
 const createAdmin = async () => {
   try {

@@ -1,6 +1,6 @@
 import "express-async-errors";
 import { config } from "dotenv";
-config();
+config({ path: "../.env"});
 import express from "express";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
@@ -23,8 +23,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static("public"));
 app.use(express.json());
+
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: process.env.BACKEND_ORIGIN || "http://localhost:5173",
   credentials: true,
 };
 // const corsOptions = {

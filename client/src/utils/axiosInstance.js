@@ -1,12 +1,14 @@
 import axios from 'axios';
 
-// Create an axios instance with only the baseURL
+// console.log("Frontend Origin:", import.meta.env.VITE_FRONTEND_ORIGIN);
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3100/api/v1',
+  baseURL: import.meta.env.VITE_FRONTEND_ORIGIN || 'http://localhost:3100/api/v1',
   withCredentials: true,
 });
 
 export default axiosInstance;
+
 
 // import axios from 'axios';
 

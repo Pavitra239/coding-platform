@@ -1,6 +1,6 @@
 
-import { config } from 'dotenv';
-config();
+import { config } from "dotenv";
+config({ path: "../.env"});
 import multer from 'multer';
 import { GridFsStorage } from 'multer-gridfs-storage';
 
