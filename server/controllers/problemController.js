@@ -384,7 +384,7 @@ export const getProblemById = async (req, res) => {
 
     // Fetch the problem from the database
     // const problem = await Problem.findById(id);
-    const problem = await Problem.findById(id).select("-assignedStudents -createdAt -updatedAt -createdBy");
+    const problem = await Problem.findById(id).select("-createdAt -updatedAt");
 
 
     if (!problem) {
@@ -406,8 +406,6 @@ export const getProblemById = async (req, res) => {
 
     // Faculty can access only the problems they created
     if (isAdmin === "faculty") {
-      console.log("problem.createdBy", problem.createdBy.toString());
-      console.log("userId", userId.toString());
 
       if (problem.createdBy.toString() !== userId.toString()) {
         return res
