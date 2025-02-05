@@ -92,8 +92,8 @@ int main() {
       const response = await axiosInstance.post("/compiler/run-code", {
         code: codeByLanguage[language],
         language,
-        testCases: testcases,
         allTestCases: false,
+        problemId: problem._id,
       });
   
       const testResults = response.data.testResults;
@@ -131,8 +131,8 @@ int main() {
       const compilePayload = {
         code: codeByLanguage[language],
         language,
-        testCases: testcases,
         allTestCases: true, // Ensures backend processes all test cases
+        problemId: problem._id,
       };
   
       // Send code and test cases to the backend for compilation

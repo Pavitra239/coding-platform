@@ -38,8 +38,10 @@ const MakeProblem = () => {
 
   const handleDeleteProblem = async () => {
     try {
-      await axiosInstance.delete(`/problems/${problemToDelete}`);
-      toast.success("Problem deleted successfully!");
+      const res = await axiosInstance.delete(`/problems/${problemToDelete}`);
+      // console.log(res.data);
+
+      toast.success(res?.data?.message || "Problem deleted successfully!");
       setShowDeleteModal(false);
       setProblemToDelete(null);
       fetchProblems();
@@ -86,8 +88,9 @@ const MakeProblem = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get(`/problems`);
+      // console.log(response.data)
       const { problems: allProblems } = response.data;
-      console.log(response.data);
+      // console.log(response.data);
       setProblems(allProblems);
     } catch (error) {
       toast.error("Error fetching problems!");

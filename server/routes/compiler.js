@@ -1,5 +1,6 @@
 import express from "express";
 import axios from "axios";
+import problem from "../models/problem.js";
 
 const router = express.Router();
 const JUDGE0_BASE_URL = "https://judge0-ce.p.rapidapi.com";
@@ -412,13 +413,13 @@ const normalizeOutput = (output) => {
 };
 
 router.post("/run-code", async (req, res) => {
-  const { code, language, testCases, allTestCases } = req.body;
+  const { code, language, allTestCases, problemId } = req.body;
+  console.log("hello--->123")
 
   if (
     !code ||
-    !language ||
-    !Array.isArray(testCases) ||
-    testCases.length === 0
+    !language   ||
+    !problemId 
   ) {
     return res.status(400).json({
       success: false,
@@ -434,11 +435,25 @@ router.post("/run-code", async (req, res) => {
     });
   }
 
+
   try {
-    let selectedTestCases = testCases;
-    if (!allTestCases) {
-      selectedTestCases = [testCases[0]]; // Only first test case
+    const problemData = await problem.findById(problemId).select("testCases");
+
+    if (!problemData || !problemData.testCases || problemData.testCases.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No test cases found for the given problem ID.",
+      });
     }
+
+    let selectedTestCases = problemData.testCases;
+
+
+    if (!allTestCases) {
+      selectedTestCases = [problemData.testCases[0]]; // Only first test case
+    }
+
+    console.log("Selected test cases:", selectedTestCases);
 
     const submissions = selectedTestCases.map((testCase) => ({
       source_code: code,

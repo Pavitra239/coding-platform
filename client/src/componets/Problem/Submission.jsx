@@ -21,6 +21,7 @@ const Submission = ({ problemId, latestSubmission }) => {
           problem_id: problemId,
         },
       });
+      // console.log(response.data);
       const sortedSubmissions = response.data.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );

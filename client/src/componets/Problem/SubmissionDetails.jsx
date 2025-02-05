@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 
 const SubmissionDetails = ({ submission, onBack }) => {
   const [expandedCase, setExpandedCase] = useState(null); // Default: No case expanded
+  // console.log(submission);
 
   const safeAccess = (obj, path, defaultValue = "N/A") => {
     try {

@@ -37,6 +37,7 @@ const ProblemShow = () => {
       try {
         const response = await axiosInstance.get(`/problems/${id}`);
         setProblem(response.data);
+        console.log(response.data)
       } catch (error) {
         toast.error("Failed to load problem data");
         // console.error("Failed to load problem data", error);

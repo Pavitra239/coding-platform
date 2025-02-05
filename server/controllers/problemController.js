@@ -383,7 +383,9 @@ export const getProblemById = async (req, res) => {
     const { id } = req.params;
 
     // Fetch the problem from the database
-    const problem = await Problem.findById(id);
+    // const problem = await Problem.findById(id);
+    const problem = await Problem.findById(id).select("-assignedStudents -createdAt -updatedAt -createdBy");
+
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
