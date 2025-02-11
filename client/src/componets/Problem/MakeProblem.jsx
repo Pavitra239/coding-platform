@@ -74,7 +74,7 @@ const MakeProblem = () => {
 
   const assignProblem = (problemId) => {
     // Log problemId for debugging
-    console.log(problemId);
+    // console.log(problemId);
     // Navigate to the assign problem page
     navigate(`/assignProblem/${problemId}`);
   };
@@ -88,9 +88,7 @@ const MakeProblem = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get(`/problems`);
-      // console.log(response.data)
       const { problems: allProblems } = response.data;
-      // console.log(response.data);
       setProblems(allProblems);
     } catch (error) {
       toast.error("Error fetching problems!");

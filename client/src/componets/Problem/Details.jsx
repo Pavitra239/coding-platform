@@ -17,7 +17,7 @@ const Details = () => {
           `/submissions/${submissionId}`
         );
         setSubmission(response.data);
-        console.log(response.data);
+        // console.log(response.data);
       } catch (err) {
         setError(
           err.response?.data?.error || "Failed to fetch submission details"

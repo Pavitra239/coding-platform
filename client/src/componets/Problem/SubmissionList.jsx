@@ -1,7 +1,8 @@
 import React from "react";
-import { FaClock, FaMemory } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const SubmissionList = ({ submissions, onSelect, loading, error }) => {
+  const navigate = useNavigate();
   return (
     <div>
       <h3 className="font-bold text-xl text-white mb-2">Submissions</h3>
@@ -37,7 +38,7 @@ const SubmissionList = ({ submissions, onSelect, loading, error }) => {
                 {submissions.map((submission) => (
                   <tr
                     key={submission._id}
-                    onClick={() => onSelect(submission)}
+                    onClick={() => navigate("/submissions/" + submission._id)}
                     className="transition duration-200 ease-in-out hover:bg-gray-900 rounded-lg hover:cursor-pointer"
                   >
                     <td className="px-4 py-2 font-semibold text-center capitalize">

@@ -22,7 +22,7 @@ const SubmissionPage = () => {
       const response = await axiosInstance.get(
         "/submissions/user/submissions",
         {
-          params: { user_id: userId, page: 1, limit: 7 }, // Fetch up to 7 submissions
+          params: {page: 1, limit: 7 }, // Fetch up to 7 submissions
         }
       );
       setSubmissions(response.data.submissions);

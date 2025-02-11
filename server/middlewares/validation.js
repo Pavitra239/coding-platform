@@ -97,26 +97,9 @@ export const taskInputValidator = withValidationResult([
     }),
 ]);
 
-export const profileInputValidator = withValidationResult([
-  body("name").optional().isString().withMessage("Name must be a string"),
-  body("bio").optional().isString().withMessage("Bio must be a string"),
-  body("avatar").optional().isString().withMessage("Avatar URL must be a string"),
-]);
 
-export const passwordInputValidator = withValidationResult([
-  body("oldPassword")
-    .isString()
-    .notEmpty()
-    .withMessage("Old password is required")
-    .isLength({ min: 8 })
-    .withMessage("Old password should contain at least 8 characters"),
-  body("newPassword")
-    .isString()
-    .notEmpty()
-    .withMessage("New password is required")
-    .isLength({ min: 8 })
-    .withMessage("New password should contain at least 8 characters"),
-]);
+
+
 
 
 // Validation for user creation and update

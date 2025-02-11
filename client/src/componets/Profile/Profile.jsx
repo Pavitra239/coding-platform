@@ -4,7 +4,6 @@ import ProfileLeft from "./ProfileLeft";
 import ProfileRight from "./ProfileRight";
 import SubmissionPage from "../SubmissionPage"; // Assume this is your SubmissionPage component
 import axiosInstance from "../../utils/axiosInstance";
-import { useSelector } from "react-redux";
 
 const initialState = {
   username: "",
@@ -36,7 +35,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, dispatch] = useReducer(reducer, initialState);
-  const userId = useSelector((state) => state?.app?.user?._id);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -90,7 +88,6 @@ const Profile = () => {
     try {
       const response = await axiosInstance.put("user/update", {
         ...formData,
-        userId,
       });
 
       if (response.data.success) {

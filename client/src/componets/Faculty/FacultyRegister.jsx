@@ -77,12 +77,12 @@ const FacultyRegister = () => {
 
   const handleDelete = async () => {
     try {
-      console.log(userId)
+      // console.log(userId)
       const response = await axiosInstance.delete(
         `/faculty/remove-user/${userId}`
       );
 
-      console.log(response.data);
+      // console.log(response.data);
       if (response.data.success) {
         toast.success(response.data.message);
         fetchStudents(currentPage);

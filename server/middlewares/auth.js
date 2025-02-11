@@ -6,8 +6,8 @@ export const isAuthorized = async (req, res, next) => {
   if (!req.headers.cookie) throw new UnauthorizedError("please login!");
   // console.log(req.headers.cookie);
 
-  const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => {
-    const [name, value] = cookie.trim().split('=');
+  const cookies = req.headers.cookie.split(";").reduce((acc, cookie) => {
+    const [name, value] = cookie.trim().split("=");
     acc[name] = value;
     return acc;
   }, {});
@@ -19,18 +19,20 @@ export const isAuthorized = async (req, res, next) => {
 
   // console.log("-->", user.sessionId, "-->", decoded.sessionId)
   if (!user || user.sessionId !== decoded.sessionId) {
-    throw new UnauthorizedError("Invalid or expired session. Please log in again.");
+    throw new UnauthorizedError(
+      "Invalid or expired session. Please log in again."
+    );
   }
   req.user = {
     id: user._id,
     isAdmin: user.role,
   };
-  console.log("hello")
+  console.log("hello");
   next();
 };
 
 export const isAdmin = (req, res, next) => {
-  console.log('->', req.user);
+  console.log("->", req.user);
   if (req.user && req.user.isAdmin === "admin") {
     // Allow access if the user is an admin
     return next();
@@ -40,10 +42,10 @@ export const isAdmin = (req, res, next) => {
 };
 
 export const isFaculty = (req, res, next) => {
-  console.log('=+-->', req.user);
+  console.log("=+-->", req.user);
   if (req.user && req.user.isAdmin === "faculty") {
     // Allow access if the user is an faculty
-    console.log("hello2")
+    console.log("hello2");
     return next();
   }
   // Deny access if the user is not an faculty
@@ -51,10 +53,14 @@ export const isFaculty = (req, res, next) => {
 };
 
 export const isAdminOrFaculty = (req, res, next) => {
-  console.log('=+-->', req.user);
-  if (req.user.role !== 'Faculty' || req.user.role !== 'Admin') {
-    console.log("hello5")
-    return next();
+  console.log("=+-->", req.user);
+
+  if (req.user.isAdmin !== "faculty" && req.user.isAdmin !== "admin") {
+    console.log("Unauthorized Access");
+    return res
+      .status(403)
+      .json({ message: "You are not allowed to access this route" });
   }
-  throw new ForbiddenError("You are not allowed to access this route");
+
+  next(); // Proceed to the next middleware/controller
 };

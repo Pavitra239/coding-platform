@@ -29,7 +29,7 @@ const Admin = () => {
       const response = await axiosInstance.get(
         `/admin/get-pending-users?page=${page}`
       );
-      console.log(response?.data);
+      // console.log(response?.data);
       if (response?.data?.success) {
         setPendingUsers(response?.data?.data);
         setTotalPages(response?.data?.totalPages);

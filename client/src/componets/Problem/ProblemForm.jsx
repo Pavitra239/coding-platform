@@ -50,7 +50,8 @@ const ProblemForm = () => {
 
       const fetchProblem = async () => {
         try {
-          const response = await axiosInstance.get(`/problems/${id}`);
+          const response = await axiosInstance.get(`/problems/getProblemByIdForUpdate/${id}`);
+          // console.log(response.data);
           const fetchedData = response.data;
 
           setProblemData({
@@ -230,7 +231,7 @@ const ProblemForm = () => {
     problemData.testCases.forEach((testCase, index) => {
       if (!testCase.inputs || !testCase.outputs || testCase.marks < 0) {
         newErrors[`testCase_${index}`] = true;
-        console.log("Test case error", index);
+        // console.log("Test case error", index);
       }
     });
 
@@ -272,7 +273,6 @@ const ProblemForm = () => {
       const response = await apiMethod(apiEndpoint, {
         ...problemData,
         tags,
-        createdBy: user._id,
       });
 
       if (response.status === 200 || response.status === 201) {

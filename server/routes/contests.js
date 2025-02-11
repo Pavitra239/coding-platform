@@ -17,10 +17,10 @@ router.use(isAuthorized);
 router.post('/create', isAdminOrFaculty,createContest);
 
 // Get All Contests
-router.get('/', getAllContests);
+router.get('/',isAdminOrFaculty, getAllContests);
 
 // Get Contest by ID
-router.get('/:id', getContestById);
+router.get('/:id',isAdminOrFaculty, getContestById);
 
 // Update Contest
 router.put('/:id', isAdminOrFaculty,updateContest);

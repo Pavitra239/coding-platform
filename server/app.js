@@ -8,11 +8,11 @@ import notFoundHandler from "./controllers/not-found.js";
 import errorHandler from "./controllers/error.js";
 import authRoutes from "./routes/auth.js";
 import contestRoutes from "./routes/contests.js";
-import problemRoutes from "./routes/problemRoutes.js"; // Problem routes
-import user from "./routes/user.js";
+import problemRoutes from "./routes/problem.router.js"; // Problem routes
+import user from "./routes/user.router.js";
 import cors from "cors";
 import compileRoutes from "./routes/compileRoutes.js"; // Import the compile routes
-import submissionRoutes from "./routes/submissionRoutes.js"; // Import the submission routes
+import submissionRoutes from "./routes/submission.router.js"; // Import the submission routes
 import adminRouter from "./routes/admin.router.js";
 import facultyRouter from "./routes/faculty.router.js";
 import compiler from "./routes/compiler.js";

@@ -26,7 +26,7 @@ const StudentList = () => {
         }
       );
       if (response.data.success) {
-        console.log(response.data);
+        // console.log(response.data);
         setStudents(response.data.students);
         setTotalPages(response.data.totalPages); // Ensure backend sends the total pages
         setTotalStudents(response.data.totalStudents);
@@ -64,7 +64,7 @@ const StudentList = () => {
 
   const handleExpireSession = async (userId) => {
     try {
-      console.log("Expiring session for user:", userId);
+      // console.log("Expiring session for user:", userId);
       const response = await axiosInstance.post("/faculty/expire-session", {
         userId,
       });

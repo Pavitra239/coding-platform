@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 
 const ProblemForm = () => {
   const user = useSelector((state) => state.app.user); // Get the logged-in user
-  console.log(user)
+  // console.log(user)
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -75,9 +75,9 @@ const ProblemForm = () => {
     };
 
     try {
-      console.log("Problem data --->", problemData);
+      // console.log("Problem data --->", problemData);
       const response = await axiosInstance.post("/problems", problemData);
-      console.log("Problem created successfully:", response.data);
+      // console.log("Problem created successfully:", response.data);
     } catch (error) {
       console.error("Error creating problem:", error);
     }

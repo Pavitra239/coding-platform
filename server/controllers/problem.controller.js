@@ -4,59 +4,7 @@ import Submission from "../models/submission.js";
 import user from "../models/user.js";
 import mongoose from "mongoose";
 
-// Create problem
-// export const createProblem = async (req, res) => {
-//   const {
-//     title,
-//     description,
-//     difficulty,
-//     inputFormat,
-//     outputFormat,
-//     sampleIO,
-//     testCases = [], // Default to an empty array if undefined
-//     constraints,
-//     tags,
-//     createdBy,
-//     totalMarks
-//     } = req.body;
-
-//   console.log("testCases", testCases);
-
-//   try {
-//     const problem = new Problem({
-//       title,
-//       description,
-//       difficulty,
-//       inputFormat,
-//       outputFormat,
-//       sampleIO,
-//       testCases: testCases.map((testCase) => ({
-//         inputs: testCase.inputs.map((input, index) => ({
-//           value: input,
-//           type: testCase.inputTypes[index], // Use index to get corresponding type
-//         })),
-//         outputs: testCase.outputs.map((output, index) => ({
-//           value: output,
-//           type: testCase.outputTypes[index], // Use index to get corresponding type
-//         })),
-//         marks: testCase.marks, // Assign marks for the test case
-//         timeLimit: testCase.timeLimit, // Include timeLimit if provided
-//         memoryLimit: testCase.memoryLimit, // Include memoryLimit if provided
-//       })),
-//       constraints,
-//       tags,
-//       totalMarks,
-//       createdBy: req.user?._id || createdBy,
-//     });
-
-//     const createdProblem = await problem.save();
-//     res.status(201).json(createdProblem);
-//   } catch (error) {
-//     console.log(error + " error");
-//     res.status(400).json({ message: error.message });
-//   }
-// };
-
+// Create a new problem
 export const createProblem = async (req, res) => {
   const {
     title,
@@ -69,11 +17,16 @@ export const createProblem = async (req, res) => {
     constraints,
     tags,
     totalMarks,
-    createdBy
   } = req.body;
 
-  // Enhanced logging for testCases to check the raw input structure
-  console.log("Received testCases raw:", testCases);
+
+  if(!req.user){
+    return res.status(403).json({ message: "Unauthorized access" });
+  }
+
+  console.log("req.user", req.user);
+  const createdBy = req.user?.id;
+
   if (Array.isArray(testCases)) {
     testCases.forEach((testCase, index) => {
       console.log(`TestCase ${index + 1}:`, JSON.stringify(testCase, null, 2));
@@ -83,7 +36,6 @@ export const createProblem = async (req, res) => {
   }
 
   try {
-    // Create a new Problem document using the provided data
     const problem = new Problem({
       title,
       description,
@@ -105,11 +57,8 @@ export const createProblem = async (req, res) => {
       createdBy
     });
 
-    // Save the problem to the database
     const createdProblem = await problem.save();
-    console.log("Created Problem:", createdProblem);
 
-    // Respond with the created problem
     res.status(201).json(createdProblem);
   } catch (error) {
     console.error("Error creating problem:", error);
@@ -164,13 +113,15 @@ export const assignProblemToStudents = async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    console.log("hello")
+    const userId = req.user.id;
+    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
 
-    // Add students to the assigned list
+    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
+      return res.status(403).json({ message: "Unauthorized to assignProblemToStudents this problem" });
+    }
+
     problem.assignedStudents.push(...studentIds);
-    console.log("problem.assignedStudents", problem.assignedStudents);
     await problem.save();
-    console.log("problem", problem);
 
     res
       .status(200)
@@ -183,13 +134,13 @@ export const assignProblemToStudents = async (req, res) => {
 export const unassignStudents = async (req, res) => {
   const { id } = req.params; // Problem ID
   const { studentIds } = req.body; // Array of student IDs to unassign
-  console.log(studentIds);
 
   if (!Array.isArray(studentIds) || studentIds.length === 0) {
     return res.status(400).json({ message: "No student IDs provided." });
   }
 
   try {
+    
     // Fetch the problem by ID
     const problem = await Problem.findById(id);
 
@@ -197,6 +148,14 @@ export const unassignStudents = async (req, res) => {
       console.error(`Problem with ID ${id} not found.`);
       return res.status(404).json({ message: "Problem not found" });
     }
+
+    const userId = req.user.id;
+    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+
+    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
+      return res.status(403).json({ message: "Unauthorized to get Students this problem" });
+    }
+
 
     // Filter out the students to be unassigned
     const updatedAssignedStudents = problem.assignedStudents.filter(
@@ -223,7 +182,7 @@ export const getProblemWithStudents = async (req, res) => {
   const { id } = req.params; // Problem ID
 
   try {
-    // Fetch the problem by ID
+
     const problem = await Problem.findById(id);
 
     if (!problem) {
@@ -231,14 +190,21 @@ export const getProblemWithStudents = async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
+
+    const userId = req.user.id;
+    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+
+    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
+      return res.status(403).json({ message: "Unauthorized to get Students this problem" });
+    }
+    
+    
+
     // Fetch all students assigned to this problem
     const assignedStudents = problem.assignedStudents.map(
       (studentId) => new mongoose.Types.ObjectId(studentId) // Ensure consistent ObjectId type
     );
 
-    // console.log(`Assigned Students IDs: ${assignedStudents}`);
-
-    // Find users corresponding to the assigned student IDs
     const assignedStudentData = await user
       .find(
         { _id: { $in: assignedStudents } } // Fetch matching users
@@ -250,7 +216,6 @@ export const getProblemWithStudents = async (req, res) => {
       console.warn(`No assigned students found for Problem ID ${id}.`);
     }
 
-    // Return the problem and assigned student data
     res.status(200).json({
       message: "Problem and assigned students fetched successfully",
       assignedStudents: assignedStudentData,
@@ -263,9 +228,10 @@ export const getProblemWithStudents = async (req, res) => {
 
 export const getProblemWithUnassignedStudents = async (req, res) => {
   const { id } = req.params; // Problem ID
-  console.log("Problem ID:22", id);
 
   try {
+
+    
     // Fetch the problem by ID
     const problem = await Problem.findById(id);
 
@@ -273,6 +239,14 @@ export const getProblemWithUnassignedStudents = async (req, res) => {
       console.error(`Problem with ID ${id} not found.`);
       return res.status(404).json({ message: "Problem not found" });
     }
+
+    const userId = req.user.id;
+    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+
+    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
+      return res.status(403).json({ message: "Unauthorized to get Students this problem" });
+    }
+
 
     // Fetch all students assigned to this problem
     const assignedStudents = problem.assignedStudents.map(
@@ -381,10 +355,8 @@ export const getStudents = async (req, res) => {
 export const getProblemById = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Fetch the problem from the database
-    // const problem = await Problem.findById(id);
-    const problem = await Problem.findById(id).select("-createdAt -updatedAt");
+    console.log("welcome")
+    const problem = await Problem.findById(id).select("-createdAt -updatedAt -testCases");
 
 
     if (!problem) {
@@ -437,80 +409,51 @@ export const getProblemById = async (req, res) => {
   }
 };
 
-// Update problem
-// export const updateProblem = async (req, res) => {
-//   try {
-//     const problem = await Problem.findById(req.params.id);
+export const getProblemByIdForUpdate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("hello22")
+    const problem = await Problem.findById(id).select("-createdAt -updatedAt -assignedStudents");
 
-//     if (!problem) {
-//       return res.status(404).json({ message: "Problem not found" });
-//     }
+    if (!problem) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
 
-//     const {
-//       sampleIO,
-//       testCases,
-//       ...otherUpdates // Extract other fields for direct assignment
-//     } = req.body;
+    // Ensure req.user is properly populated
+    if (!req.user) {
+      return res.status(403).json({ message: "Unauthorized access2" });
+    }
 
-//     // Update sampleIO if provided
-//     if (sampleIO) {
-//       problem.sampleIO = sampleIO.map((sample) => ({
-//         input: sample.input,
-//         output: sample.output,
-//       }));
-//     }
+    return res.json(problem);
 
-//     // Update testCases if provided
-//     if (testCases) {
-//       problem.testCases = testCases.map((testCase) => ({
-//         inputs: testCase.inputs.map((input, index) => ({
-//           value: input,
-//           type: testCase.inputTypes?.[index], // Safely access inputTypes
-//         })),
-//         outputs: testCase.outputs.map((output, index) => ({
-//           value: output,
-//           type: testCase.outputTypes?.[index], // Safely access outputTypes
-//         })),
-//         timeLimit: testCase.timeLimit,
-//         memoryLimit: testCase.memoryLimit,
-//         marks: testCase.marks || 0, // Default marks to 0 if not provided
-//       }));
-//     }
-
-//     // Assign other updates directly
-//     Object.assign(problem, otherUpdates);
-
-//     // Save updated problem
-//     const updatedProblem = await problem.save();
-
-//     res.json(updatedProblem);
-//   } catch (error) {
-//     console.error("Update Problem Error:", error); // Log the error for debugging
-//     res
-//       .status(500)
-//       .json({ message: "Failed to update problem. Please try again later." });
-//   }
-// };
-
+    
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const updateProblem = async (req, res) => {
   try {
-    // Find the problem by its ID
     const problem = await Problem.findById(req.params.id);
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    // Extract the fields from the request body for updating
+    const userId = req.user.id;
+    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+
+    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
+    
+      return res.status(403).json({ message: "Unauthorized to edit this problem" });
+    }
+
     const {
       sampleIO,
       testCases,
       ...otherUpdates // Extract other fields for direct assignment
     } = req.body;
 
-    // Log the received test cases for debugging
-    console.log("Received testCases raw:", testCases);
     if (Array.isArray(testCases)) {
       testCases.forEach((testCase, index) => {
         console.log(`TestCase ${index + 1}:`, JSON.stringify(testCase, null, 2));
@@ -519,7 +462,6 @@ export const updateProblem = async (req, res) => {
       console.error("Received testCases is not an array:", testCases);
     }
 
-    // Update sampleIO if provided
     if (sampleIO) {
       problem.sampleIO = sampleIO.map((sample) => ({
         input: sample.input, // Ensure input is a string
@@ -527,7 +469,6 @@ export const updateProblem = async (req, res) => {
       }));
     }
 
-    // Update testCases if provided
     if (testCases) {
       problem.testCases = testCases.map((testCase) => ({
         inputs: testCase.inputs, // Ensure inputs are a string
@@ -541,9 +482,7 @@ export const updateProblem = async (req, res) => {
 
     // Save the updated problem to the database
     const updatedProblem = await problem.save();
-    console.log("Updated Problem:", updatedProblem);
 
-    // Send the updated problem back as a response
     res.json(updatedProblem);
   } catch (error) {
     console.error("Update Problem Error:", error); // Log error for debugging
@@ -562,6 +501,15 @@ export const deleteProblem = async (req, res) => {
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
+
+    const userId = req.user.id;
+    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+
+    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
+    
+      return res.status(403).json({ message: "Unauthorized to delete this problem" });
+    }
+
 
     // Delete the problem
     await Problem.deleteOne({ _id: req.params.id });

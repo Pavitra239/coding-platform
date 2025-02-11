@@ -3,7 +3,7 @@ import axios from 'axios';
 // console.log("Frontend Origin:", import.meta.env.VITE_FRONTEND_ORIGIN);
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_FRONTEND_ORIGIN || 'http://localhost:3100/api/v1',
+  baseURL: import.meta.env.VITE_FRONTEND_ORIGIN,
   withCredentials: true,
 });
 

@@ -21,7 +21,7 @@ const StudentRegister = () => {
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -33,7 +33,7 @@ const StudentRegister = () => {
       const workbook = XLSX.read(data, { type: "array" }); // Parse the Excel data into a workbook
       const sheet = workbook.Sheets[workbook.SheetNames[0]]; // Get the first sheet
       const parsedData = XLSX.utils.sheet_to_json(sheet); // Parse the sheet into JSON data
-      console.log("Parsed Data:", parsedData); // Log parsed data to debug
+      // console.log("Parsed Data:", parsedData); // Log parsed data to debug
 
       // Transform parsed data to expected format
       setStudents(

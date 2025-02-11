@@ -6,7 +6,9 @@ import SubmissionDetails from "./SubmissionDetails";
 
 const Submission = ({ problemId, latestSubmission }) => {
   const [submissions, setSubmissions] = useState([]);
-  const [selectedSubmission, setSelectedSubmission] = useState(latestSubmission || null);
+  const [selectedSubmission, setSelectedSubmission] = useState(
+    latestSubmission || null
+  );
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const user = useSelector((state) => state.app.user);
@@ -15,20 +17,28 @@ const Submission = ({ problemId, latestSubmission }) => {
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
+      setError(null); // Reset error state before fetching
+
       const response = await axiosInstance.get("/submissions", {
-        params: {
-          user_id: userId,
-          problem_id: problemId,
-        },
+        params: { problem_id: problemId },
       });
-      // console.log(response.data);
-      const sortedSubmissions = response.data.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-      setSubmissions(sortedSubmissions);
-      setLoading(false);
+
+      if (response.data.data?.length === 0) {
+        setSubmissions([]);
+        setError("No submissions found for this problem.");
+      } else {
+        const sortedSubmissions = response.data.data.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setSubmissions(sortedSubmissions);
+      }
     } catch (error) {
-      setError("Failed to load submissions. Please try again.");
+      console.error("Error fetching submissions:", error);
+      setError(
+        error.response?.data?.message ||
+          "Failed to load submissions. Please try again."
+      );
+    } finally {
       setLoading(false);
     }
   };
@@ -46,19 +56,12 @@ const Submission = ({ problemId, latestSubmission }) => {
 
   return (
     <div className="bg-gray-900 p-2 rounded-lg shadow-lg">
-      {selectedSubmission ? (
-        <SubmissionDetails
-          submission={selectedSubmission}
-          onBack={() => setSelectedSubmission(null)}
-        />
-      ) : ( 
-        <SubmissionList
-          submissions={submissions}
-          onSelect={setSelectedSubmission}
-          loading={loading}
-          error={error}
-        />
-      )}
+      <SubmissionList
+        submissions={submissions}
+        onSelect={setSelectedSubmission}
+        loading={loading}
+        error={error}
+      />
     </div>
   );
 };

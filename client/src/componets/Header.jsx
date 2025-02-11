@@ -56,7 +56,7 @@ const Header = () => {
       toast.success("Logged out successfully");
       navigate("/");
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       toast.error("Failed to log out. Please try again.");
     }
   };

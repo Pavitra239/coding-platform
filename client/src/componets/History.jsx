@@ -17,13 +17,14 @@ const History = () => {
   const fetchSubmissions = async (page) => {
     setLoading(true);
     try {
+      console.log("history page", page);
       const response = await axiosInstance.get(
         "/submissions/user/submissions",
         {
-          params: { user_id: userId, page, limit: 9 },
+          params: { page, limit: 9 },
         }
       );
-      console.log(response.data);
+      // console.log(response.data);
       setSubmissions(response.data.submissions);
       setTotalPages(response.data.totalPages);
     } catch (err) {
@@ -107,7 +108,9 @@ const History = () => {
                     submissions.map((submission, index) => (
                       <tr
                         key={submission._id}
-                        onClick={() => navigate("/submissions/" + submission._id)}
+                        onClick={() =>
+                          navigate("/submissions/" + submission._id)
+                        }
                         className={`${
                           index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
                         } hover:text-blue-400 text-gray-300 cursor-pointer transition-all duration-300 ease-in-out transform`}

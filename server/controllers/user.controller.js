@@ -7,8 +7,8 @@ import { mongoose } from "../app.js";
 
 export const updateUser = async (req, res) => {
   try {
+    console.log("update api called");
     const {
-      userId,
       username,
       gender,
       location,
@@ -22,7 +22,9 @@ export const updateUser = async (req, res) => {
       email,
     } = req.body;
 
-    console.log(req.body);
+    // console.log(req.body);
+
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(400).json({
@@ -31,7 +33,6 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    // Find the user by userId
     const user = await User.findById(userId);
 
     if (!user) {
@@ -49,7 +50,6 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    // Update user profile
     user.username = username;
     user.profile.name = name;
     user.email = email;
@@ -64,7 +64,6 @@ export const updateUser = async (req, res) => {
       linkedIn,
     });
 
-    // Save the updated user data
     await user.save({ validateBeforeSave: false });
 
     return res.status(200).json({

@@ -71,7 +71,7 @@ const AssignProblem = () => {
         studentIds: selectedStudents,
       });
       toast.success(res.data.message);
-      console.log(res.data)
+      // console.log(res.data)
       fetchUnassignedStudents();
       setSelectedStudents([]); // Clear selection after assigning
     } catch (err) {

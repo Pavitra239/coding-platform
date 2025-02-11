@@ -57,7 +57,7 @@ const MakeContest = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/contests");
-      console.log(response.data);
+      // console.log(response.data);
 
       if (Array.isArray(response.data)) {
         setContests(response.data);

@@ -23,13 +23,13 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
   const linkedInURL = formData.linkedIn || null;
 
   const fetchProfilePic = useCallback(async () => {
-    console.log("Hello there");
+    // console.log("Hello there");
     try {
       setLoading(true);
       const response = await axiosInstance.get("/user/profile/upload-avatar", {
         responseType: "blob",
       });
-      console.log("this is it: ", response.data);
+      // console.log("this is it: ", response.data);
       const imageUrl = URL.createObjectURL(response.data);
       setProfilePic(imageUrl);
     } catch (error) {

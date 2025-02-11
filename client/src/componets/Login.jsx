@@ -104,7 +104,7 @@ const Login = () => {
       role: userType,
     };
 
-    console.log(newUser);
+    // console.log(newUser);
 
     try {
       dispatch(setLoading(true));

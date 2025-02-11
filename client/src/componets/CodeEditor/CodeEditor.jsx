@@ -49,7 +49,7 @@ int main() {
     const fetchSavedCode = async () => {
       try {
         const response = await axiosInstance.get("/compile/getCode", {
-          params: { userId, problemId: problem._id },
+          params: { problemId: problem._id },
         });
         if (response.data.success) {
           setCodeByLanguage(response.data.code);
@@ -97,7 +97,7 @@ int main() {
       });
   
       const testResults = response.data.testResults;
-      console.log(testResults)
+      // console.log(testResults)
   
       // Check if any test case contains an error
       const errorTestCase = testResults.find((test) => test.error);
@@ -119,109 +119,148 @@ int main() {
   };
   
 
+  // const handleSubmit = async () => {
+  //   setIsLoading(true);
+  //   setSubmitLoading(true);
+  //   setResults(null);
+  //   setError(null);
+  //   setAssignLoading(true); // Start loading
+  
+  //   try {
+  //     // Prepare data for compilation request
+  //     const compilePayload = {
+  //       code: codeByLanguage[language],
+  //       language,
+  //       allTestCases: true, // Ensures backend processes all test cases
+  //       problemId: problem._id,
+  //     };
+  
+  //     // Send code and test cases to the backend for compilation
+  //     const compileResponse = await axiosInstance.post(
+  //       "/compiler/run-code",
+  //       compilePayload
+  //     );
+  
+  //     let {
+  //       testResults,
+  //       overallTime,
+  //       averageMemory,
+  //       allPassed,
+  //     } = compileResponse.data;
+  
+  //     console.log("Compilation Results:", testResults);
+  //     setResults(testResults);
+  
+  //     // Check for errors in test results
+  //     const errorTestCase = testResults.find((test) => test.error);
+  //     if (errorTestCase) {
+  //       setError(errorTestCase.error); // Display the first error encountered
+  //       console.error("Compilation Error:", errorTestCase.error);
+  //       return; 
+  //     }
+  
+  //     overallTime = (overallTime * 1000).toFixed(2); // Now in ms
+  //     averageMemory = (averageMemory / 1024).toFixed(2); // Now in MB
+  
+  //     console.log(`Overall Time: ${overallTime} ms`);
+  //     console.log(`Average Memory: ${averageMemory} MB`);
+  
+  //     // Calculate metrics and prepare test case results
+  //     const numberOfTestCase = testResults.length;
+  //     const numberOfTestCasePass = testResults.filter((test) => test.passed)
+  //       .length;
+  //     const testCaseResults = testResults.map((test, index) => {
+  //       const marks =
+  //         test.passed && testcases[index]?.marks ? testcases[index].marks : 0;
+  //       return { ...test, marks };
+  //     });
+  
+  //     const totalMarks = testCaseResults.reduce(
+  //       (sum, test) => sum + test.marks,
+  //       0
+  //     );
+  //     const submissionStatus = allPassed ? "completed" : "rejected";
+  
+  //     console.log("Number of Test Cases:", numberOfTestCase);
+  //     console.log("Number of Test Cases Passed:", numberOfTestCasePass);
+  //     console.log("Total Marks Obtained:", totalMarks);
+  //     console.log("Submission Status:", submissionStatus);
+  
+  //     // Prepare submission payload with time in ms and memory in MB
+  //     const submissionPayload = {
+  //       user_id: userId,
+  //       problem_id: problem._id,
+  //       code: codeByLanguage[language],
+  //       language,
+  //       execution_time: overallTime, // Now in ms
+  //       memory_usage: averageMemory, // Now in MB
+  //       status: submissionStatus,
+  //       numberOfTestCase,
+  //       numberOfTestCasePass,
+  //       totalMarks,
+  //       testCaseResults,
+  //     };
+  
+  //     // Send the submission to the backend
+  //     const submissionResponse = await axiosInstance.post(
+  //       "/submissions",
+  //       submissionPayload
+  //     );
+  //     const savedSubmission = submissionResponse.data.submission;
+  
+  //     console.log("Submission Saved Successfully:", savedSubmission);
+  
+  //     // Trigger callback if provided
+  //     if (onSubmission) {
+  //       onSubmission(savedSubmission);
+  //     }
+  //   } catch (error) {
+  //     // Handle errors gracefully
+  //     const errorMessage =
+  //       error.response?.data?.details || "An error occurred. Please try again.";
+  //     console.error("Submission Error:", error);
+  //     setError(errorMessage);
+  //   } finally {
+  //     // Reset loading states
+  //     setIsLoading(false);
+  //     setSubmitLoading(false);
+  //     setAssignLoading(false);
+  //   }
+  // };
+  
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitLoading(true);
     setResults(null);
     setError(null);
-    setAssignLoading(true); // Start loading
+    setAssignLoading(true);
   
     try {
-      // Prepare data for compilation request
       const compilePayload = {
         code: codeByLanguage[language],
         language,
-        allTestCases: true, // Ensures backend processes all test cases
+        allTestCases: true,  // Ensure all test cases are run
         problemId: problem._id,
       };
   
-      // Send code and test cases to the backend for compilation
-      const compileResponse = await axiosInstance.post(
-        "/compiler/run-code",
-        compilePayload
-      );
+      const compileResponse = await axiosInstance.post("/compiler/run-code", compilePayload);
+      const { testResults, savedSubmission } = compileResponse.data;
   
-      let {
-        testResults,
-        overallTime,
-        averageMemory,
-        allPassed,
-      } = compileResponse.data;
-  
-      console.log("Compilation Results:", testResults);
+      // console.log("Compilation Results:", testResults);
+      // console.log("Compilation Results:", savedSubmission);
+
       setResults(testResults);
   
-      // Check for errors in test results
-      const errorTestCase = testResults.find((test) => test.error);
-      if (errorTestCase) {
-        setError(errorTestCase.error); // Display the first error encountered
-        console.error("Compilation Error:", errorTestCase.error);
-        return; 
-      }
-  
-      overallTime = (overallTime * 1000).toFixed(2); // Now in ms
-      averageMemory = (averageMemory / 1024).toFixed(2); // Now in MB
-  
-      console.log(`Overall Time: ${overallTime} ms`);
-      console.log(`Average Memory: ${averageMemory} MB`);
-  
-      // Calculate metrics and prepare test case results
-      const numberOfTestCase = testResults.length;
-      const numberOfTestCasePass = testResults.filter((test) => test.passed)
-        .length;
-      const testCaseResults = testResults.map((test, index) => {
-        const marks =
-          test.passed && testcases[index]?.marks ? testcases[index].marks : 0;
-        return { ...test, marks };
-      });
-  
-      const totalMarks = testCaseResults.reduce(
-        (sum, test) => sum + test.marks,
-        0
-      );
-      const submissionStatus = allPassed ? "completed" : "rejected";
-  
-      console.log("Number of Test Cases:", numberOfTestCase);
-      console.log("Number of Test Cases Passed:", numberOfTestCasePass);
-      console.log("Total Marks Obtained:", totalMarks);
-      console.log("Submission Status:", submissionStatus);
-  
-      // Prepare submission payload with time in ms and memory in MB
-      const submissionPayload = {
-        user_id: userId,
-        problem_id: problem._id,
-        code: codeByLanguage[language],
-        language,
-        execution_time: overallTime, // Now in ms
-        memory_usage: averageMemory, // Now in MB
-        status: submissionStatus,
-        numberOfTestCase,
-        numberOfTestCasePass,
-        totalMarks,
-        testCaseResults,
-      };
-  
-      // Send the submission to the backend
-      const submissionResponse = await axiosInstance.post(
-        "/submissions",
-        submissionPayload
-      );
-      const savedSubmission = submissionResponse.data.submission;
-  
-      console.log("Submission Saved Successfully:", savedSubmission);
-  
-      // Trigger callback if provided
-      if (onSubmission) {
-        onSubmission(savedSubmission);
+      if (savedSubmission) {
+        // console.log("Submission Saved Successfully:", savedSubmission);
+        if (onSubmission) {
+          onSubmission(savedSubmission);
+        }
       }
     } catch (error) {
-      // Handle errors gracefully
-      const errorMessage =
-        error.response?.data?.details || "An error occurred. Please try again.";
+      setError(error.response?.data?.message || "An error occurred. Please try again.");
       console.error("Submission Error:", error);
-      setError(errorMessage);
     } finally {
-      // Reset loading states
       setIsLoading(false);
       setSubmitLoading(false);
       setAssignLoading(false);
@@ -232,7 +271,6 @@ int main() {
   const handleSaveCode = async () => {
     try {
       await axiosInstance.post("/compile/saveCode", {
-        userId,
         problemId: problem._id,
         codeByLanguage,
       });

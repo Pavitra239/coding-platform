@@ -24,7 +24,7 @@ const AdminRegister = () => {
       });
 
       if (response.data.success) {
-        console.log(response.data);
+        // console.log(response.data);
         setFacultys(response.data.facultys);
         setTotalFacultyPages(response.data.totalPages);
         setTotalFaculty(response.data.totalStudents);

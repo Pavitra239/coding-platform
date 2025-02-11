@@ -37,7 +37,7 @@ const Dashboard = () => {
         setSubmissions(response.data.submissions);
         setTotalSubmission(response.data.submissions.length);
         setFilteredSubmissions(response.data.submissions);
-        console.log(response.data);
+        // console.log(response.data);
       } catch (err) {
         setError(
           err.response ? err.response.data.message : "Error fetching data"
@@ -108,7 +108,7 @@ const Dashboard = () => {
       );
     }
     if (filters.batch !== "ALL") {
-      console.log(filters.batch);
+      // console.log(filters.batch);
       filtered = filtered.filter((submission) => {
         return submission.user_id.batch?.toUpperCase() === filters.batch;
       });
