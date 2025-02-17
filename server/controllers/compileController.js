@@ -266,7 +266,7 @@ export const getCode = async (req, res) => {
       .status(401)
       .json({ success: false, message: "Unauthorized access" });
   }
-  console.log("Received query params:", req.query);
+  // console.log("Received query params:", req.query);
 
   try {
     const code = await Code.findOne({ userId, problemId });

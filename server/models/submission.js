@@ -10,6 +10,7 @@ const testCaseResultSchema = new Schema({
   passed: { type: Boolean, required: true }, // Pass or fail status
   time: { type: Number, required: true }, // Execution time (in seconds or another unit)
   memory: { type: Number, required: true }, // Memory usage (in KB or another unit)
+  is_hidden : { type: Boolean, required: true }, // Memory usage (in KB or another unit)
 });
 
 const submissionSchema = new Schema({

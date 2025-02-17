@@ -17,7 +17,7 @@ router.use(isAuthorized);
 router.post('/create', isAdminOrFaculty,createContest);
 
 // Get All Contests
-router.get('/',isAdminOrFaculty, getAllContests);
+router.get('/', getAllContests);
 
 // Get Contest by ID
 router.get('/:id',isAdminOrFaculty, getContestById);

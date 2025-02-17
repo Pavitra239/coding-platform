@@ -2,7 +2,7 @@ import express from "express";
 import axios from "axios";
 import problem from "../models/problem.js";
 import submission from "../models/submission.js";
-import { isAuthorized } from '../middlewares/auth.js';
+import { isAuthorized } from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -175,11 +175,11 @@ const normalizeOutput = (output) => {
 //   }
 // });
 
-router.post("/run-code",isAuthorized, async (req, res) => {
+router.post("/run-code", isAuthorized, async (req, res) => {
   const { code, language, allTestCases, problemId } = req.body;
   console.log(req.body);
 
-  if(!req.user){
+  if (!req.user) {
     return console.log("Unauthorized access");
   }
 
@@ -203,17 +203,38 @@ router.post("/run-code",isAuthorized, async (req, res) => {
   try {
     const problemData = await problem.findById(problemId).select("testCases");
 
-    if (!problemData || !problemData.testCases || problemData.testCases.length === 0) {
+    if (
+      !problemData ||
+      !problemData.testCases ||
+      problemData.testCases.length === 0
+    ) {
       return res.status(404).json({
         success: false,
         message: "No test cases found for the given problem ID.",
       });
     }
 
-    let selectedTestCases = problemData.testCases;
+    let selectedTestCases;
+
+    // let selectedTestCases = problemData.testCases;
+
+    // if (!allTestCases) {
+    //   selectedTestCases = [problemData.testCases[0]]; // Only first test case
+    // }
 
     if (!allTestCases) {
-      selectedTestCases = [problemData.testCases[0]]; // Only first test case
+      selectedTestCases = problemData.testCases.filter(
+        (testCase) => !testCase.is_hidden
+      );
+    } else {
+      selectedTestCases = problemData.testCases; // Run all test cases during submission
+    }
+
+    if (selectedTestCases.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No visible test cases available for execution.",
+      });
     }
 
     const submissions = selectedTestCases.map((testCase) => ({
@@ -221,6 +242,8 @@ router.post("/run-code",isAuthorized, async (req, res) => {
       language_id: languageId,
       stdin: testCase.inputs || "",
       expected_output: testCase.outputs || "",
+      cpu_time_limit: testCase.cpu_time_limit || 2, // Default to 2 seconds if not provided
+      memory_limit: testCase.memory_limit * 1024 || 128 * 1024, // Default to 128 MB if not provided
     }));
 
     // Send code to Judge0 API
@@ -243,6 +266,17 @@ router.post("/run-code",isAuthorized, async (req, res) => {
             `${JUDGE0_BASE_URL2}/submissions/${token}?base64_encoded=true&fields=*`
           );
           result = data;
+
+          // Check if the submission exceeded the time limit
+          if (result.status.id === 5) {
+            return {
+              ...result,
+              error: "Time Limit Exceeded",
+              compilationError: null,
+              standardError: null,
+            };
+          }
+
           if (result.status.id <= 2 && retries < 5) {
             retries++;
             console.log(`Waiting for result... Retry #${retries}`);
@@ -256,42 +290,55 @@ router.post("/run-code",isAuthorized, async (req, res) => {
 
       return {
         ...result,
-        compilationError: result.compile_output ? decodeBase64(result.compile_output) : null,
+        compilationError: result.compile_output
+          ? decodeBase64(result.compile_output)
+          : null,
         standardError: result.stderr ? decodeBase64(result.stderr) : null,
+        error: result.status.id === 5 ? "Time Limit Exceeded" : null, // Explicitly set error for time limit
       };
     };
 
     // Fetch execution results
     const results = await Promise.all(tokens.map(fetchResults));
 
+    console.log("Execution Results:", results);
+
     // Process test results
     const testResults = results.map((result, index) => {
       const decodedOutput = decodeBase64(result.stdout?.trim() || "");
       const normalizedOutput = normalizeOutput(decodedOutput);
-      const expectedOutput = normalizeOutput(selectedTestCases[index]?.outputs || "");
+      const expectedOutput = normalizeOutput(
+        selectedTestCases[index]?.outputs || ""
+      );
 
       return {
         input: selectedTestCases[index]?.inputs || "",
         expectedOutput: selectedTestCases[index]?.outputs || "",
         output: decodedOutput,
-        error: result.compilationError || result.standardError,
+        error: result.error || result.compilationError || result.standardError,
         passed: normalizedOutput === expectedOutput && !result.error,
         time: result.time,
         memory: result.memory,
       };
     });
 
+    console.log("Test Results:", testResults);
+
     // Compute performance metrics
     const overallTime =
-      testResults.reduce((sum, test) => sum + parseFloat(test.time || 0), 0) * 1000; // Convert to ms
+      testResults.reduce((sum, test) => sum + parseFloat(test.time || 0), 0) *
+      1000; // Convert to ms
     const averageMemory =
       testResults.length > 0
-        ? testResults.reduce((sum, test) => sum + parseInt(test.memory || 0), 0) /
-          testResults.length
+        ? testResults.reduce(
+            (sum, test) => sum + parseInt(test.memory || 0),
+            0
+          ) / testResults.length
         : 0;
 
     const numberOfTestCase = testResults.length;
-    const numberOfTestCasePass = testResults.filter((test) => test.passed).length;
+    const numberOfTestCasePass = testResults.filter((test) => test.passed)
+      .length;
 
     // Calculate marks for each test case
     const testCaseResults = testResults.map((test, index) => ({
@@ -302,11 +349,19 @@ router.post("/run-code",isAuthorized, async (req, res) => {
       passed: test.passed,
       time: test.time,
       memory: test.memory,
-      marks: test.passed && selectedTestCases[index]?.marks ? selectedTestCases[index].marks : 0,
+      is_hidden : selectedTestCases[index]?.is_hidden || false,
+      marks:
+        test.passed && selectedTestCases[index]?.marks
+          ? selectedTestCases[index].marks
+          : 0,
     }));
 
-    const totalMarks = testCaseResults.reduce((sum, test) => sum + test.marks, 0);
-    const submissionStatus = numberOfTestCase === numberOfTestCasePass ? "completed" : "rejected";
+    const totalMarks = testCaseResults.reduce(
+      (sum, test) => sum + test.marks,
+      0
+    );
+    const submissionStatus =
+      numberOfTestCase === numberOfTestCasePass ? "completed" : "rejected";
 
     console.log("Submission Metrics:");
     console.log("Total Test Cases:", numberOfTestCase);
@@ -339,9 +394,11 @@ router.post("/run-code",isAuthorized, async (req, res) => {
     res.json({
       success: true,
       testResults: testResults.map((test, index) => ({
-        input: index === 0 ? test.input : "****",
-        expectedOutput: index === 0 ? test.expectedOutput : "****",
-        output: test.output,
+        input: selectedTestCases[index].is_hidden ? "******" : test.input,
+        expectedOutput: selectedTestCases[index].is_hidden
+          ? "******"
+          : test.expectedOutput,
+        output: selectedTestCases[index].is_hidden ? "******"  : test.output,
         error: test.error,
         passed: test.passed,
         time: test.time,
@@ -354,20 +411,21 @@ router.post("/run-code",isAuthorized, async (req, res) => {
       savedSubmission: savedSubmission
         ? {
             ...savedSubmission._doc,
-            testCaseResults: savedSubmission.testCaseResults.map((test, index) => ({
-              input: index === 0 ? test.input : "****",
-              expectedOutput: index === 0 ? test.expectedOutput : "****",
-              output: test.output,
-              error: test.error,
-              passed: test.passed,
-              time: test.time,
-              memory: test.memory,
-              marks: test.marks,
-            })),
+            testCaseResults: savedSubmission.testCaseResults.map(
+              (test, index) => ({
+                input: test.is_hidden ? "******" : test.input,
+                expectedOutput: test.is_hidden ? "******" : test.expectedOutput,
+                output: test.is_hidden ? "******" : test.output,
+                error: test.error,
+                passed: test.passed,
+                time: test.time,
+                memory: test.memory,
+                marks: test.marks,
+              })
+            ),
           }
         : null,
     });
-
   } catch (error) {
     console.error("Error during execution:");
     res.status(500).json({

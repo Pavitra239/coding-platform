@@ -13,26 +13,40 @@ export const createProblem = async (req, res) => {
     inputFormat,
     outputFormat,
     sampleIO,
-    testCases = [], // Default to an empty array if undefined
+    testCases = [],
     constraints,
     tags,
     totalMarks,
   } = req.body;
 
+  console.log("req.body ---> ", req.body);
 
-  if(!req.user){
+  if (!req.user) {
     return res.status(403).json({ message: "Unauthorized access" });
   }
 
   console.log("req.user", req.user);
   const createdBy = req.user?.id;
 
-  if (Array.isArray(testCases)) {
-    testCases.forEach((testCase, index) => {
-      console.log(`TestCase ${index + 1}:`, JSON.stringify(testCase, null, 2));
-    });
-  } else {
-    console.error("Received testCases is not an array:", testCases);
+  if (!Array.isArray(testCases)) {
+    return res.status(400).json({ message: "Invalid testCases format" });
+  }
+
+  // Validate each test case
+  for (let i = 0; i < testCases.length; i++) {
+    const testCase = testCases[i];
+
+    if (testCase.cpu_time_limit < 1 || testCase.cpu_time_limit > 15) {
+      return res.status(400).json({
+        message: `Test Case ${i + 1}: CPU time limit must be between 1 and 15 seconds.`,
+      });
+    }
+
+    if (testCase.memory_limit < 1 || testCase.memory_limit > 256) {
+      return res.status(400).json({
+        message: `Test Case ${i + 1}: Memory limit must be between 1 and 256 MB.`,
+      });
+    }
   }
 
   try {
@@ -43,28 +57,31 @@ export const createProblem = async (req, res) => {
       inputFormat,
       outputFormat,
       sampleIO: sampleIO.map((sample) => ({
-        input: sample.input, // Input as a string (e.g., "3 3 1 2 3 4 5 6 7 8 9")
-        output: sample.output, // Output as a string (e.g., "6 15 24 12 15 18")
+        input: sample.input,
+        output: sample.output,
       })),
       testCases: testCases.map((testCase) => ({
-        inputs: testCase.inputs, // Store the input as a single string (e.g., "1 2 3 4")
-        outputs: testCase.outputs, // Store the output as a single string (e.g., "10")
-        marks: testCase.marks || 0, // Ensure marks are set, defaulting to 0
+        inputs: testCase.inputs,
+        outputs: testCase.outputs,
+        marks: testCase.marks ?? 0,
+        cpu_time_limit: testCase.cpu_time_limit,
+        memory_limit: testCase.memory_limit,
+        is_hidden: testCase.is_hidden ?? false,
       })),
       constraints,
       tags,
       totalMarks,
-      createdBy
+      createdBy,
     });
 
     const createdProblem = await problem.save();
-
     res.status(201).json(createdProblem);
   } catch (error) {
     console.error("Error creating problem:", error);
-    res.status(400).json({ message: error.message }); // Return error message if something goes wrong
+    res.status(400).json({ message: error.message });
   }
 };
+
 
 
 // Backend code (Express.js route handler)
@@ -441,39 +458,48 @@ export const updateProblem = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+    const userRole = req.user.isAdmin; // Assuming admin role is stored in req.user.isAdmin
 
     if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-    
       return res.status(403).json({ message: "Unauthorized to edit this problem" });
     }
 
-    const {
-      sampleIO,
-      testCases,
-      ...otherUpdates // Extract other fields for direct assignment
-    } = req.body;
+    const { sampleIO, testCases, ...otherUpdates } = req.body;
 
+    // Validate test cases
     if (Array.isArray(testCases)) {
-      testCases.forEach((testCase, index) => {
-        console.log(`TestCase ${index + 1}:`, JSON.stringify(testCase, null, 2));
-      });
-    } else {
-      console.error("Received testCases is not an array:", testCases);
+      for (let i = 0; i < testCases.length; i++) {
+        const testCase = testCases[i];
+
+        if (testCase.cpu_time_limit < 1 || testCase.cpu_time_limit > 15) {
+          return res.status(400).json({
+            message: `Test Case ${i + 1}: CPU time limit must be between 1 and 15 seconds.`,
+          });
+        }
+
+        if (testCase.memory_limit < 1 || testCase.memory_limit > 256) {
+          return res.status(400).json({
+            message: `Test Case ${i + 1}: Memory limit must be between 1 and 256 MB.`,
+          });
+        }
+      }
+
+      problem.testCases = testCases.map((testCase) => ({
+        inputs: testCase.inputs,
+        outputs: testCase.outputs,
+        marks: testCase.marks || 0,
+        cpu_time_limit: testCase.cpu_time_limit,
+        memory_limit: testCase.memory_limit,
+        is_hidden: testCase.is_hidden ?? false,
+      }));
+    } else if (testCases !== undefined) {
+      return res.status(400).json({ message: "Invalid testCases format" });
     }
 
     if (sampleIO) {
       problem.sampleIO = sampleIO.map((sample) => ({
-        input: sample.input, // Ensure input is a string
-        output: sample.output, // Ensure output is a string
-      }));
-    }
-
-    if (testCases) {
-      problem.testCases = testCases.map((testCase) => ({
-        inputs: testCase.inputs, // Ensure inputs are a string
-        outputs: testCase.outputs, // Ensure outputs are a string
-        marks: testCase.marks || 0, // Default marks to 0 if not provided
+        input: sample.input,
+        output: sample.output,
       }));
     }
 
@@ -485,12 +511,11 @@ export const updateProblem = async (req, res) => {
 
     res.json(updatedProblem);
   } catch (error) {
-    console.error("Update Problem Error:", error); // Log error for debugging
-    res.status(500).json({
-      message: "Failed to update the problem. Please try again later.",
-    });
+    console.error("Update Problem Error:", error);
+    res.status(500).json({ message: "Failed to update the problem. Please try again later." });
   }
 };
+
 
 
 // Delete problem

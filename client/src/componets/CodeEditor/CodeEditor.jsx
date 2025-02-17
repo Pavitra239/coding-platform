@@ -26,7 +26,7 @@ class Main {
     }
 }`,
     python: `print("Hello, World!")`,
-    cpp: `#include <bits/stdc++.h>
+    cpp: `#include <iostream>
 using namespace std;
 
 int main() {

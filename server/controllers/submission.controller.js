@@ -211,19 +211,33 @@ export const getSubmissionById = async (req, res) => {
     }
 
     // If user is a student, mask test case results except the first one
+    // if (isAdmin === "student") {
+    //   submission.testCaseResults = submission.testCaseResults.map(
+    //     (testCase, index) =>
+    //       index === 0
+    //         ? testCase
+    //         : {
+    //             ...testCase,
+    //             input: "****",
+    //             output: "****",
+    //             expectedOutput: "****",
+    //           }
+    //   );
+    // }
+
     if (isAdmin === "student") {
-      submission.testCaseResults = submission.testCaseResults.map(
-        (testCase, index) =>
-          index === 0
-            ? testCase
-            : {
-                ...testCase,
-                input: "****",
-                output: "****",
-                expectedOutput: "****",
-              }
+      submission.testCaseResults = submission.testCaseResults.map((testCase) =>
+        !testCase.is_hidden
+          ? testCase
+          : {
+              ...testCase,
+              input: "****",
+              output: "****",
+              expectedOutput: "****",
+            }
       );
     }
+    
 
     // Admin can see all submissions, so no restrictions here
 

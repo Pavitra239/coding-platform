@@ -17,7 +17,23 @@ const testCaseSchema = new Schema({
     type: Number,
     required: [true, "Marks for the test case are required"],
     min: 0,
-  }, // Marks for the test case
+  },
+  cpu_time_limit: {
+    type: Number,
+    required: [true, "CPU time limit is required"],
+    min: 1, // Minimum 1 seconds
+    max: 15, // Maximum 15 seconds
+  },
+  memory_limit: {
+    type: Number,
+    required: [true, "Memory limit is required"],
+    min: 1, // Minimum 1 MB
+    max: 256, // Maximum 256 MB
+  },
+  is_hidden: {
+    type: Boolean,
+    default: false, // False means test case is visible
+  },
 });
 
 // Main problem schema with test cases
