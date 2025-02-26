@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { IoIosArrowDropdown } from "react-icons/io";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { logout, setUser } from "../redux/userSlice";
 import axiosInstance from "../utils/axiosInstance";
-import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
+import { 
+  Menu,
+  X,
+  Home,
+  User,
+  History,
+  HelpCircle,
+  Code2,
+  ClipboardList,
+  LogOut,
+  ChevronDown,
+  Plus
+} from "lucide-react";
 
 const Header = () => {
   const user = useSelector((store) => store.app.user);
@@ -17,6 +29,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScreenSmall, setIsScreenSmall] = useState(false);
   const [isOnMakeContest, setIsOnMakeContest] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     if (authStatus === false) {
@@ -26,7 +39,7 @@ const Header = () => {
 
   useEffect(() => {
     setIsAdmin(user?.role);
-  })
+  }, [user?.role]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,15 +61,12 @@ const Header = () => {
   const logoutHandler = async () => {
     try {
       await axiosInstance.get(`auth/logout`);
-
       dispatch(setUser(null));
       localStorage.removeItem("UserToken");
       dispatch(logout());
-
       toast.success("Logged out successfully");
       navigate("/");
     } catch (error) {
-      // console.log(error);
       toast.error("Failed to log out. Please try again.");
     }
   };
@@ -70,210 +80,157 @@ const Header = () => {
   };
 
   const isActive = (path) => location.pathname === path;
-
-  // Determine button text based on user role
   const makeContestButtonText = user?.role === "student" ? "Contest" : "Make Contest";
 
+  const navLinks = [
+    { path: "/browse", label: "Home", icon: <Home size={18} /> },
+    { path: "/profile", label: "Profile", icon: <User size={18} /> },
+    { path: "/history", label: "History", icon: <History size={18} /> },
+    { path: "/support", label: "Support", icon: <HelpCircle size={18} /> },
+    { path: "/make-problem", label: "Problem", icon: <Code2 size={18} /> },
+  ];
+
+  if (user?.role === 'admin') {
+    navLinks.push({ path: "/pending-requests", label: "Requests", icon: <ClipboardList size={18} /> });
+  }
+  if (user?.role === 'faculty') {
+    navLinks.push({ path: "/faculty-section", label: "Requests", icon: <ClipboardList size={18} /> });
+  }
+
   return (
-    <div className="z-10 w-full flex items-center justify-between px-4 md:px-6 bg-gradient-to-b bg-black bg-opacity-50 backdrop-blur-md py-2 fixed">
-      <h1
-        className="text-3xl md:text-5xl font-bold text-white"
-        style={{
-          textShadow: "2px 2px 8px rgba(0, 0, 0, 0.9)",
-        }}
-      >
-        Codify
-      </h1>
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="z-10 w-full fixed top-0 bg-black/80 backdrop-blur-lg border-b border-white/10"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="flex-shrink-0"
+          >
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+              Codify
+            </h1>
+          </motion.div>
 
-      {isScreenSmall && user && (
-        <div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? (
-              <AiOutlineClose size={30} className="text-white" />
-            ) : (
-              <AiOutlineMenu size={30} className="text-white" />
-            )}
-          </button>
+          {isScreenSmall && user ? (
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-white hover:text-blue-400 transition-colors"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          ) : (
+            user && (
+              <div className="hidden md:flex items-center space-x-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive(link.path)
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "text-gray-300 hover:bg-blue-500/10 hover:text-blue-300"
+                    }`}
+                  >
+                    {link.icon}
+                    <span>{link.label}</span>
+                  </Link>
+                ))}
+
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-blue-500/10 hover:text-blue-300"
+                  >
+                    <span>{user?.username}</span>
+                    <ChevronDown size={16} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-1"
+                      >
+                        <button
+                          onClick={logoutHandler}
+                          className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        >
+                          <LogOut size={16} />
+                          <span>Logout</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={toggleMakeContest}
+                  className="flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  {isOnMakeContest ? <Home size={18} /> : <Plus size={18} />}
+                  <span>{isOnMakeContest ? "Home" : makeContestButtonText}</span>
+                </motion.button>
+              </div>
+            )
+          )}
         </div>
-      )}
+      </div>
 
-      {!isScreenSmall && user && (
-        <div className="hidden md:flex items-center space-x-4 flex-wrap">
-          <Link
-            to="/browse"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/browse")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
+      <AnimatePresence>
+        {isScreenSmall && isMenuOpen && user && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-t border-white/10"
           >
-            Home
-          </Link>
-          <Link
-            to="/profile"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/profile")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Profile
-          </Link>
-          <Link
-            to="/history"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/history")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            History
-          </Link>
-          <Link
-            to="/support"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/support")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Support
-          </Link>
-          <Link
-            to="/make-problem"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/make-problem")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Problem
-          </Link>
-          {user?.role === 'admin' && <Link
-            to="/pending-requests"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/pending-requests")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Requests
-          </Link>}
-          {user?.role === 'faculty' && <Link
-            to="/faculty-section"
-            className={`text-lg font-semibold transition duration-300 ${isActive("/faculty-section")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Requests
-          </Link>}
-          <div className="flex items-center space-x-2">
-            <IoIosArrowDropdown size="24px" color="white" />
-            <h1 className="text-lg font-medium text-white">{user?.username}</h1>
-          </div>
-          <button
-            onClick={logoutHandler}
-            className="bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold rounded-lg shadow-lg hover:bg-red-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
-          >
-            Logout
-          </button>
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+                    isActive(link.path)
+                      ? "bg-blue-500/20 text-blue-400"
+                      : "text-gray-300 hover:bg-blue-500/10 hover:text-blue-300"
+                  }`}
+                >
+                  {link.icon}
+                  <span>{link.label}</span>
+                </Link>
+              ))}
 
-          <button
-            onClick={toggleMakeContest}
-            className="bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2"
-          >
-            {isOnMakeContest ? "Home" : makeContestButtonText}
-          </button>
-        </div>
-      )}
+              <button
+                onClick={logoutHandler}
+                className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-500/10"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
 
-      {isScreenSmall && isMenuOpen && user && (
-        <div className="absolute top-12 right-4 w-48 bg-gray-800 text-white rounded-lg shadow-lg p-4">
-          <Link
-            to="/browse"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/browse")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Home
-          </Link>
-          <Link
-            to="/profile"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/profile")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Profile
-          </Link>
-          <Link
-            to="/history"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/history")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            History
-          </Link>
-          <Link
-            to="/support"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/support")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Support
-          </Link>
-          <Link
-            to="/make-problem"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/make-problem")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Problem
-          </Link>
-
-          {user?.role === 'admin' && <Link
-            to="/pending-requests"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/pending-requests")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Requests
-          </Link>}
-          {user?.role === 'faculty' && <Link
-            to="/faculty-section"
-            className={`block mb-2 font-semibold transition duration-300 ${isActive("/faculty-section")
-              ? "text-blue-400"
-              : "text-white hover:text-blue-300"
-              }`}
-          >
-            Requests
-          </Link>}
-          
-
-          <button
-            onClick={logoutHandler}
-            className="block w-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold rounded-lg shadow-lg hover:bg-red-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-4"
-          >
-            Logout
-          </button>
-
-          <button
-            onClick={() => {
-              setIsMenuOpen(false);
-              toggleMakeContest();
-            }}
-            className="block w-full bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 hover:shadow-2xl transition duration-300 ease-in-out px-4 py-2 mt-4"
-          >
-            {isOnMakeContest ? "Home" : makeContestButtonText}
-          </button>
-        </div>
-      )}
-    </div>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  toggleMakeContest();
+                }}
+                className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-base font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
+              >
+                {isOnMakeContest ? <Home size={18} /> : <Plus size={18} />}
+                <span>{isOnMakeContest ? "Home" : makeContestButtonText}</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 };
 

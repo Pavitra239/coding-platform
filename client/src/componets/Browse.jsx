@@ -1,89 +1,87 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Code2, Trophy, Users, Timer } from "lucide-react";
 import Header from "./Header";
 
 const Browse = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // New loading state
-  const [errorMessage, setErrorMessage] = useState(""); // For displaying errors
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleJoinQuizClick = () => {
-    setIsPopupOpen(true);
-  };
-
-  const handleClosePopup = () => {
-    setIsPopupOpen(false);
-    setJoinCode(""); // Reset code when closing popup
-    setErrorMessage(""); // Clear any previous errors
-  };
-
+  const features = [
+    {
+      icon: <Code2 className="w-8 h-8 text-blue-500" />,
+      title: "Coding Challenges",
+      description: "Tackle real-world programming problems",
+    },
+    {
+      icon: <Trophy className="w-8 h-8 text-yellow-500" />,
+      title: "Compete & Win",
+      description: "Earn points and climb the leaderboard",
+    },
+    {
+      icon: <Users className="w-8 h-8 text-green-500" />,
+      title: "Global Community",
+      description: "Connect with developers worldwide",
+    },
+    {
+      icon: <Timer className="w-8 h-8 text-purple-500" />,
+      title: "Time-based Contests",
+      description: "Test your speed and efficiency",
+    },
+  ];
 
   return (
-    <>
-      <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
-        {/* Center content both vertically and horizontally */}
-        <div className="flex flex-col justify-center items-center px-4 lg:px-20 pt-20 md:pt-[14%] min-h-[70vh]">
-          <div className="w-full  bg-white text-black p-8 lg:p-16 rounded-lg shadow-lg bg-opacity-80">
-            <h2 className="text-2xl lg:text-4xl font-bold mb-4 lg:mb-8">
-              Coding Time!
-            </h2>
-            <p className="mb-5 text-justify text-1xl">
-              Test your Coding knowledge with our Coding Contest. Ready to challenge yourself?
-            </p>
-            <button
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300 text-justify"
-              // onClick={handleJoinQuizClick}
-            >
-              Join Contest
-            </button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white">
+      <main className="container mx-auto px-4 pt-24 pb-12">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text"
+          >
+            Ready to Code?
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto"
+          >
+            Join our coding contests to challenge yourself, compete with others,
+            and improve your programming skills.
+          </motion.p>
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full text-lg font-semibold hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            Join Contest Now
+          </motion.button>
         </div>
 
-        {/* Popup for joining quiz */}
-        {isPopupOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 lg:p-10 rounded-lg shadow-2xl max-w-md lg:max-w-lg w-full">
-              <h2 className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6 text-black">
-                Enter Join Codes
-              </h2>
-              <input
-                type="text"
-                placeholder="Enter your code"
-                className="w-full text-black px-4 py-2 lg:py-3 mb-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-              />
-
-              {/* Display error message */}
-              {errorMessage && (
-                <p className="text-red-500 text-sm mb-4">{errorMessage}</p>
-              )}
-
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={handleClosePopup}
-                  className="px-4 py-2 lg:px-6 lg:py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition duration-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  // onClick={handleJoinQuiz}
-                  className={`px-4 py-2 lg:px-6 lg:py-3 bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transition duration-300 ${
-                    isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-600"
-                  }`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Joining..." : "Join Contest"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {features.map((feature, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 * index }}
+              className="bg-gray-800 rounded-xl p-6 hover:bg-gray-700 transition-colors duration-300 border border-gray-700"
+            >
+              <div className="mb-4">{feature.icon}</div>
+              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+              <p className="text-gray-400">{feature.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </main>
+    </div>
   );
 };
 
 export default Browse;
-  
