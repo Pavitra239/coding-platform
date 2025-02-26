@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
-import StudentTable from "./StudentTable";
+import StudentTable from "../Problem/StudentTable.jsx";
 
-const AssignProblem = () => {
-  const { problemId } = useParams();
+const UnAssignContest = () => {
+  const { contestId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [assignLoading, setAssignLoading] = useState(false); // For button-specific loading
+  const [assignLoading, setAssignLoading] = useState(false);
   const [unassignedStudents, setUnassignedStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [filters, setFilters] = useState({
@@ -25,7 +25,7 @@ const AssignProblem = () => {
       setLoading(true);
       try {
         const response = await axiosInstance.get(
-          `/problems/${problemId}/unassignStudent`,
+          `/contests/${contestId}/unassignedStudents`,
           {
             params: {
               branch: filters.branch,
@@ -34,7 +34,7 @@ const AssignProblem = () => {
             },
           }
         );
-        setUnassignedStudents(response.data.unassignedStudents);
+        setUnassignedStudents(response.data.unassignedStudents || []);
       } catch (err) {
         toast.error("Failed to fetch unassigned students. Please try again.");
         setError("Failed to fetch unassigned students");
@@ -44,7 +44,7 @@ const AssignProblem = () => {
     };
 
     fetchUnassignedStudents();
-  }, [problemId, filters]);
+  }, [contestId, filters]);
 
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -72,9 +72,12 @@ const AssignProblem = () => {
   const handleAssign = async () => {
     setAssignLoading(true);
     try {
-      const res = await axiosInstance.post(`/problems/${problemId}/assign`, {
-        studentIds: selectedStudents,
-      });
+      const res = await axiosInstance.post(
+        `/contests/${contestId}/assignContestToStudents`,
+        {
+          studentIds: selectedStudents,
+        }
+      );
       setUnassignedStudents(
         unassignedStudents.filter(
           (student) => !selectedStudents.includes(student._id)
@@ -100,7 +103,7 @@ const AssignProblem = () => {
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <h1 className="text-2xl font-bold mb-4 pt-20 justify-center flex items-center">
-        List of Students unAssigned to the Problem
+        Contest Unassigned Students List
       </h1>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -132,13 +135,14 @@ const AssignProblem = () => {
           </div>
         </div>
       )}
-
-      <button
-        className="py-2 px-6 ml-6 bg-gradient-to-r mb-4 from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition transform duration-200"
-        onClick={() => navigate(`/assignedStudents/${problemId}`)}
-      >
-        View Assigned Students
-      </button>
+      <div className="p-4">
+        <button
+          onClick={() => navigate(`/unassignContestToStudents/${contestId}`)}
+          className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition mb-4"
+        >
+          View Assigned Students
+        </button>
+      </div>
 
       <div className="px-4 mb-4">
         <p className="text-xl font-medium">
@@ -160,11 +164,11 @@ const AssignProblem = () => {
         totalPages={totalPages}
       />
 
-      <div className="flex justify-start ml-4 p-4">
+      <div className="flex justify-start p-4">
         <button
           onClick={handleAssign}
           disabled={selectedStudents.length === 0}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-600"
+          className="bg-green-500 text-white  px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-600"
         >
           Assign Problem
         </button>
@@ -173,4 +177,4 @@ const AssignProblem = () => {
   );
 };
 
-export default AssignProblem;
+export default UnAssignContest;

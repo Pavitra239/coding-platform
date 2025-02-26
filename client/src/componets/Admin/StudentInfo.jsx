@@ -79,12 +79,6 @@ const StudentInfo = () => {
                 {error}
               </div>
             )}
-            <StudentTable
-              users={users}
-              selectedStudents={selectedStudents}
-              handleSelectStudent={handleSelectStudent}
-              handleSelectAll={handleSelectAll}
-            />
           </>
         )}
       </div>
@@ -112,7 +106,7 @@ const BranchWiseCount = ({ branches }) => (
 );
 
 const SemesterWiseCount = ({ semesters }) => (
-  <div className="mb-4">
+  <div className="pb-4">
     <h3 className="text-lg font-medium text-white">Semester-wise Count:</h3>
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
       {Object.entries(semesters).map(([semester, branches]) => (
@@ -148,105 +142,5 @@ const SemesterWiseCount = ({ semesters }) => (
     </div>
   </div>
 );
-
-const StudentTable = ({ users }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
-
-  // Calculate total pages
-  const totalPages = Math.ceil(users.length / rowsPerPage);
-
-  // Get the data for the current page
-  const currentData = users.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
-  const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  return (
-    <div className="overflow-x-auto p-5">
-      <table className="w-full border-collapse border border-gray-700 text-left text-gray-500">
-        <thead className="bg-gray-900 text-gray-400">
-          <tr>
-            <th className="py-3 px-4 sm:px-6 text-center">ID</th>
-            <th className="py-3 px-4 sm:px-6 text-center">Username</th>
-            <th className="py-3 px-4 sm:px-6 text-center">Branch</th>
-            <th className="py-3 px-4 sm:px-6 text-center">Semester</th>
-            <th className="py-3 px-4 sm:px-6 text-center">Batch</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentData.length > 0 ? (
-            currentData.map((user, index) => (
-              <tr
-                key={user.id}
-                className={`${index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}`}
-              >
-                <td className="py-3 px-4 sm:px-6 text-center text-white">
-                  {user.id?.toUpperCase()}
-                </td>
-                <td className="py-3 px-4 sm:px-6 text-center text-white capitalize">
-                  {user.username}
-                </td>
-                <td className="py-3 px-4 sm:px-6 text-center text-white">
-                  {user.branch?.toUpperCase()}
-                </td>
-                <td className="py-3 px-4 sm:px-6 text-center text-white">
-                  {user.semester}
-                </td>
-                <td className="py-3 px-4 sm:px-6 text-center text-white">
-                  {user.batch?.toUpperCase()}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan="5"
-                className="py-3 px-4 sm:px-6 text-center text-gray-300"
-              >
-                No students found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-      <div className="flex justify-center mt-4">
-        <button
-          onClick={handlePrev}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600 text-white"
-          }`}
-        >
-          Previous
-        </button>
-        <span className="mx-4 mt-1 text-white">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600 text-white"
-          }`}
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  );
-};
 
 export default StudentInfo;

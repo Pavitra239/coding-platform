@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
-import StudentTable from "./StudentTable";
+import StudentTable from "../Problem/StudentTable";
 
-const AssignProblem = () => {
-  const { problemId } = useParams();
+const AssignedContest = () => {
+  const { contestId } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [assignLoading, setAssignLoading] = useState(false); // For button-specific loading
-  const [unassignedStudents, setUnassignedStudents] = useState([]);
+  const [students, setStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const [assignLoading, setAssignLoading] = useState(false);
   const [filters, setFilters] = useState({
     branch: "cspit-it",
     semester: "6",
     batch: "a1",
   });
+  const [loading, setLoading] = useState(false);
+  const [totalAssigned, setTotalAssigned] = useState(0);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 12;
 
   useEffect(() => {
-    const fetchUnassignedStudents = async () => {
+    const fetchStudents = async () => {
       setLoading(true);
       try {
         const response = await axiosInstance.get(
-          `/problems/${problemId}/unassignStudent`,
+          `/contests/${contestId}/getAssignedStudents`,
           {
             params: {
               branch: filters.branch,
@@ -34,17 +35,17 @@ const AssignProblem = () => {
             },
           }
         );
-        setUnassignedStudents(response.data.unassignedStudents);
+        setStudents(response.data.assignedStudents || []);
+        setTotalAssigned(response.data.assignedStudents.length);
       } catch (err) {
-        toast.error("Failed to fetch unassigned students. Please try again.");
-        setError("Failed to fetch unassigned students");
+        setError("Failed to load students");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUnassignedStudents();
-  }, [problemId, filters]);
+    fetchStudents();
+  }, [contestId, filters]);
 
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -52,10 +53,10 @@ const AssignProblem = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedStudents.length === unassignedStudents.length) {
+    if (selectedStudents.length === students.length) {
       setSelectedStudents([]);
     } else {
-      setSelectedStudents(unassignedStudents.map((student) => student._id));
+      setSelectedStudents(students.map((student) => student._id));
     }
   };
 
@@ -69,29 +70,30 @@ const AssignProblem = () => {
     }
   };
 
-  const handleAssign = async () => {
+  const handleUnassign = async () => {
     setAssignLoading(true);
     try {
-      const res = await axiosInstance.post(`/problems/${problemId}/assign`, {
-        studentIds: selectedStudents,
-      });
-      setUnassignedStudents(
-        unassignedStudents.filter(
-          (student) => !selectedStudents.includes(student._id)
-        )
+      const res = await axiosInstance.post(
+        `/contests/${contestId}/unassignContestToStudents`,
+        {
+          studentIds: selectedStudents,
+        }
+      );
+      setStudents(
+        students.filter((student) => !selectedStudents.includes(student._id))
       );
       toast.success(res.data.message);
       setSelectedStudents([]);
       setError(null);
     } catch (error) {
-      toast.error("Failed to assign students. Please try again.");
-      setError("Failed to assign students. Please try again.");
+      toast.error("Failed to unassign students. Please try again.");
+      setError("Failed to unassign students. Please try again.");
     } finally {
       setAssignLoading(false);
     }
   };
 
-  const totalPages = Math.ceil(unassignedStudents.length / studentsPerPage);
+  const totalPages = Math.ceil(students.length / studentsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -100,7 +102,7 @@ const AssignProblem = () => {
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <h1 className="text-2xl font-bold mb-4 pt-20 justify-center flex items-center">
-        List of Students unAssigned to the Problem
+        Contest assigned Students List
       </h1>
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -128,26 +130,26 @@ const AssignProblem = () => {
                 d="M4 12a8 8 0 018-8v8H4z"
               ></path>
             </svg>
-            <p className="text-white text-lg font-semibold">Assigning...</p>
+            <p className="text-white text-lg font-semibold">Unassigning...</p>
           </div>
         </div>
       )}
 
       <button
         className="py-2 px-6 ml-6 bg-gradient-to-r mb-4 from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition transform duration-200"
-        onClick={() => navigate(`/assignedStudents/${problemId}`)}
+        onClick={() => navigate(-1)}
       >
-        View Assigned Students
+        Back
       </button>
 
       <div className="px-4 mb-4">
         <p className="text-xl font-medium">
-          Unassigned Students: {unassignedStudents.length}
+          Assigned Students: {totalAssigned}
         </p>
       </div>
 
       <StudentTable
-        users={unassignedStudents}
+        users={students}
         selectedStudents={selectedStudents}
         handleSelectStudent={handleSelectStudent}
         handleSelectAll={handleSelectAll}
@@ -162,15 +164,15 @@ const AssignProblem = () => {
 
       <div className="flex justify-start ml-4 p-4">
         <button
-          onClick={handleAssign}
+          onClick={handleUnassign}
           disabled={selectedStudents.length === 0}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-600"
+          className="bg-green-500 text-white  px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-600"
         >
-          Assign Problem
+          Unassign Problem
         </button>
       </div>
     </div>
   );
 };
 
-export default AssignProblem;
+export default AssignedContest;

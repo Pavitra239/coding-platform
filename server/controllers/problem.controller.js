@@ -38,13 +38,17 @@ export const createProblem = async (req, res) => {
 
     if (testCase.cpu_time_limit < 1 || testCase.cpu_time_limit > 15) {
       return res.status(400).json({
-        message: `Test Case ${i + 1}: CPU time limit must be between 1 and 15 seconds.`,
+        message: `Test Case ${
+          i + 1
+        }: CPU time limit must be between 1 and 15 seconds.`,
       });
     }
 
     if (testCase.memory_limit < 1 || testCase.memory_limit > 256) {
       return res.status(400).json({
-        message: `Test Case ${i + 1}: Memory limit must be between 1 and 256 MB.`,
+        message: `Test Case ${
+          i + 1
+        }: Memory limit must be between 1 and 256 MB.`,
       });
     }
   }
@@ -82,8 +86,6 @@ export const createProblem = async (req, res) => {
   }
 };
 
-
-
 // Backend code (Express.js route handler)
 export const getProblems = async (req, res) => {
   try {
@@ -105,7 +107,7 @@ export const getProblems = async (req, res) => {
     }
 
     res.json({
-      problems: problems.map(({ _id, title, difficulty, createdAt}) => ({
+      problems: problems.map(({ _id, title, difficulty, createdAt }) => ({
         _id,
         title,
         difficulty,
@@ -114,7 +116,6 @@ export const getProblems = async (req, res) => {
       totalProblems: problems.length,
       success: true,
     });
-    
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -124,7 +125,7 @@ export const assignProblemToStudents = async (req, res) => {
   const { id } = req.params;
   const { studentIds } = req.body; // Array of student IDs
 
-  try { 
+  try {
     const problem = await Problem.findById(id);
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
@@ -133,8 +134,13 @@ export const assignProblemToStudents = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
 
-    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-      return res.status(403).json({ message: "Unauthorized to assignProblemToStudents this problem" });
+    if (
+      problem.createdBy.toString() !== userId.toString() &&
+      userRole !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Unauthorized to assignProblemToStudents this problem",
+      });
     }
 
     problem.assignedStudents.push(...studentIds);
@@ -157,7 +163,6 @@ export const unassignStudents = async (req, res) => {
   }
 
   try {
-    
     // Fetch the problem by ID
     const problem = await Problem.findById(id);
 
@@ -169,10 +174,14 @@ export const unassignStudents = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
 
-    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-      return res.status(403).json({ message: "Unauthorized to get Students this problem" });
+    if (
+      problem.createdBy.toString() !== userId.toString() &&
+      userRole !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to get Students this problem" });
     }
-
 
     // Filter out the students to be unassigned
     const updatedAssignedStudents = problem.assignedStudents.filter(
@@ -196,9 +205,14 @@ export const unassignStudents = async (req, res) => {
 };
 
 export const getProblemWithStudents = async (req, res) => {
-  const { id } = req.params; // Problem ID
-
   try {
+    const { id } = req.params;
+    const { branch, semester, batch } = req.query;
+    console.log(req.query);
+
+    if (!id) {
+      return res.status(400).json({ error: "Contest ID is required." });
+    }
 
     const problem = await Problem.findById(id);
 
@@ -207,35 +221,40 @@ export const getProblemWithStudents = async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-
     const userId = req.user.id;
     const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
 
-    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-      return res.status(403).json({ message: "Unauthorized to get Students this problem" });
+    if (
+      problem.createdBy.toString() !== userId.toString() &&
+      userRole !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to get Students this problem" });
     }
-    
-    
 
-    // Fetch all students assigned to this problem
-    const assignedStudents = problem.assignedStudents.map(
-      (studentId) => new mongoose.Types.ObjectId(studentId) // Ensure consistent ObjectId type
-    );
+    const filter = {
+      _id: { $in: problem.assignedStudents },
+      role: "student", // Exclude assigned students
+    };
 
-    const assignedStudentData = await user
-      .find(
-        { _id: { $in: assignedStudents } } // Fetch matching users
-      )
-      .select("username semester batch branch id _id") // Include only specific fields
-      .sort({ id: 1 }); // Sort by `id` in ascending order
-
-    if (!assignedStudentData.length) {
-      console.warn(`No assigned students found for Problem ID ${id}.`);
+    if (branch && branch !== "ALL") {
+      filter.branch = branch;
     }
+    if (semester && semester !== "ALL") {
+      filter.semester = semester;
+    }
+    if (batch && batch !== "ALL") {
+      filter.batch = batch;
+    }
+
+    const assignedStudents = await user
+      .find(filter)
+      .select("username semester batch branch _id id");
 
     res.status(200).json({
       message: "Problem and assigned students fetched successfully",
-      assignedStudents: assignedStudentData,
+      assignedStudents: assignedStudents,
     });
   } catch (error) {
     console.error(`Error fetching problem and students: ${error.message}`);
@@ -244,11 +263,15 @@ export const getProblemWithStudents = async (req, res) => {
 };
 
 export const getProblemWithUnassignedStudents = async (req, res) => {
-  const { id } = req.params; // Problem ID
-
   try {
+    const { id } = req.params; // Problem ID
+    const { branch, semester, batch } = req.query;
+    console.log(req.query);
 
-    
+    if (!id) {
+      return res.status(400).json({ error: "Contest ID is required." });
+    }
+
     // Fetch the problem by ID
     const problem = await Problem.findById(id);
 
@@ -257,38 +280,29 @@ export const getProblemWithUnassignedStudents = async (req, res) => {
       return res.status(404).json({ message: "Problem not found" });
     }
 
-    const userId = req.user.id;
-    const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
+    const filter = {
+      _id: { $nin: problem.assignedStudents },
+      role: "student", // Exclude assigned students
+    };
 
-    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-      return res.status(403).json({ message: "Unauthorized to get Students this problem" });
+    if (branch && branch !== "ALL") {
+      filter.branch = branch;
+    }
+    if (semester && semester !== "ALL") {
+      filter.semester = semester;
+    }
+    if (batch && batch !== "ALL") {
+      filter.batch = batch;
     }
 
-
-    // Fetch all students assigned to this problem
-    const assignedStudents = problem.assignedStudents.map(
-      (studentId) => new mongoose.Types.ObjectId(studentId) // Ensure consistent ObjectId type
-    );
-
-    console.log(`Assigned Students IDs: ${assignedStudents}`);
-
-    // Fetch all users who are NOT assigned to the problem and have the role of "student"
-    const unassignedStudentData = await user
-      .find({
-        _id: { $nin: assignedStudents }, // Exclude assigned students
-        role: "student", // Include only users with role "student"
-      })
-      .select("username semester batch branch id _id") // Include only specific fields
-      .sort({ id: 1 }); // Sort by ID in ascending order
-
-    if (!unassignedStudentData.length) {
-      console.warn(`No unassigned students found for Problem ID ${id}.`);
-    }
+    const unassignedStudents = await user
+      .find(filter)
+      .select("username semester batch branch _id id");
 
     // Return the problem and unassigned student data
     res.status(200).json({
       message: "Problem and unassigned students fetched successfully",
-      unassignedStudents: unassignedStudentData,
+      unassignedStudents: unassignedStudents,
     });
   } catch (error) {
     console.error(
@@ -372,9 +386,10 @@ export const getStudents = async (req, res) => {
 export const getProblemById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("welcome")
-    const problem = await Problem.findById(id).select("-createdAt -updatedAt -testCases");
-
+    console.log("welcome");
+    const problem = await Problem.findById(id).select(
+      "-createdAt -updatedAt -testCases"
+    );
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
@@ -395,7 +410,6 @@ export const getProblemById = async (req, res) => {
 
     // Faculty can access only the problems they created
     if (isAdmin === "faculty") {
-
       if (problem.createdBy.toString() !== userId.toString()) {
         return res
           .status(403)
@@ -429,8 +443,10 @@ export const getProblemById = async (req, res) => {
 export const getProblemByIdForUpdate = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("hello22")
-    const problem = await Problem.findById(id).select("-createdAt -updatedAt -assignedStudents");
+    console.log("hello22");
+    const problem = await Problem.findById(id).select(
+      "-createdAt -updatedAt -assignedStudents"
+    );
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
@@ -442,8 +458,6 @@ export const getProblemByIdForUpdate = async (req, res) => {
     }
 
     return res.json(problem);
-
-    
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -460,8 +474,13 @@ export const updateProblem = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.isAdmin; // Assuming admin role is stored in req.user.isAdmin
 
-    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-      return res.status(403).json({ message: "Unauthorized to edit this problem" });
+    if (
+      problem.createdBy.toString() !== userId.toString() &&
+      userRole !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to edit this problem" });
     }
 
     const { sampleIO, testCases, ...otherUpdates } = req.body;
@@ -473,13 +492,17 @@ export const updateProblem = async (req, res) => {
 
         if (testCase.cpu_time_limit < 1 || testCase.cpu_time_limit > 15) {
           return res.status(400).json({
-            message: `Test Case ${i + 1}: CPU time limit must be between 1 and 15 seconds.`,
+            message: `Test Case ${
+              i + 1
+            }: CPU time limit must be between 1 and 15 seconds.`,
           });
         }
 
         if (testCase.memory_limit < 1 || testCase.memory_limit > 256) {
           return res.status(400).json({
-            message: `Test Case ${i + 1}: Memory limit must be between 1 and 256 MB.`,
+            message: `Test Case ${
+              i + 1
+            }: Memory limit must be between 1 and 256 MB.`,
           });
         }
       }
@@ -512,11 +535,11 @@ export const updateProblem = async (req, res) => {
     res.json(updatedProblem);
   } catch (error) {
     console.error("Update Problem Error:", error);
-    res.status(500).json({ message: "Failed to update the problem. Please try again later." });
+    res.status(500).json({
+      message: "Failed to update the problem. Please try again later.",
+    });
   }
 };
-
-
 
 // Delete problem
 export const deleteProblem = async (req, res) => {
@@ -530,11 +553,14 @@ export const deleteProblem = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.isAdmin; // Assuming role is stored in req.user.role
 
-    if (problem.createdBy.toString() !== userId.toString() && userRole !== "admin") {
-    
-      return res.status(403).json({ message: "Unauthorized to delete this problem" });
+    if (
+      problem.createdBy.toString() !== userId.toString() &&
+      userRole !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete this problem" });
     }
-
 
     // Delete the problem
     await Problem.deleteOne({ _id: req.params.id });

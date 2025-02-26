@@ -98,7 +98,6 @@ const Contest = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-900">
-        <Header />
         <div className="mx-auto p-4 pt-20 text-white">
           {contest ? (
             <>

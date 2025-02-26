@@ -1,25 +1,37 @@
-import Contest from '../models/contest.js';
+import Contest from "../models/contest.js";
+import user from "../models/user.js";
+import Problem from "../models/problem.js";
 
 // Function to determine contest status based on current time
 const determineStatus = (start_time, end_time) => {
   const now = new Date();
   if (now < start_time) {
-    return 'upcoming';  // Contest has not started yet
+    return "upcoming"; // Contest has not started yet
   } else if (now >= start_time && now <= end_time) {
-    return 'ongoing';   // Contest is currently live
+    return "ongoing"; // Contest is currently live
   } else {
-    return 'completed'; // Contest has ended
+    return "completed"; // Contest has ended
   }
 };
 
 // Create a new contest
 export const createContest = async (req, res) => {
   try {
-    const { name, description, created_by, problems, start_time, end_time } = req.body;
+    const {
+      name,
+      description,
+      created_by,
+      problems,
+      start_time,
+      end_time,
+    } = req.body;
 
     // Validate required fields
     if (!name || !description || !created_by || !start_time || !end_time) {
-      return res.status(400).json({ error: 'Name, description, creator, start time, and end time are required' });
+      return res.status(400).json({
+        error:
+          "Name, description, creator, start time, and end time are required",
+      });
     }
 
     // Convert to Date objects
@@ -28,11 +40,13 @@ export const createContest = async (req, res) => {
 
     // Validate date-time values
     if (isNaN(startTime) || isNaN(endTime)) {
-      return res.status(400).json({ error: 'Invalid date format' });
+      return res.status(400).json({ error: "Invalid date format" });
     }
 
     if (startTime >= endTime) {
-      return res.status(400).json({ error: 'Start time must be before end time' });
+      return res
+        .status(400)
+        .json({ error: "Start time must be before end time" });
     }
 
     // Determine contest status
@@ -63,7 +77,14 @@ export const createContest = async (req, res) => {
 // Update a contest
 export const updateContest = async (req, res) => {
   const { id } = req.params;
-  const { name, description, created_by, problems, start_time, end_time } = req.body;
+  const {
+    name,
+    description,
+    created_by,
+    problems,
+    start_time,
+    end_time,
+  } = req.body;
 
   try {
     // Convert to Date objects
@@ -72,11 +93,13 @@ export const updateContest = async (req, res) => {
 
     // Validate date-time values
     if (isNaN(startTime) || isNaN(endTime)) {
-      return res.status(400).json({ error: 'Invalid date format' });
+      return res.status(400).json({ error: "Invalid date format" });
     }
 
     if (startTime >= endTime) {
-      return res.status(400).json({ error: 'Start time must be before end time' });
+      return res
+        .status(400)
+        .json({ error: "Start time must be before end time" });
     }
 
     // Determine contest status
@@ -87,17 +110,16 @@ export const updateContest = async (req, res) => {
       {
         name,
         description,
-        created_by,
         problems,
         start_time: startTime,
         end_time: endTime,
-        status
+        status,
       },
       { new: true, runValidators: true }
     );
 
     if (!updatedContest) {
-      return res.status(404).json({ error: 'Contest not found' });
+      return res.status(404).json({ error: "Contest not found" });
     }
 
     res.status(200).json(updatedContest);
@@ -112,11 +134,25 @@ export const deleteContest = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Find and delete the contest
     const deletedContest = await Contest.findByIdAndDelete(id);
 
     if (!deletedContest) {
-      return res.status(404).json({ error: 'Contest not found' });
+      return res.status(404).json({ error: "Contest not found" });
     }
+
+    // Remove assigned students from all problems in the contest
+    const problemUpdates = deletedContest.problems.map(async (problemId) => {
+      const problem = await Problem.findById(problemId);
+      if (problem) {
+        problem.assignedStudents = problem.assignedStudents.filter(
+          (studentId) => !deletedContest.assignedStudents.includes(studentId)
+        );
+        await problem.save();
+      }
+    });
+
+    await Promise.all(problemUpdates);
 
     res.status(204).send(); // No content
   } catch (error) {
@@ -125,35 +161,67 @@ export const deleteContest = async (req, res) => {
   }
 };
 
-// Get a contest by ID
 export const getContestById = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id; // Assuming authentication middleware attaches user info
+  const userRole = req.user.isAdmin; // Get user role from authentication
 
   try {
     const contest = await Contest.findById(id)
-      .populate('created_by')
-      .populate('problems');
+      .populate("created_by")
+      .populate("problems");
 
     if (!contest) {
-      return res.status(404).json({ error: 'Contest not found' });
+      return res.status(404).json({ error: "Contest not found" });
     }
 
-    res.status(200).json(contest);
+    // Access control logic:
+    if (
+      userRole === "admin" || // Admin can access all contests
+      (userRole === "faculty" &&
+        contest.created_by._id.toString() === userId.toString()) || // Faculty can access only their own contests
+      (userRole === "student" && contest.assignedStudents.includes(userId)) // Student can access only assigned contests
+    ) {
+      return res.status(200).json(contest);
+    }
+
+    return res
+      .status(403)
+      .json({ error: "You do not have access to this contest." });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
 // Get all contests
 export const getAllContests = async (req, res) => {
   try {
-    const contests = await Contest.find()
-      .populate('problems');    // Populate problems field
+    const userId = req.user.id; // Get user ID from authentication middleware
+    const userRole = req.user.isAdmin; // Get user role
 
-    // Update status for each contest based on current time
+    let contests;
+
+    if (userRole === "admin") {
+      // Admins can see all contests
+      contests = await Contest.find().populate("problems");
+    } else if (userRole === "faculty") {
+      // Faculty can only see contests they created
+      contests = await Contest.find({ created_by: userId }).populate(
+        "problems"
+      );
+    } else if (userRole === "student") {
+      // Students can only see contests they are assigned to
+      contests = await Contest.find({ assignedStudents: userId }).populate(
+        "problems"
+      );
+    } else {
+      return res.status(403).json({ error: "Unauthorized access" });
+    }
+
+    // Update contest status dynamically
     const now = new Date();
-    contests.forEach(contest => {
+    contests.forEach((contest) => {
       contest.status = determineStatus(contest.start_time, contest.end_time);
     });
 
@@ -161,5 +229,188 @@ export const getAllContests = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const assignContestToStudents = async (req, res) => {
+  try {
+    const { studentIds } = req.body;
+    const { id } = req.params;
+
+    if (!id || !studentIds || !Array.isArray(studentIds)) {
+      return res
+        .status(400)
+        .json({ error: "Contest ID and valid student IDs are required." });
+    }
+
+    // Find contest
+    const contest = await Contest.findById(id).populate("problems");
+    if (!contest) {
+      return res.status(404).json({ error: "Contest not found." });
+    }
+
+    // Assign students to the contest
+    contest.assignedStudents = [
+      ...new Set([...contest.assignedStudents, ...studentIds]),
+    ];
+
+    // Assign students to all problems within the contest
+    const problemUpdates = contest.problems.map(async (problemId) => {
+      const problem = await Problem.findById(problemId);
+      if (problem) {
+        problem.assignedStudents = [
+          ...new Set([...problem.assignedStudents, ...studentIds]),
+        ];
+        await problem.save();
+      }
+    });
+
+    await Promise.all(problemUpdates);
+    await contest.save();
+
+    res
+      .status(200)
+      .json({ message: "Contest assigned to students successfully.", contest });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+export const getAssignedStudents = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { branch, semester, batch } = req.query;
+    console.log(req.query);
+
+    if (!id) {
+      return res.status(400).json({ error: "Contest ID is required." });
+    }
+
+    const contest = await Contest.findById(id);
+    if (!contest) {
+      return res.status(404).json({ error: "Contest not found." });
+    }
+
+    const filter = {
+      _id: { $in: contest.assignedStudents },
+      role: "student",
+    };
+
+    if (branch && branch !== "ALL") {
+      filter.branch = branch;
+    }
+    if (semester && semester !== "ALL") {
+      filter.semester = semester;
+    }
+    if (batch && batch !== "ALL") {
+      filter.batch = batch;
+    }
+
+    const assignedStudents = await user.find(filter)
+      .select("username semester batch branch _id id");
+
+    res.status(200).json({ assignedStudents });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+
+export const getUnassignedStudents = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { branch, semester, batch } = req.query;
+    console.log(req.query);
+
+    if (!id) {
+      return res.status(400).json({ error: "Contest ID is required." });
+    }
+
+    const contest = await Contest.findById(id);
+    if (!contest) {
+      return res.status(404).json({ error: "Contest not found." });
+    }
+
+    const filter = {
+      _id: { $nin: contest.assignedStudents },
+      role: "student", // Exclude assigned students
+    };
+
+    if (branch && branch !== "ALL") {
+      filter.branch = branch;
+    }
+    if (semester && semester !== "ALL") {
+      filter.semester = semester;
+    }
+    if (batch && batch !== "ALL") {
+      filter.batch = batch;
+    }
+
+    // // Fetch students who are NOT assigned to this contest
+    // const unassignedStudents = await user
+    //   .find({
+    //     _id: { $nin: contest.assignedStudents },
+    //     role: "student", // Exclude assigned students
+    //   })
+    //   .select("username semester batch branch _id id");
+
+    const unassignedStudents = await user.find(filter)
+      .select("username semester batch branch _id id");
+
+
+    res.status(200).json({ unassignedStudents });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+export const unassignContestToStudents = async (req, res) => {
+  try {
+    const { studentIds } = req.body;
+    const { id } = req.params; // Contest ID from params
+
+    if (!id || !studentIds || !Array.isArray(studentIds)) {
+      return res
+        .status(400)
+        .json({ error: "Contest ID and valid student IDs are required." });
+    }
+
+    // Find contest
+    const contest = await Contest.findById(id).populate("problems");
+    if (!contest) {
+      return res.status(404).json({ error: "Contest not found." });
+    }
+
+    // Remove students from the contest's assignedStudents list
+    contest.assignedStudents = contest.assignedStudents.filter(
+      (studentId) => !studentIds.includes(studentId.toString())
+    );
+
+    // Remove students from all problems within the contest
+    const problemUpdates = contest.problems.map(async (problemId) => {
+      const problem = await Problem.findById(problemId);
+      if (problem) {
+        problem.assignedStudents = problem.assignedStudents.filter(
+          (studentId) => !studentIds.includes(studentId.toString())
+        );
+        await problem.save();
+      }
+    });
+
+    await Promise.all(problemUpdates);
+    await contest.save();
+
+    res
+      .status(200)
+      .json({
+        message: "Students unassigned from contest successfully.",
+        contest,
+      });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };

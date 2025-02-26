@@ -25,6 +25,8 @@ import AssignedStudents from './Problem/AssignedStudents';
 import StudentInfo from './Admin/StudentInfo';
 import Details from './Problem/Details';
 import Support from './Support';
+import AssignedContest from './Contest/AssignedContest';
+import UnAssignContest from './Contest/UnAssignContest';
 
 const appRouter = createBrowserRouter([
   {
@@ -56,7 +58,9 @@ const appRouter = createBrowserRouter([
       { path:"/assignProblem/:problemId", element: <AssignProblem /> },
       { path:"/assignedStudents/:problemId", element: <AssignedStudents /> },
       { path:"/studentinformation", element: <StudentInfo /> },
-      { path:"/submissions/:submissionId", element:<Details />}
+      { path:"/submissions/:submissionId", element:<Details />},
+      { path:"/assignContestToStudents/:contestId", element:<UnAssignContest />},
+      { path:"/unassignContestToStudents/:contestId", element:<AssignedContest />}
     ],
   },
 ]);

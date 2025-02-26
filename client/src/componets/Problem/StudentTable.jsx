@@ -5,17 +5,20 @@ const StudentTable = ({
   selectedStudents,
   handleSelectAll,
   handleSelectStudent,
-  handleAssign,
   filters,
   updateFilter,
   loading,
+  currentPage,
+  itemsPerPage,
+  handlePageChange,
+  totalPages,
 }) => {
   const [sortConfig, setSortConfig] = useState({
     key: "id",
     direction: "asc",
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+
+  console.log(users);
 
   // Apply filters
   const filteredUsers = users.filter((user) => {
@@ -61,15 +64,10 @@ const StudentTable = ({
   });
 
   // Pagination logic
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
   const paginatedUsers = sortedUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
 
   const handleSort = (key) => {
     setSortConfig((prev) => {
@@ -78,15 +76,15 @@ const StudentTable = ({
         ? prev.direction === "asc"
           ? "desc"
           : "asc"
-        : "asc";
+        : "asc"; // Corrected this line
       return { key, direction: newDirection };
     });
   };
 
   return (
-    <div className="overflow-x-auto p-5">
+    <div className="overflow-x-auto p-4">
       {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:justify-between items-center">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:justify-between items-center pl-4">
         <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
           <select
             value={filters.branch}
@@ -127,133 +125,156 @@ const StudentTable = ({
         </div>
       </div>
 
-      {/* Student Count */}
-      <div className="mb-4 text-gray-300">
+      <div className="mb-4 text-gray-300 pl-4">
         <span className="font-bold">{filteredUsers.length}</span>{" "}
         {filteredUsers.length === 1 ? "student" : "students"} found.
       </div>
 
-      {/* Table */}
-      <table className="w-full border-collapse border border-gray-700 text-left text-gray-500">
-        <thead className="bg-gray-900 text-gray-400">
-          <tr>
-            <th className="py-3 px-4 text-center">
-              <button
-                onClick={handleSelectAll}
-                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-              >
-                {selectedStudents.length === users.length
-                  ? "Deselect All"
-                  : "Select All"}
-              </button>
-            </th>
-            <th
-              className="py-3 px-4 text-center cursor-pointer"
-              onClick={() => handleSort("id")}
-            >
-              ID
-              {sortConfig.key === "id" &&
-                (sortConfig.direction === "asc" ? " ↑" : " ↓")}
-            </th>
-            <th
-              className="py-3 px-4 text-center cursor-pointer"
-              onClick={() => handleSort("username")}
-            >
-              Username
-              {sortConfig.key === "username" &&
-                (sortConfig.direction === "asc" ? " ↑" : " ↓")}
-            </th>
-            <th className="py-3 px-4 text-center">Branch</th>
-            <th
-              className="py-3 px-4 text-center cursor-pointer"
-              onClick={() => handleSort("semester")}
-            >
-              Semester
-              {sortConfig.key === "semester" &&
-                (sortConfig.direction === "asc" ? " ↑" : " ↓")}
-            </th>
-            <th className="py-3 px-4 text-center">Batch</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan="6" className="py-6 text-center">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-                  <p className="mt-4 text-blue-500 text-lg font-medium">
-                    Loading, please wait...
-                  </p>
-                </div>
-              </td>
-            </tr>
-          ) : paginatedUsers.length > 0 ? (
-            paginatedUsers.map((user, index) => (
-              <tr
-                key={user._id}
-                className={index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}
-              >
-                <td className="py-3 px-4 text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedStudents.includes(user._id)}
-                    onChange={() => handleSelectStudent(user._id)}
-                    className="cursor-pointer"
-                  />
-                </td>
-                <td className="py-3 px-4 text-center text-white">
-                  {user.id?.toUpperCase()}
-                </td>
-                <td className="py-3 px-4 text-center text-white">
-                  {user.username}
-                </td>
-                <td className="py-3 px-4 text-center text-white">
-                  {user.branch?.toUpperCase()}
-                </td>
-                <td className="py-3 px-4 text-center text-white">
-                  {user.semester}
-                </td>
-                <td className="py-3 px-4 text-center text-white">
-                  {user.batch?.toUpperCase()}
-                </td>
+      {/* Students Table */}
+      <div className="p-4">
+        <div className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900/50 shadow-xl">
+          <table className="w-full border-collapse text-left text-gray-300">
+            <thead>
+              <tr className="border-b border-gray-800 bg-gray-900/80">
+                <th className="py-4 px-4 text-center">
+                  <button
+                    onClick={handleSelectAll}
+                    className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/20 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                  >
+                    {selectedStudents.length === filteredUsers.length
+                      ? "Deselect All"
+                      : "Select All"}
+                  </button>
+                </th>
+                <th
+                  className="group cursor-pointer py-4 px-4 text-center text-sm font-medium uppercase tracking-wider text-gray-400 transition-colors hover:text-white"
+                  onClick={() => handleSort("id")}
+                >
+                  <div className="flex items-center justify-center space-x-1">
+                    <span>ID</span>
+                    {sortConfig.key === "id" && (
+                      <span className="text-blue-500">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="group cursor-pointer py-4 px-4 text-center text-sm font-medium uppercase tracking-wider text-gray-400 transition-colors hover:text-white"
+                  onClick={() => handleSort("username")}
+                >
+                  <div className="flex items-center justify-center space-x-1">
+                    <span>Username</span>
+                    {sortConfig.key === "username" && (
+                      <span className="text-blue-500">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </div>
+                </th>
+                <th className="py-4 px-4 text-center text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Branch
+                </th>
+                <th
+                  className="group cursor-pointer py-4 px-4 text-center text-sm font-medium uppercase tracking-wider text-gray-400 transition-colors hover:text-white"
+                  onClick={() => handleSort("semester")}
+                >
+                  <div className="flex items-center justify-center space-x-1">
+                    <span>Semester</span>
+                    {sortConfig.key === "semester" && (
+                      <span className="text-blue-500">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </div>
+                </th>
+                <th className="py-4 px-4 text-center text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Batch
+                </th>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6" className="py-3 px-4 text-center text-gray-300">
-                No unassigned students found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-700 border-t-blue-500"></div>
+                      <p className="mt-4 text-lg font-medium text-blue-400">
+                        Loading, please wait...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedUsers.length > 0 ? (
+                paginatedUsers.map((student, index) => (
+                  <tr
+                    key={student._id}
+                    className={`transition-colors ${
+                      index % 2 === 0 ? "bg-gray-900/30" : "bg-gray-900/10"
+                    } hover:bg-gray-900/60`}
+                  >
+                    <td className="py-4 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.includes(student._id)}
+                        onChange={() => handleSelectStudent(student._id)}
+                        className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                      />
+                    </td>
+                    <td className="whitespace-nowrap py-4 px-4 text-center font-medium text-gray-100">
+                      {student.id?.toUpperCase()}
+                    </td>
+                    <td className="py-4 px-4 text-center text-gray-100">
+                      {student.username}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="inline-flex rounded-full bg-gray-800 px-3 py-1 text-sm font-medium text-gray-100">
+                        {student.branch?.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center font-medium text-gray-100">
+                      {student.semester}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="inline-flex rounded-full bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-400">
+                        {student.batch?.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="py-8 text-center text-lg text-gray-400"
+                  >
+                    No students found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Pagination */}
-      <div className="flex justify-center mt-4">
+      <div className="mb-4 flex items-center justify-center space-x-4">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="cursor-pointer bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+          className="flex items-center space-x-2 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-gray-800"
         >
-          Previous
+          <span>Previous</span>
         </button>
-        <span className="mx-4 mt-1 text-white">{`Page ${currentPage} of ${totalPages}`}</span>
+        <div className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300">
+          Page {currentPage} of {totalPages}
+        </div>
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="cursor-pointer bg-gray-700 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
+          className="flex items-center space-x-2 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-gray-800"
         >
-          Next
-        </button>
-      </div>
-
-      <div className="flex justify-start">
-        <button
-          onClick={handleAssign}
-          disabled={selectedStudents.length === 0}
-          className="bg-green-500 text-white  px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-600"
-        >
-          Assign Problem
+          <span>Next</span>
         </button>
       </div>
     </div>

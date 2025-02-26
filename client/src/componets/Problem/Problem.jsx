@@ -12,7 +12,9 @@ const ProblemForm = () => {
   const [inputFormat, setInputFormat] = useState("");
   const [outputFormat, setOutputFormat] = useState("");
   const [sampleIO, setSampleIO] = useState([{ input: "", output: "" }]);
-  const [testCases, setTestCases] = useState([{ inputs: "", outputs: "", marks: 0 }]);
+  const [testCases, setTestCases] = useState([
+    { inputs: "", outputs: "", marks: 0 },
+  ]);
   const [constraints, setConstraints] = useState("");
   const [tags, setTags] = useState([]);
   const [totalMarks, setTotalMarks] = useState(0);
@@ -89,7 +91,9 @@ const ProblemForm = () => {
       <form onSubmit={handleSubmit}>
         {/* Problem Details */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Title</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Title
+          </label>
           <input
             type="text"
             value={title}
@@ -100,7 +104,9 @@ const ProblemForm = () => {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Description
+          </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -112,7 +118,9 @@ const ProblemForm = () => {
         {/* Difficulty, Input/Output Format */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Difficulty</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Difficulty
+            </label>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
@@ -126,7 +134,9 @@ const ProblemForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Input Format</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Input Format
+            </label>
             <input
               type="text"
               value={inputFormat}
@@ -139,7 +149,9 @@ const ProblemForm = () => {
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Output Format</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Output Format
+            </label>
             <input
               type="text"
               value={outputFormat}
@@ -150,7 +162,9 @@ const ProblemForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Constraints</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Constraints
+            </label>
             <input
               type="text"
               value={constraints}
@@ -169,14 +183,18 @@ const ProblemForm = () => {
                 type="text"
                 placeholder="Sample Input"
                 value={sio.input}
-                onChange={(e) => handleSampleIOChange(index, "input", e.target.value)}
+                onChange={(e) =>
+                  handleSampleIOChange(index, "input", e.target.value)
+                }
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md mb-2"
               />
               <input
                 type="text"
                 placeholder="Sample Output"
                 value={sio.output}
-                onChange={(e) => handleSampleIOChange(index, "output", e.target.value)}
+                onChange={(e) =>
+                  handleSampleIOChange(index, "output", e.target.value)
+                }
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               />
               <button
@@ -205,14 +223,18 @@ const ProblemForm = () => {
               <textarea
                 placeholder="Input"
                 value={testCase.inputs}
-                onChange={(e) => handleTestCaseChange(index, "inputs", e.target.value)}
+                onChange={(e) =>
+                  handleTestCaseChange(index, "inputs", e.target.value)
+                }
                 className="block w-full p-2 border border-gray-300 rounded-md mb-2"
                 rows="3"
               />
               <textarea
                 placeholder="Expected Output"
                 value={testCase.outputs}
-                onChange={(e) => handleTestCaseChange(index, "outputs", e.target.value)}
+                onChange={(e) =>
+                  handleTestCaseChange(index, "outputs", e.target.value)
+                }
                 className="block w-full p-2 border border-gray-300 rounded-md mb-2"
                 rows="3"
               />
@@ -220,7 +242,9 @@ const ProblemForm = () => {
                 type="number"
                 placeholder="Marks"
                 value={testCase.marks}
-                onChange={(e) => handleTestCaseChange(index, "marks", e.target.value)}
+                onChange={(e) =>
+                  handleTestCaseChange(index, "marks", e.target.value)
+                }
                 className="block w-full p-2 border border-gray-300 rounded-md"
               />
               <button
@@ -247,12 +271,16 @@ const ProblemForm = () => {
 
         {/* Tags */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Tags</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Tags
+          </label>
           <input
             type="text"
             placeholder="Comma-separated tags"
             value={tags.join(", ")}
-            onChange={(e) => setTags(e.target.value.split(",").map((tag) => tag.trim()))}
+            onChange={(e) =>
+              setTags(e.target.value.split(",").map((tag) => tag.trim()))
+            }
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
           />
         </div>

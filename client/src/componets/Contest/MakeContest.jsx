@@ -57,8 +57,7 @@ const MakeContest = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get("/contests");
-      // console.log(response.data);
-
+        console.log(response.data);
       if (Array.isArray(response.data)) {
         setContests(response.data);
       } else if (Array.isArray(response.data.contests)) {
@@ -116,7 +115,7 @@ const MakeContest = () => {
     )
     .filter((contest) => {
       if (statusFilter === "") return true;
-      return contest.status === statusFilter;
+      return contest?.status === statusFilter;
     });
 
   const formatDate = (dateString) => {
@@ -129,9 +128,12 @@ const MakeContest = () => {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
 
+  const assignContestToStudents = (contestId) => {
+    navigate(`/assignContestToStudents/${contestId}`);
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <Header />
       <div className="mx-auto p-4">
         {userRole !== "student" && (
           <button
@@ -261,6 +263,18 @@ const MakeContest = () => {
                         className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
                       >
                         Delete
+                      </button>
+                      <button
+                        onClick={() => handleDeleteConfirmation(contest._id)}
+                        className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
+                      >
+                        Dashboard
+                      </button>
+                      <button
+                        onClick={() => assignContestToStudents(contest._id)}
+                        className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                      >
+                        assigned
                       </button>
                     </td>
                   )}
