@@ -6,6 +6,16 @@ import {
   FaBirthdayCake,
   FaClipboardList,
 } from "react-icons/fa";
+import {
+  User,
+  Github,
+  Linkedin,
+  Cake,
+  ClipboardList,
+  Edit,
+  Upload,
+  X,
+} from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
 import { ClipLoader } from "react-spinners";
 import toast from "react-hot-toast";
@@ -117,71 +127,102 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
   };
 
   return (
-    <div className="flex flex-col items-center sticky top-20 bg-gray-900 text-white rounded-lg shadow-lg p-6">
-      {/* Profile Image */}
-      {loading ? (
-        <ClipLoader size={150} color={"#ffffff"} loading={loading} />
-      ) : selectedFile ? (
-        <img
-          src={imagePreview}
-          alt="Selected"
-          className="w-48 h-48 rounded-full mb-3"
-        />
-      ) : profilePic ? (
-        <img
-          src={profilePic}
-          alt="Profile"
-          className="w-48 h-48 rounded-full mb-3"
-        />
-      ) : (
-        <FaUser size={200} className="text-primary mb-3" />
-      )}
+    <div className="sticky top-20 bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-xl shadow-2xl p-8 border border-gray-700">
+      <div className="flex flex-col items-center">
+        {/* Profile Image with improved styling */}
+        <div className="relative mb-6">
+          {loading ? (
+            <div className="w-40 h-40 rounded-full bg-gray-700 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <div className="relative group">
+              <div className="w-40 h-40 rounded-full overflow-hidden ring-4 ring-blue-500 shadow-lg transition-all duration-300 hover:ring-blue-400">
+                {selectedFile ? (
+                  <img
+                    src={imagePreview}
+                    alt="Selected"
+                    className="w-full h-full object-cover"
+                  />
+                ) : profilePic ? (
+                  <img
+                    src={profilePic}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                    <User size={80} className="text-gray-400" />
+                  </div>
+                )}
+              </div>
 
-      <p className="text-xl font-semibold pb-5">{formData.name}</p>
+              {isEditing && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    onClick={() => document.getElementById("fileInput").click()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-all"
+                  >
+                    <Edit size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-      <div className="flex items-center space-x-2">
-        <a
-          href={githubURL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`transition-all ${
-            githubURL ? "text-white" : "text-gray-400"
-          } hover:text-gray-200`}
+        {/* Name with improved typography */}
+        <h2 className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+          {formData.name}
+        </h2>
+
+        {/* Social links with improved styling */}
+        <div className="flex items-center space-x-4 mb-6">
+          <a
+            href={githubURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`transition-all p-2 rounded-full ${
+              githubURL
+                ? "bg-gray-700 text-white hover:bg-gray-600 hover:scale-110"
+                : "bg-gray-800 text-gray-500 cursor-not-allowed"
+            }`}
+            title={githubURL ? "GitHub Profile" : "No GitHub profile available"}
+          >
+            <Github size={24} />
+          </a>
+          <a
+            href={linkedInURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`transition-all p-2 rounded-full ${
+              linkedInURL
+                ? "bg-gray-700 text-white hover:bg-gray-600 hover:scale-110"
+                : "bg-gray-800 text-gray-500 cursor-not-allowed"
+            }`}
+            title={
+              linkedInURL ? "LinkedIn Profile" : "No LinkedIn profile available"
+            }
+          >
+            <Linkedin size={24} />
+          </a>
+        </div>
+
+        {/* Edit button with improved styling */}
+        <button
+          onClick={toggleEdit}
+          className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 ${
+            isEditing
+              ? "bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800"
+              : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800"
+          } text-white shadow-lg`}
         >
-          <FaGithub size={30} />
-        </a>
-        <a
-          href={linkedInURL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`transition-all ${
-            linkedInURL ? "text-white" : "text-gray-400"
-          } hover:text-gray-200`}
-        >
-          <FaLinkedin size={30} />
-        </a>
-      </div>
+          {isEditing ? "Cancel Edit" : "Edit Details"}
+        </button>
 
-      <button
-        onClick={toggleEdit}
-        className={`px-4 py-2 rounded-md mt-4 transition ${
-          isEditing
-            ? "bg-red-500 hover:bg-red-700"
-            : "bg-blue-500 hover:bg-blue-700"
-        } text-white`}
-      >
-        {isEditing ? "Cancel Edit" : "Edit Details"}
-      </button>
-
-      {isEditing && (
-        <>
-          <div className="mt-2 w-full">
-            <label
-              htmlFor="fileInput"
-              className="block text-sm font-medium text-gray-300"
-            >
-              Choose a profile picture:
-            </label>
+        {/* File upload section with improved styling */}
+        {isEditing && (
+          <div className="mt-6 w-full space-y-4">
             <input
               id="fileInput"
               type="file"
@@ -189,49 +230,51 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
               onChange={handleFileChange}
               className="hidden"
             />
-            <button
-              onClick={() => document.getElementById("fileInput").click()}
-              className="mt-2 w-full bg-blue-600 text-white rounded px-4 py-2 shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-            >
-              Select Image
-            </button>
-          </div>
 
-          {selectedFile && (
-            <>
-              <div className="mt-2 text-sm text-gray-400">
-                <span className="font-medium">Selected File: </span>
-                <span>{selectedFile.name}</span>
-              </div>
+            {!selectedFile && (
               <button
-                onClick={handleUpdateProfilePic}
-                className="mt-4 w-full bg-green-500 text-white rounded px-4 py-2 shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all"
+                onClick={() => document.getElementById("fileInput").click()}
+                className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-lg px-4 py-3 shadow-lg hover:from-indigo-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all flex items-center justify-center space-x-2"
               >
-                Upload Profile Picture
+                <Upload size={18} />
+                <span>Select New Image</span>
               </button>
-            </>
-          )}
-        </>
-      )}
+            )}
 
-      {isEditing && profilePic && !selectedFile && (
-        <>
-          <div className="mt-2 w-full">
-            <label
-              htmlFor="fileInput"
-              className="block text-sm font-medium text-gray-300"
-            >
-              Remove a profile picture:
-            </label>
-            <button
-              onClick={handleRemoveImage}
-              className="mt-2 w-full bg-green-600 text-white rounded px-4 py-2 shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-            >
-              Remove image
-            </button>
+            {selectedFile && (
+              <div className="space-y-3">
+                <div className="text-sm text-gray-300 bg-gray-800 p-3 rounded-lg flex items-center">
+                  <div className="flex-1 truncate">{selectedFile.name}</div>
+                  <button
+                    onClick={() => setSelectedFile(null)}
+                    className="text-gray-400 hover:text-red-400 ml-2"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleUpdateProfilePic}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg px-4 py-3 shadow-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all flex items-center justify-center space-x-2"
+                >
+                  <Upload size={18} />
+                  <span>Upload Profile Picture</span>
+                </button>
+              </div>
+            )}
+
+            {profilePic && !selectedFile && (
+              <button
+                onClick={handleRemoveImage}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg px-4 py-3 shadow-lg hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all flex items-center justify-center space-x-2"
+              >
+                <X size={18} />
+                <span>Remove Profile Picture</span>
+              </button>
+            )}
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };

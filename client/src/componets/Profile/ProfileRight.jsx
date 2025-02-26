@@ -1,176 +1,304 @@
 import React from "react";
+import {
+  Save,
+  User,
+  Mail,
+  Github,
+  Linkedin,
+  FileText,
+  MapPin,
+  Cake,
+  BookOpen,
+  Code,
+} from "lucide-react";
 
 const ProfileRight = ({ formData, handleInputChange, handleSubmit, user }) => {
   return (
     <div className="flex flex-col space-y-4">
-      <div
-        className="dark:bg-gray-900 shadow-lg rounded-lg p-6"
-        // style={{border:"2px solid red"}}
-        style={{ boxShadow: "1px 1px 4px gray" }}
-      >
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-900 rounded-xl shadow-2xl p-8 border border-blue-900/30">
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+            Profile Information
+          </h2>
+          <div className="mt-2 h-1 w-24 mx-auto bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
+          {/* Full Name */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <User size={18} className="mr-3 text-blue-400" />
               Full Name
             </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your full name"
-            />
+            <div className="relative group">
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+                placeholder="Enter your full name"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
+          {/* Username */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <User size={18} className="mr-3 text-blue-400" />
               Username
             </label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your username"
-            />
+            <div className="relative group">
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+                placeholder="Enter your username"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
+          {/* Email */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <Mail size={18} className="mr-3 text-blue-400" />
               Email
             </label>
-            <input
-              type="email"
-              value={user.email}
-              readOnly
-              className="w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-            />
+            <div className="relative">
+              <input
+                type="email"
+                value={user.email}
+                readOnly
+                className="w-full p-4 pl-5 bg-gray-700 border-2 border-gray-600 rounded-lg shadow-lg
+                           text-gray-300 cursor-not-allowed"
+              />
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-xs font-semibold text-gray-400 bg-gray-800 px-3 py-1 rounded-full border border-gray-600">
+                Read only
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+          {/* Github */}
+          <div className="col-span-1">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <Github size={18} className="mr-3 text-blue-400" />
               Github
             </label>
-            <input
-              name="github"
-              value={formData.github}
-              onChange={handleInputChange}
-              className="w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your GitHub profile name"
-            />
+            <div className="relative group">
+              <input
+                name="github"
+                value={formData.github}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+                placeholder="Enter your GitHub profile name"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+          {/* LinkedIn */}
+          <div className="col-span-1">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <Linkedin size={18} className="mr-3 text-blue-400" />
               LinkedIn
             </label>
-            <input
-              name="linkedIn"
-              value={formData.linkedIn}
-              onChange={handleInputChange}
-              className="w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your LinkedIn profile URL"
-            />
+            <div className="relative group">
+              <input
+                name="linkedIn"
+                value={formData.linkedIn}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+                placeholder="Enter your LinkedIn profile URL"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
+          {/* Bio */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <FileText size={18} className="mr-3 text-blue-400" />
               Bio
             </label>
-            <textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleInputChange}
-              className="w-full p-4 bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your bio"
-              rows={4}
-            />
+            <div className="relative group">
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600 resize-none"
+                placeholder="Tell us about yourself..."
+                rows={4}
+              ></textarea>
+              <div className="absolute top-4 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
-          
-
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+          {/* Gender */}
+          <div className="col-span-1">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <User size={18} className="mr-3 text-blue-400" />
               Gender
             </label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleInputChange}
-              className="w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
+            <div className="relative group">
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600 appearance-none"
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none">
+                <svg
+                  className="w-5 h-5 text-blue-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+          {/* Birthday */}
+          <div className="col-span-1">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <Cake size={18} className="mr-3 text-blue-400" />
               Birthday
             </label>
-            <input
-              type="date"
-              name="birthday"
-              value={formData.birthday}
-              onChange={handleInputChange}
-              className="w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-            />
+            <div className="relative group">
+              <input
+                type="date"
+                name="birthday"
+                value={formData.birthday}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
+          {/* Location */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2 col-span-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <MapPin size={18} className="mr-3 text-blue-400" />
               Location
             </label>
-            <textarea
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your location"
-              rows={4}
-            />
+            <div className="relative group">
+              <textarea
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600 resize-none"
+                placeholder="Enter your location details"
+                rows={3}
+              ></textarea>
+              <div className="absolute top-4 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
+          {/* Skills */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <Code size={18} className="mr-3 text-blue-400" />
               Skills
             </label>
-            <input
-              type="text"
-              name="skills"
-              value={formData.skills}
-              onChange={handleInputChange}
-              className="w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your skills"
-            />
+            <div className="relative group">
+              <input
+                type="text"
+                name="skills"
+                value={formData.skills}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+                placeholder="Enter your skills (e.g., JavaScript, React, Node.js)"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
+          {/* Education */}
           <div className="col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center text-white mb-3 text-sm font-medium">
+              <BookOpen size={18} className="mr-3 text-blue-400" />
               Education
             </label>
-            <input
-              type="text"
-              name="education"
-              value={formData.education}
-              onChange={handleInputChange}
-              className="w-full p-4  bg-gray-800 border rounded-lg mb-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-700"
-              placeholder="Enter your education"
-            />
+            <div className="relative group">
+              <input
+                type="text"
+                name="education"
+                value={formData.education}
+                onChange={handleInputChange}
+                className="w-full p-4 pl-5 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                           transition-all duration-300 group-hover:border-gray-600"
+                placeholder="Enter your education details"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
           </div>
 
-          {/* Other form fields like Gender, Birthday, Location, etc. */}
-
-          <div className="col-span-2">
+          {/* Submit Button */}
+          <div className="col-span-2 mt-6">
             <button
               type="submit"
-              className="w-full p-3 shadow-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+              className="w-full p-4 rounded-lg font-medium text-lg transition-all duration-300 transform hover:scale-[1.02] 
+                         bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800
+                         text-white shadow-xl flex items-center justify-center space-x-3 border border-blue-600"
             >
-              Save Changes
+              <Save size={20} />
+              <span>Save Changes</span>
             </button>
           </div>
         </form>

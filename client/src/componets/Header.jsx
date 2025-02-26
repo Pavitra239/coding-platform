@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { logout, setUser } from "../redux/userSlice";
 import axiosInstance from "../utils/axiosInstance";
-import { 
+import {
   Menu,
   X,
   Home,
@@ -16,7 +16,7 @@ import {
   ClipboardList,
   LogOut,
   ChevronDown,
-  Plus
+  Plus,
 } from "lucide-react";
 
 const Header = () => {
@@ -30,6 +30,23 @@ const Header = () => {
   const [isScreenSmall, setIsScreenSmall] = useState(false);
   const [isOnMakeContest, setIsOnMakeContest] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
 
   useEffect(() => {
     if (authStatus === false) {
@@ -80,7 +97,8 @@ const Header = () => {
   };
 
   const isActive = (path) => location.pathname === path;
-  const makeContestButtonText = user?.role === "student" ? "Contest" : "Make Contest";
+  const makeContestButtonText =
+    user?.role === "student" ? "Contest" : "Make Contest";
 
   const navLinks = [
     { path: "/browse", label: "Home", icon: <Home size={18} /> },
@@ -90,11 +108,19 @@ const Header = () => {
     { path: "/make-problem", label: "Problem", icon: <Code2 size={18} /> },
   ];
 
-  if (user?.role === 'admin') {
-    navLinks.push({ path: "/pending-requests", label: "Requests", icon: <ClipboardList size={18} /> });
+  if (user?.role === "admin") {
+    navLinks.push({
+      path: "/pending-requests",
+      label: "Requests",
+      icon: <ClipboardList size={18} />,
+    });
   }
-  if (user?.role === 'faculty') {
-    navLinks.push({ path: "/faculty-section", label: "Requests", icon: <ClipboardList size={18} /> });
+  if (user?.role === "faculty") {
+    navLinks.push({
+      path: "/faculty-section",
+      label: "Requests",
+      icon: <ClipboardList size={18} />,
+    });
   }
 
   return (
@@ -105,10 +131,7 @@ const Header = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="flex-shrink-0"
-          >
+          <motion.div whileHover={{ scale: 1.05 }} className="flex-shrink-0">
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
               Codify
             </h1>
@@ -139,7 +162,8 @@ const Header = () => {
                   </Link>
                 ))}
 
-                <div className="relative">
+                {/* User Dropdown */}
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-blue-500/10 hover:text-blue-300"
@@ -168,6 +192,7 @@ const Header = () => {
                   </AnimatePresence>
                 </div>
 
+                {/* Make Contest Button */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -175,7 +200,9 @@ const Header = () => {
                   className="flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   {isOnMakeContest ? <Home size={18} /> : <Plus size={18} />}
-                  <span>{isOnMakeContest ? "Home" : makeContestButtonText}</span>
+                  <span>
+                    {isOnMakeContest ? "Home" : makeContestButtonText}
+                  </span>
                 </motion.button>
               </div>
             )

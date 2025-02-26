@@ -113,10 +113,10 @@ const Profile = () => {
     <div className="relative min-h-screen bg-gray-900 text-white">
       {loading ? (
         <div className="flex justify-center items-center h-screen">
-          <div className="relative w-12 h-12">
+          {/* <div className="relative w-12 h-12">
             <div className="absolute w-full h-full border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             <div className="absolute inset-2 w-8 h-8 border-4 border-blue-300 border-t-transparent rounded-full animate-spin"></div>
-          </div>
+          </div> */}
         </div>
       ) : !user ? (
         <div className="text-center text-gray-500 h-screen flex items-center justify-center">

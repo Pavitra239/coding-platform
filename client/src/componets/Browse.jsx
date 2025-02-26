@@ -33,7 +33,7 @@ const Browse = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-900 text-white">
       <main className="container mx-auto px-4 pt-24 pb-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
