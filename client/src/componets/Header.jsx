@@ -105,8 +105,11 @@ const Header = () => {
     { path: "/profile", label: "Profile", icon: <User size={18} /> },
     { path: "/history", label: "History", icon: <History size={18} /> },
     { path: "/support", label: "Support", icon: <HelpCircle size={18} /> },
-    { path: "/make-problem", label: "Problem", icon: <Code2 size={18} /> },
   ];
+
+  if (user?.role !== "student") {
+    navLinks.push({ path: "/make-problem", label: "Problem", icon: <Code2 size={18} /> });
+  }
 
   if (user?.role === "admin") {
     navLinks.push({
@@ -168,7 +171,7 @@ const Header = () => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-blue-500/10 hover:text-blue-300"
                   >
-                    <span>{user?.username}</span>
+                    <span>{user?.id?.toUpperCase()}</span>
                     <ChevronDown size={16} />
                   </button>
 

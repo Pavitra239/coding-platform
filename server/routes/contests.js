@@ -9,6 +9,7 @@ import {
   getAssignedStudents,
   getUnassignedStudents,
   unassignContestToStudents,
+  getContestDashboard,
 } from "../controllers/contestController.js";
 import {
   isAuthorized,
@@ -54,6 +55,13 @@ router.post(
   "/:id/unassignContestToStudents",
   isAdminOrFaculty,
   unassignContestToStudents
+);
+
+router.get(
+  "/:id/dashboard",
+  isAuthorized,
+  isAdminOrFaculty,
+  getContestDashboard
 );
 
 export default router;

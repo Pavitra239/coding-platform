@@ -24,7 +24,7 @@ const decodeBase64 = (base64Str) => {
   return buffer.toString("utf-8");
 };
 
-const JUDGE0_BASE_URL2 = "http://localhost:2358"; // Your Judge0 instance URL
+const JUDGE0_BASE_URL2 = "http://localhost:80"; // Your Judge0 instance URL
 const JUDGE0_TOKEN = "CHAUHANRUTVIK22IT015"; // Replace with your actual token
 
 const normalizeOutput = (output) => {
@@ -36,171 +36,90 @@ const normalizeOutput = (output) => {
     .trim(); // Trim the entire output
 };
 
-// router.post("/run-code", async (req, res) => {
-//   const { code, language, allTestCases, problemId } = req.body;
-//   console.log("hello--->123")
+const logServerInstance = (response, requestType) => {
+  const instance = response.headers["x-server-instance"];
+  console.log(`${requestType} handled by instance:`, instance);
+  console.log("Full response headers:", response.headers);
+  console.log("Request URL:", response.config.url);
+  console.log("Response status:", response.status);
+};
 
-//   if (
-//     !code ||
-//     !language   ||
-//     !problemId
-//   ) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Invalid input. Missing required fields or test cases.",
-//     });
-//   }
+// Add a simple request counter for basic load monitoring
+let requestCounter = 0;
 
-//   const languageId = getLanguageId(language);
-//   if (!languageId) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Unsupported programming language.",
-//     });
-//   }
+// Add queue monitoring
+const queueStatus = {
+  pending: 0,
+  processing: 0,
+};
 
-//   try {
-//     const problemData = await problem.findById(problemId).select("testCases");
+// Add rate limiting configuration
+const userSubmissionLimits = {
+  windowMs: 60000, // 1 minute
+  maxRequests: 20, // max requests per minute per user
+};
+const userSubmissionCounts = new Map();
 
-//     if (!problemData || !problemData.testCases || problemData.testCases.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "No test cases found for the given problem ID.",
-//       });
-//     }
+// Add this function to manage rate limiting
+const checkRateLimit = (userId) => {
+  const now = Date.now();
+  const userCount = userSubmissionCounts.get(userId) || {
+    count: 0,
+    timestamp: now,
+  };
 
-//     let selectedTestCases = problemData.testCases;
+  if (now - userCount.timestamp > userSubmissionLimits.windowMs) {
+    // Reset if window has passed
+    userCount.count = 1;
+    userCount.timestamp = now;
+  } else if (userCount.count >= userSubmissionLimits.maxRequits) {
+    return false; // Rate limit exceeded
+  } else {
+    userCount.count++;
+  }
 
-//     if (!allTestCases) {
-//       selectedTestCases = [problemData.testCases[0]]; // Only first test case
-//     }
-
-//     console.log("Selected test cases:", selectedTestCases);
-
-//     const submissions = selectedTestCases.map((testCase) => ({
-//       source_code: code,
-//       language_id: languageId,
-//       stdin: testCase.inputs || "",
-//       expected_output: testCase.outputs || "",
-//     }));
-
-//     const submissionResponses = await Promise.all(
-//       submissions.map((submission) =>
-//         axios.post(`${JUDGE0_BASE_URL2}/submissions`, submission, {
-//           headers: { Authorization: `Bearer ${JUDGE0_TOKEN}` },
-//         })
-//       )
-//     );
-
-//     const tokens = submissionResponses.map((response) => response.data.token);
-
-//     const fetchResults = async (token) => {
-//       let result = null;
-//       let retries = 0;
-//       while (!result || result.status.id <= 2) {
-//         try {
-//           const { data } = await axios.get(
-//             `${JUDGE0_BASE_URL2}/submissions/${token}?base64_encoded=true&fields=*`
-//           );
-//           result = data;
-//           if (result.status.id <= 2 && retries < 5) {
-//             retries++;
-//             console.log(`Waiting for result... Retry #${retries}`);
-//             await new Promise((resolve) => setTimeout(resolve, 1000));
-//           }
-//         } catch (error) {
-//           console.error("Error fetching result:", error.message);
-//           break;
-//         }
-//       }
-
-//       // Adding compilationError and standardError logic here
-//       const compilationError = result.compile_output
-//         ? decodeBase64(result.compile_output)
-//         : null;
-//       const standardError = result.stderr ? decodeBase64(result.stderr) : null;
-
-//       return {
-//         ...result,
-//         compilationError,
-//         standardError,
-//       };
-//     };
-
-//     const results = await Promise.all(tokens.map(fetchResults));
-//     const testResults = results.map((result, index) => {
-//       const decodedOutput = decodeBase64(result.stdout?.trim() || "");
-//       const normalizedOutput = normalizeOutput(decodedOutput);
-//       const expectedOutput = normalizeOutput(
-//         selectedTestCases[index]?.outputs || ""
-//       );
-
-//       return {
-//         input: selectedTestCases[index]?.inputs || "",
-//         expectedOutput: selectedTestCases[index]?.outputs || "",
-//         output: decodedOutput,
-//         error: result.compilationError || result.standardError,
-//         passed: normalizedOutput === expectedOutput && !result.error,
-//         time: result.time,
-//         memory: result.memory,
-//       };
-//     });
-
-//     const overallTime = testResults.reduce(
-//       (sum, test) => sum + parseFloat(test.time || 0),
-//       0
-//     );
-//     const averageMemory =
-//       testResults.length > 0
-//         ? testResults.reduce(
-//             (sum, test) => sum + parseInt(test.memory || 0),
-//             0
-//           ) / testResults.length
-//         : 0;
-
-//     console.log("Test Results:", testResults);
-//     res.json({
-//       success: true,
-//       testResults,
-//       overallTime,
-//       averageMemory,
-//       allPassed: testResults.every((test) => test.passed),
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: "An error occurred while processing the code.",
-//       error: error.message || error,
-//     });
-//   }
-// });
+  userSubmissionCounts.set(userId, userCount);
+  return true;
+};
 
 router.post("/run-code", isAuthorized, async (req, res) => {
   const { code, language, allTestCases, problemId } = req.body;
-  console.log(req.body);
-
-  if (!req.user) {
-    return console.log("Unauthorized access");
-  }
-
   const userId = req.user?.id;
 
-  if (!code || !language || !problemId || !userId) {
-    return res.status(400).json({
+  // Check rate limit
+  if (!checkRateLimit(userId)) {
+    return res.status(429).json({
       success: false,
-      message: "Invalid input. Missing required fields.",
+      message: "Too many submissions. Please wait before trying again.",
     });
   }
 
-  const languageId = getLanguageId(language);
-  if (!languageId) {
-    return res.status(400).json({
-      success: false,
-      message: "Unsupported programming language.",
-    });
-  }
+  // Increment queue counter
+  queueStatus.pending++;
+  requestCounter = (requestCounter + 1) % Number.MAX_SAFE_INTEGER;
 
   try {
+    console.log(req.body);
+
+    if (!req.user) {
+      return console.log("Unauthorized access");
+    }
+
+    if (!code || !language || !problemId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid input. Missing required fields.",
+      });
+    }
+
+    const languageId = getLanguageId(language);
+    if (!languageId) {
+      return res.status(400).json({
+        success: false,
+        message: "Unsupported programming language.",
+      });
+    }
+
     const problemData = await problem.findById(problemId).select("testCases");
 
     if (
@@ -215,12 +134,6 @@ router.post("/run-code", isAuthorized, async (req, res) => {
     }
 
     let selectedTestCases;
-
-    // let selectedTestCases = problemData.testCases;
-
-    // if (!allTestCases) {
-    //   selectedTestCases = [problemData.testCases[0]]; // Only first test case
-    // }
 
     if (!allTestCases) {
       selectedTestCases = problemData.testCases.filter(
@@ -246,45 +159,75 @@ router.post("/run-code", isAuthorized, async (req, res) => {
       memory_limit: testCase.memory_limit * 1024 || 128 * 1024, // Default to 128 MB if not provided
     }));
 
-    // Send code to Judge0 API
-    const submissionResponses = await Promise.all(
-      submissions.map((submission) =>
-        axios.post(`${JUDGE0_BASE_URL2}/submissions`, submission, {
-          headers: { Authorization: `Bearer ${JUDGE0_TOKEN}` },
-        })
-      )
-    );
+    // Add request tracking
+    console.log(`Processing request #${requestCounter} for user ${userId}`);
+    queueStatus.pending--;
+    queueStatus.processing++;
 
-    const tokens = submissionResponses.map((response) => response.data.token);
+    // Modify your submission code to include retry logic
+    const submitToJudge0 = async (submission, retryCount = 3) => {
+      for (let i = 0; i < retryCount; i++) {
+        try {
+          const response = await axios.post(
+            `${JUDGE0_BASE_URL2}/submissions`,
+            submission,
+            {
+              headers: {
+                Authorization: `Bearer ${JUDGE0_TOKEN}`,
+                "X-Request-ID": `${userId}-${requestCounter}-${i}`, // Add request tracking
+              },
+              timeout: 10000, // 10 second timeout
+            }
+          );
 
+          // Log which instance handled the request
+          logServerInstance(response, "Submission");
+          return response;
+        } catch (error) {
+          if (i === retryCount - 1) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+        }
+      }
+    };
+
+    // Modify your results fetching to include better error handling
     const fetchResults = async (token) => {
       let result = null;
       let retries = 0;
+      const maxRetries = 5;
+      const maxWaitTime = 30000; // 30 seconds maximum wait time
+      const startTime = Date.now();
+
       while (!result || result.status.id <= 2) {
+        if (Date.now() - startTime > maxWaitTime) {
+          throw new Error("Execution time exceeded maximum wait time");
+        }
+
         try {
-          const { data } = await axios.get(
-            `${JUDGE0_BASE_URL2}/submissions/${token}?base64_encoded=true&fields=*`
+          const response = await axios.get(
+            `${JUDGE0_BASE_URL2}/submissions/${token}?base64_encoded=true&fields=*`,
+            {
+              headers: {
+                Authorization: `Bearer ${JUDGE0_TOKEN}`,
+                "X-Request-ID": `${userId}-${requestCounter}-result-${retries}`,
+              },
+            }
           );
-          result = data;
 
-          // Check if the submission exceeded the time limit
-          if (result.status.id === 5) {
-            return {
-              ...result,
-              error: "Time Limit Exceeded",
-              compilationError: null,
-              standardError: null,
-            };
-          }
+          result = response.data;
+          logServerInstance(response, "Status Check");
 
-          if (result.status.id <= 2 && retries < 5) {
+          if (result.status.id <= 2 && retries < maxRetries) {
             retries++;
-            console.log(`Waiting for result... Retry #${retries}`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000 * retries)); // Exponential backoff
+            continue;
           }
-        } catch (error) {
-          console.error("Error fetching result:", error.message);
+
           break;
+        } catch (error) {
+          if (retries >= maxRetries) throw error;
+          retries++;
+          await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
         }
       }
 
@@ -294,14 +237,19 @@ router.post("/run-code", isAuthorized, async (req, res) => {
           ? decodeBase64(result.compile_output)
           : null,
         standardError: result.stderr ? decodeBase64(result.stderr) : null,
-        error: result.status.id === 5 ? "Time Limit Exceeded" : null, // Explicitly set error for time limit
+        error: result.status.id === 5 ? "Time Limit Exceeded" : null,
       };
     };
 
+    // Send code to Judge0 API
+    const submissionResponses = await Promise.all(
+      submissions.map((submission) => submitToJudge0(submission))
+    );
+
+    const tokens = submissionResponses.map((response) => response.data.token);
+
     // Fetch execution results
     const results = await Promise.all(tokens.map(fetchResults));
-
-    console.log("Execution Results:", results);
 
     // Process test results
     const testResults = results.map((result, index) => {
@@ -349,7 +297,7 @@ router.post("/run-code", isAuthorized, async (req, res) => {
       passed: test.passed,
       time: test.time,
       memory: test.memory,
-      is_hidden : selectedTestCases[index]?.is_hidden || false,
+      is_hidden: selectedTestCases[index]?.is_hidden || false,
       marks:
         test.passed && selectedTestCases[index]?.marks
           ? selectedTestCases[index].marks
@@ -398,7 +346,7 @@ router.post("/run-code", isAuthorized, async (req, res) => {
         expectedOutput: selectedTestCases[index].is_hidden
           ? "******"
           : test.expectedOutput,
-        output: selectedTestCases[index].is_hidden ? "******"  : test.output,
+        output: selectedTestCases[index].is_hidden ? "******" : test.output,
         error: test.error,
         passed: test.passed,
         time: test.time,
@@ -425,15 +373,32 @@ router.post("/run-code", isAuthorized, async (req, res) => {
             ),
           }
         : null,
+      queueStatus,
     });
+
+    // Update queue status after processing
+    queueStatus.processing--;
   } catch (error) {
-    console.error("Error during execution:");
-    res.status(500).json({
+    // Update queue status on error
+    queueStatus.processing--;
+
+    console.error("Error during execution:", error);
+    res.status(error.response?.status || 500).json({
       success: false,
       message: "An error occurred while processing the code.",
       error: error.message || error,
+      queueStatus,
     });
   }
+});
+
+// Add a new endpoint to check queue status
+router.get("/queue-status", isAuthorized, (req, res) => {
+  res.json({
+    success: true,
+    queueStatus,
+    activeUsers: userSubmissionCounts.size,
+  });
 });
 
 export default router;

@@ -240,7 +240,7 @@ export const saveCode = async (req, res) => {
       { codeByLanguage, updatedAt: new Date() },
       { new: true, upsert: true }
     );
-    console.log(code);
+    // console.log(code);
     res
       .status(200)
       .json({ success: true, message: "Code saved successfully", code });
@@ -270,7 +270,7 @@ export const getCode = async (req, res) => {
 
   try {
     const code = await Code.findOne({ userId, problemId });
-    console.log("Retrieved code draft:", code);
+    // console.log("Retrieved code draft:", code);
 
     if (code) {
       // Send back the codeByLanguage object directly

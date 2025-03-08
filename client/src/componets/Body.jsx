@@ -28,6 +28,7 @@ import Support from './Support';
 import AssignedContest from './Contest/AssignedContest';
 import UnAssignContest from './Contest/UnAssignContest';
 import Duplicate from './Duplicate';
+import ContestDashboard from './Contest/ContestDashboard';
 
 const appRouter = createBrowserRouter([
   {
@@ -62,7 +63,8 @@ const appRouter = createBrowserRouter([
       { path:"/submissions/:submissionId", element:<Details />},
       { path:"/assignContestToStudents/:contestId", element:<UnAssignContest />},
       { path:"/unassignContestToStudents/:contestId", element:<AssignedContest />},
-      { path:"/duplicate", element:<Duplicate />}
+      { path:"/duplicate", element:<Duplicate />},
+      { path:"/contests/:id/dashboard", element:<ContestDashboard />},
     ],
   },
 ]);

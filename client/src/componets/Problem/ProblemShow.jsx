@@ -7,15 +7,21 @@ import Solution from "./Solution";
 import Statement from "./Statement";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import toast from "react-hot-toast";
+import { useLocation } from "react-router-dom";
 
 const ProblemShow = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const { state } = location;
+  const { startTime, endTime } = state || {};
   const navigate = useNavigate();
   const [problem, setProblem] = useState(null);
   const [language, setLanguage] = useState("java");
   const [code, setCode] = useState("");
   const [activeTab, setActiveTab] = useState("statement");
   const [latestSubmission, setLatestSubmission] = useState(null); // Store latest submission
+
+  
 
   const handleSubmission = (submission) => {
     setLatestSubmission(submission); // Update with the new submission
@@ -165,7 +171,7 @@ const ProblemShow = () => {
         code={code}
         setCode={setCode}
         problem={problem}
-        onSubmission={handleSubmission} // Handle new submission
+        onSubmission={handleSubmission}
       />
     </div>
   );

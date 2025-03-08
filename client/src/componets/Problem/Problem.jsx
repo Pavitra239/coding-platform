@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
+import { use } from "react";
 
 const ProblemForm = () => {
   const user = useSelector((state) => state.app.user); // Get the logged-in user
@@ -28,6 +29,10 @@ const ProblemForm = () => {
   const handleAddSampleIO = () => {
     setSampleIO([...sampleIO, { input: "", output: "" }]);
   };
+
+  useEffect(() => {z
+    if (user?.role !== "admin") navigate("/");
+  }, [user, navigate]);
 
   const handleRemoveSampleIO = (index) => {
     setSampleIO(sampleIO.filter((_, i) => i !== index));

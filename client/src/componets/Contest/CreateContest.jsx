@@ -161,7 +161,7 @@ const CreateContest = () => {
   const displayedProblems = searchTerm ? filteredProblems : problems;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white px-4 py-8 pt-20">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-900 text-white px-4 py-8 pt-20">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
@@ -187,7 +187,7 @@ const CreateContest = () => {
                   r="10"
                   stroke="currentColor"
                   strokeWidth="4"
-                ></circle>
+                ></circle>z
                 <path
                   className="opacity-75"
                   fill="currentColor"
@@ -212,7 +212,7 @@ const CreateContest = () => {
           onClose={handleCloseModal}
           onConfirm={handleConfirmBack}
         />
-        <div className="bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-700">
+        <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-700">
           <form className="space-y-8" onSubmit={handleSubmit}>
             <div>
               <label
@@ -235,7 +235,7 @@ const CreateContest = () => {
             </div>
             <div>
               <label
-                className="block text-lg font-medium mb-3 text-gray-200"
+                className="block text-g font-medium mb-3 text-gray-200"
                 htmlFor="description"
               >
                 Description <span className="text-red-400">*</span>

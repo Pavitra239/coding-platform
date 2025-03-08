@@ -1,6 +1,7 @@
 import Contest from "../models/contest.js";
 import user from "../models/user.js";
 import Problem from "../models/problem.js";
+import Submission from "../models/submission.js";
 
 // Function to determine contest status based on current time
 const determineStatus = (start_time, end_time) => {
@@ -307,7 +308,8 @@ export const getAssignedStudents = async (req, res) => {
       filter.batch = batch;
     }
 
-    const assignedStudents = await user.find(filter)
+    const assignedStudents = await user
+      .find(filter)
       .select("username semester batch branch _id id");
 
     res.status(200).json({ assignedStudents });
@@ -316,7 +318,6 @@ export const getAssignedStudents = async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 };
-
 
 export const getUnassignedStudents = async (req, res) => {
   try {
@@ -356,9 +357,9 @@ export const getUnassignedStudents = async (req, res) => {
     //   })
     //   .select("username semester batch branch _id id");
 
-    const unassignedStudents = await user.find(filter)
+    const unassignedStudents = await user
+      .find(filter)
       .select("username semester batch branch _id id");
-
 
     res.status(200).json({ unassignedStudents });
   } catch (error) {
@@ -403,12 +404,158 @@ export const unassignContestToStudents = async (req, res) => {
     await Promise.all(problemUpdates);
     await contest.save();
 
-    res
-      .status(200)
-      .json({
-        message: "Students unassigned from contest successfully.",
-        contest,
-      });
+    res.status(200).json({
+      message: "Students unassigned from contest successfully.",
+      contest,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+export const getContestDashboard = async (req, res) => {
+  const { id } = req.params;
+  const { 
+    page = 1, 
+    limit = 10,
+    sortBy = 'totalMarks',
+    sortOrder = 'desc',
+    branch = 'ALL',
+    semester = 'ALL',
+    batch = 'ALL'
+  } = req.query;
+
+  try {
+    const contest = await Contest.findById(id).populate('problems');
+    if (!contest) {
+      return res.status(404).json({ error: "Contest not found." });
+    }
+
+    // Get all problems in the contest
+    const problemNames = contest.problems.map(problem => ({
+      id: problem._id,
+      name: problem.name,
+      maxMarks: problem.maxMarks
+    }));
+
+    // Get submissions with detailed student info
+    const submissions = await Submission.find(
+      { problem_id: { $in: contest.problems.map(p => p._id) } },
+      {
+        totalMarks: 1,
+        createdAt: 1,
+        problem_id: 1,
+        _id: 1
+      }
+    ).populate({
+      path: "user_id",
+      select: "id username branch semester batch _id role",
+      match: { 
+        role: "student",
+        ...(branch !== 'ALL' && { branch }),
+        ...(semester !== 'ALL' && { semester }),
+        ...(batch !== 'ALL' && { batch })
+      }
+    }).lean();
+
+    // Group submissions by student and track problem-wise marks
+    const studentScores = submissions.reduce((acc, submission) => {
+      if (!submission.user_id) return acc;
+      
+      const studentId = submission.user_id._id.toString();
+      
+      if (!acc[studentId]) {
+        acc[studentId] = {
+          studentId: submission.user_id.id,
+          username: submission.user_id.username,
+          branch: submission.user_id.branch,
+          semester: submission.user_id.semester,
+          batch: submission.user_id.batch,
+          totalMarks: 0,
+          lastSubmissionTime: new Date(0),
+          problemMarks: Array(problemNames.length).fill(0),
+          submissionCount: 0
+        };
+      }
+
+      // Update problem-specific marks
+      const problemIndex = problemNames.findIndex(p => 
+        p.id.toString() === submission.problem_id.toString()
+      );
+      if (problemIndex !== -1) {
+        acc[studentId].problemMarks[problemIndex] = Math.max(
+          acc[studentId].problemMarks[problemIndex],
+          submission.totalMarks
+        );
+      }
+      
+      acc[studentId].totalMarks = acc[studentId].problemMarks.reduce((sum, mark) => sum + mark, 0);
+      acc[studentId].submissionCount++;
+      
+      const submissionTime = new Date(submission.createdAt);
+      if (submissionTime > acc[studentId].lastSubmissionTime) {
+        acc[studentId].lastSubmissionTime = submissionTime;
+      }
+      
+      return acc;
+    }, {});
+
+    // Convert to array and format dates
+    let rankings = Object.values(studentScores).map(student => ({
+      ...student,
+      lastSubmissionDate: student.lastSubmissionTime.toLocaleDateString(),
+      lastSubmissionTime: student.lastSubmissionTime.toLocaleTimeString(),
+    }));
+
+    // Apply sorting
+    rankings.sort((a, b) => {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      
+      switch(sortBy) {
+        case 'totalMarks':
+          if (b.totalMarks !== a.totalMarks) {
+            return (b.totalMarks - a.totalMarks) * order;
+          } else {
+            return a.studentId.localeCompare(b.studentId) * order;
+          }
+        case 'studentId':
+          return a.studentId.localeCompare(b.studentId) * order;
+        default:
+          return (b.totalMarks - a.totalMarks) * order;
+      }
+    });
+
+    // Add ranks after sorting
+    rankings = rankings.map((student, index) => ({
+      ...student,
+      rank: index + 1
+    }));
+
+    // Apply pagination
+    const totalStudents = rankings.length;
+    const totalPages = Math.ceil(totalStudents / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    const paginatedRankings = rankings.slice(startIndex, endIndex);
+
+    res.status(200).json({
+      contestName: contest.name,
+      problemNames,
+      rankings: paginatedRankings,
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        totalStudents,
+        limit: Number(limit)
+      },
+      sortOptions: {
+        current: sortBy,
+        order: sortOrder
+      }
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error." });
