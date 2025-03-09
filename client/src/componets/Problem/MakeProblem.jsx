@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import toast from "react-hot-toast";
@@ -25,19 +25,7 @@ const MakeProblem = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [problemToDelete, setProblemToDelete] = useState(null);
-  const [userRole, setUserRole] = useState(null); // State for storing user role
-
-  const getSortIcon = (columnName) => {
-    if (sortConfig.key !== columnName) {
-      return null;
-    }
-    return sortConfig.direction === "asc" ? (
-      <ChevronUp className="inline w-4 h-4" />
-    ) : (
-      <ChevronDown className="inline w-4 h-4" />
-    );
-  };
-
+  const [userRole, setUserRole] = useState(null);
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
     direction: "desc",
@@ -47,63 +35,7 @@ const MakeProblem = () => {
     const role = user.role;
     setUserRole(role);
     fetchProblems();
-  }, []);
-
-  const handleCreateProblem = () => {
-    navigate("/problem-form");
-  };
-
-  const handleEditProblem = (problemId) => {
-    navigate(`/problem-form/${problemId}`);
-  };
-
-  const handleDeleteProblem = async () => {
-    try {
-      const res = await axiosInstance.delete(`/problems/${problemToDelete}`);
-      // console.log(res.data);
-
-      toast.success(res?.data?.message || "Problem deleted successfully!");
-      setShowDeleteModal(false);
-      setProblemToDelete(null);
-      fetchProblems();
-    } catch (error) {
-      toast.error("Error deleting problem!");
-      console.error("Error deleting problem:", error);
-    }
-  };
-
-  const handleDeleteConfirmation = (problemId) => {
-    setProblemToDelete(problemId);
-    setShowDeleteModal(true);
-  };
-
-  const handleDashboardConfirmation = (
-    problemId,
-    title,
-    difficulty,
-    createdAt
-  ) => {
-    // Passing the problem data using state with the navigate function
-    navigate(`/dashboard/${problemId}`, {
-      state: {
-        problemTitle: title,
-        difficulty: difficulty,
-        createdAt: createdAt,
-      },
-    });
-  };
-
-  const assignProblem = (problemId) => {
-    // Log problemId for debugging
-    // console.log(problemId);
-    // Navigate to the assign problem page
-    navigate(`/assignProblem/${problemId}`);
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setProblemToDelete(null);
-  };
+  }, [user]);
 
   const fetchProblems = async () => {
     try {
@@ -119,15 +51,63 @@ const MakeProblem = () => {
     }
   };
 
-  const handleDifficultyFilterChange = (event) => {
-    setDifficultyFilter(event.target.value);
+  const handleCreateProblem = () => {
+    navigate("/problem-form");
   };
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
+  const handleEditProblem = (problemId) => {
+    navigate(`/problem-form/${problemId}`);
   };
 
-  const sortedProblems = React.useMemo(() => {
+  const handleDeleteProblem = async () => {
+    try {
+      await axiosInstance.delete(`/problems/${problemToDelete}`);
+      toast.success("Problem deleted successfully!");
+      setShowDeleteModal(false);
+      setProblemToDelete(null);
+      fetchProblems();
+    } catch (error) {
+      toast.error("Error deleting problem!");
+      console.error("Error deleting problem:", error);
+    }
+  };
+
+  const handleDeleteConfirmation = (problemId) => {
+    setProblemToDelete(problemId);
+    setShowDeleteModal(true);
+  };
+
+  const handleDashboardConfirmation = (problemId, title, difficulty, createdAt) => {
+    navigate(`/dashboard/${problemId}`, {
+      state: {
+        problemTitle: title,
+        difficulty: difficulty,
+        createdAt: createdAt,
+      },
+    });
+  };
+
+  const assignProblem = (problemId) => {
+    navigate(`/assignProblem/${problemId}`);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setProblemToDelete(null);
+  };
+
+  const getSortIcon = (columnName) => {
+    if (sortConfig.key !== columnName) {
+      return null;
+    }
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp className="inline w-4 h-4" />
+    ) : (
+      <ChevronDown className="inline w-4 h-4" />
+    );
+  };
+
+  const sortedProblems = useMemo(() => {
     let sortableProblems = [...problems];
     if (sortConfig !== null) {
       sortableProblems.sort((a, b) => {
@@ -178,20 +158,17 @@ const MakeProblem = () => {
   };
 
   useEffect(() => {
-    if (user?.role !== "admin") navigate("/");
+    if (user?.role !== "admin" && user?.role !== "faculty") navigate("/");
   }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-900 text-white">
-      {/* Header with gradient */}
       <div className="py-6 px-8 pt-20 flex justify-center items-center">
         <h1 className="text-3xl font-bold text-white">Problem Bank</h1>
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        {/* Action Bar */}
-        <div className="fzlex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          {/* Add Problem Button (for non-students) */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           {userRole !== "student" && (
             <button
               onClick={handleCreateProblem}
@@ -202,7 +179,6 @@ const MakeProblem = () => {
             </button>
           )}
 
-          {/* Filters and Search */}
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -235,7 +211,6 @@ const MakeProblem = () => {
           </div>
         </div>
 
-        {/* Problems Table */}
         <div className="bg-gray-900 rounded-xl shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
@@ -293,7 +268,6 @@ const MakeProblem = () => {
                         onClick={() => navigate(`/problems/${problem._id}`)}
                       >
                         <div className="font-semibold capitalize text-blue-400 hover:text-blue-300 cursor-pointer transition-colors">
-                          {/* {problem.title} */}
                           {truncateTitle(
                             problem?.title,
                             window.innerWidth < 900 ? 25 : 50
@@ -384,7 +358,6 @@ const MakeProblem = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
           <div className="bg-gray-800 p-8 rounded-xl w-11/12 max-w-md mx-auto border border-gray-700 shadow-2xl transform transition-all">

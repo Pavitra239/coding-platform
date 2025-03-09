@@ -77,12 +77,16 @@ const Header = () => {
 
   const logoutHandler = async () => {
     try {
-      await axiosInstance.get(`auth/logout`);
-      dispatch(setUser(null));
-      localStorage.removeItem("UserToken");
-      dispatch(logout());
-      toast.success("Logged out successfully");
-      navigate("/");
+      const response = await axiosInstance.get("/auth/logout");
+
+      if (response.data.success) {
+        dispatch(setUser(null));
+        dispatch(logout());
+        toast.success(response.data.message);
+        navigate("/");
+      } else {
+        toast.error(response.data.message);
+      }
     } catch (error) {
       toast.error("Failed to log out. Please try again.");
     }
@@ -108,7 +112,11 @@ const Header = () => {
   ];
 
   if (user?.role !== "student") {
-    navLinks.push({ path: "/make-problem", label: "Problem", icon: <Code2 size={18} /> });
+    navLinks.push({
+      path: "/make-problem",
+      label: "Problem",
+      icon: <Code2 size={18} />,
+    });
   }
 
   if (user?.role === "admin") {
@@ -171,7 +179,7 @@ const Header = () => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-blue-500/10 hover:text-blue-300"
                   >
-                    <span>{user?.id?.toUpperCase()}</span>
+                    <span>{user?.username?.toUpperCase()}</span>
                     <ChevronDown size={16} />
                   </button>
 

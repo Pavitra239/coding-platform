@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import { useSelector } from "react-redux";
-import { Clock, Code, ChevronRight, AlertCircle, History, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Clock, Code, ChevronRight, AlertCircle, History, FileText } from 'lucide-react';
 
 const SubmissionPage = () => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const user = useSelector((store) => store.app.user);
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
   const navigate = useNavigate();
 
   const userId = user?._id; // Ensure user exists
@@ -22,15 +21,14 @@ const SubmissionPage = () => {
       const response = await axiosInstance.get(
         "/submissions/user/submissions",
         {
-          params: {page: 1, limit: 7 }, // Fetch up to 7 submissions
+          params: { page: 1, limit: 7 }, // Fetch up to 7 submissions
         }
       );
-      console.log(response.data.submissions);
       setSubmissions(response.data.submissions);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "An error occurred while fetching submissions."
+        "An error occurred while fetching submissions."
       );
       setSubmissions([]); // Clear outdated submissions
     } finally {
@@ -67,7 +65,7 @@ const SubmissionPage = () => {
   const getStatusColor = (status) => {
     if (!status) return "gray";
     
-    switch(status.toLowerCase()) {
+    switch (status.toLowerCase()) {
       case 'completed':
         return 'green';
       case 'rejected':
@@ -81,13 +79,6 @@ const SubmissionPage = () => {
       default:
         return 'gray';
     }
-  };
-
-  // Mock function to get random status for demo purposes
-  // In a real app, this would come from the submission data
-  const getRandomStatus = () => {
-    const statuses = ['completed', 'rejected', 'Time Limit Exceeded', 'Runtime Error', 'Compilation Error'];
-    return statuses[Math.floor(Math.random() * statuses.length)];
   };
 
   return (
@@ -129,25 +120,18 @@ const SubmissionPage = () => {
           </div>
         )}
 
-        {!loading && !error && submissions.length === 0 && (
+        {!loading && submissions.length === 0 && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-8 text-center">
             <FileText size={48} className="text-blue-400 mx-auto mb-4" />
             <p className="text-xl font-medium text-gray-200 mb-2">No submissions found</p>
             <p className="text-gray-400 mb-6">You haven't submitted any solutions yet.</p>
-            <button 
-              onClick={() => navigate('/problems')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg"
-            >
-              Browse Problems
-            </button>
           </div>
         )}
 
-        {!loading && !error && submissions.length > 0 && (
+        {!loading && submissions.length > 0 && (
           <ul className="space-y-3">
-            {submissions.map((submission, index) => {
-              // For demo purposes - in real app use actual status from submission
-              const status = submission.status || getRandomStatus();
+            {submissions.map((submission) => {
+              const status = submission.status;
               const statusColor = getStatusColor(status);
               
               return (

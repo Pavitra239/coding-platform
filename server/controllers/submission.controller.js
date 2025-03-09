@@ -123,12 +123,9 @@ export const getAllSubmissionsForUser = async (req, res) => {
     return res.status(400).json({ message: "User ID is required." });
   }
 
-  console.log(`User ID: ${user_id}, Page: ${page}, Limit: ${limit}`);
-
   try {
-    console.log("hello");
     const submissions = await Submission.find({ user_id }) // Filter by user_id
-      .populate("problem_id", "title") // Populate problem details: title and description
+      .populate("problem_id", "title") // Populate problem details: title
       .sort({ createdAt: -1 }) // Sort by creation time, descending
       .skip((page - 1) * limit) // Skip records for pagination
       .limit(parseInt(limit)) // Limit the number of records
@@ -142,18 +139,8 @@ export const getAllSubmissionsForUser = async (req, res) => {
         totalMarks: 1,
       }); // Include only these fields in the final output
 
-    // console.log(submissions)
-
     const totalSubmissions = await Submission.countDocuments({ user_id }); // Count total submissions
 
-    if (submissions.length === 0) {
-      console.log("hello2");
-      return res
-        .status(404)
-        .json({ message: "No submissions found for the given user." });
-    }
-
-    console.log("hello3");
     res.status(200).json({
       message: "Submissions retrieved successfully",
       submissions,
@@ -163,7 +150,7 @@ export const getAllSubmissionsForUser = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: "An error occurred while fetching submissions." });
   }
 };
 

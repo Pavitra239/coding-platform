@@ -90,16 +90,16 @@ export const createProblem = async (req, res) => {
 export const getProblems = async (req, res) => {
   try {
     let problems;
-    console.log("req.user3", req.user);
-    if (req.user.isAdmin === "admin") {
+    const { isAdmin, id: userId } = req.user;
+
+    if (isAdmin === "admin") {
       problems = await Problem.find({}).sort({ createdAt: -1 });
-    } else if (req.user.isAdmin === "faculty") {
-      problems = await Problem.find({ createdBy: req.user.id }).sort({
+    } else if (isAdmin === "faculty") {
+      problems = await Problem.find({ createdBy: userId }).sort({
         createdAt: -1,
       });
-    } else if (req.user.isAdmin === "student") {
-      console.log("req.user.id", req.user.id);
-      problems = await Problem.find({ assignedStudents: req.user.id }).sort({
+    } else if (isAdmin === "student") {
+      problems = await Problem.find({ assignedStudents: userId }).sort({
         createdAt: -1,
       });
     } else {
@@ -117,7 +117,8 @@ export const getProblems = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching problems:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

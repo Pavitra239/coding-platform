@@ -1,5 +1,4 @@
 import React from "react";
-import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 
 const Support = () => {
@@ -18,8 +17,6 @@ const Support = () => {
                 <br /><br />
                 📩 <strong>Email:</strong> 22it015@charusat.edu.in
                 <br />
-                {/* 📞 <strong>Phone:</strong> +91  */}
-                <br />
                 🏛️ <strong>Address:</strong> Charotar University of Science and Technology, CHARUSAT Campus, Off. Nadiad-Petlad Highway, Changa-388421
               </p>
             </div>
@@ -27,7 +24,7 @@ const Support = () => {
               <img
                 className="w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56 rounded-xl object-contain"
                 src="/collageLogo.jpg"
-                alt="collageLogo"
+                alt="College Logo"
               />
             </div>
           </div>

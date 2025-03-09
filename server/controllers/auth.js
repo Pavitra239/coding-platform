@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import cron from "node-cron";
 import { config } from "dotenv";
-config({ path: "../.env"});
+config({ path: "../.env" });
 
 export const login = async (req, res) => {
   console.log("login Api hit");
