@@ -6,8 +6,9 @@ import { isAuthorized } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-const JUDGE0_BASE_URL = "https://judge0-ce.p.rapidapi.com";
-const JUDGE0_API_KEY = "dbe32c7301msha8dfc9660bdf2bfp1bf391jsn29d2b4dbdae2";
+// Use nginx service name instead of localhost in Docker environment
+const JUDGE0_BASE_URL = "http://localhost:80";
+const JUDGE0_TOKEN = "CHAUHANRUTVIK22IT015";
 
 const getLanguageId = (language) => {
   const languageMap = {
@@ -20,27 +21,23 @@ const getLanguageId = (language) => {
 };
 
 const decodeBase64 = (base64Str) => {
+  if (!base64Str) return "";
   const buffer = Buffer.from(base64Str, "base64");
   return buffer.toString("utf-8");
 };
-
-const JUDGE0_BASE_URL2 = "http://localhost:80"; // Your Judge0 instance URL
-const JUDGE0_TOKEN = "CHAUHANRUTVIK22IT015"; // Replace with your actual token
 
 const normalizeOutput = (output) => {
   if (!output || typeof output !== "string") {
     return ""; // Return an empty string if output is not valid
   }
   return output
-    .replace(/\s+/g, " ") // Replace multiple spaces/newlines with a single space
-    .trim(); // Trim the entire output
+    .replace(/\r\n/g, "\n") // Normalize line breaks first
+    .trim(); // Trim the output
 };
 
 const logServerInstance = (response, requestType) => {
   const instance = response.headers["x-server-instance"];
   console.log(`${requestType} handled by instance:`, instance);
-  console.log("Full response headers:", response.headers);
-  console.log("Request URL:", response.config.url);
   console.log("Response status:", response.status);
 };
 
@@ -72,7 +69,7 @@ const checkRateLimit = (userId) => {
     // Reset if window has passed
     userCount.count = 1;
     userCount.timestamp = now;
-  } else if (userCount.count >= userSubmissionLimits.maxRequits) {
+  } else if (userCount.count >= userSubmissionLimits.maxRequests) { // Fixed typo: maxRequits -> maxRequests
     return false; // Rate limit exceeded
   } else {
     userCount.count++;
@@ -102,7 +99,10 @@ router.post("/run-code", isAuthorized, async (req, res) => {
     console.log(req.body);
 
     if (!req.user) {
-      return console.log("Unauthorized access");
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
     }
 
     if (!code || !language || !problemId || !userId) {
@@ -169,7 +169,7 @@ router.post("/run-code", isAuthorized, async (req, res) => {
       for (let i = 0; i < retryCount; i++) {
         try {
           const response = await axios.post(
-            `${JUDGE0_BASE_URL2}/submissions`,
+            `${JUDGE0_BASE_URL}/submissions`,
             submission,
             {
               headers: {
@@ -184,6 +184,7 @@ router.post("/run-code", isAuthorized, async (req, res) => {
           logServerInstance(response, "Submission");
           return response;
         } catch (error) {
+          console.error(`Submission attempt ${i+1} failed:`, error.message);
           if (i === retryCount - 1) throw error;
           await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
         }
@@ -205,7 +206,7 @@ router.post("/run-code", isAuthorized, async (req, res) => {
 
         try {
           const response = await axios.get(
-            `${JUDGE0_BASE_URL2}/submissions/${token}?base64_encoded=true&fields=*`,
+            `${JUDGE0_BASE_URL}/submissions/${token}?base64_encoded=true&fields=*`,
             {
               headers: {
                 Authorization: `Bearer ${JUDGE0_TOKEN}`,
@@ -225,6 +226,7 @@ router.post("/run-code", isAuthorized, async (req, res) => {
 
           break;
         } catch (error) {
+          console.error(`Result fetch attempt ${retries+1} failed:`, error.message);
           if (retries >= maxRetries) throw error;
           retries++;
           await new Promise((resolve) => setTimeout(resolve, 1000 * retries));

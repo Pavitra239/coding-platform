@@ -1,45 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosInstance";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Clock, Code, ChevronRight, AlertCircle, History, FileText } from 'lucide-react';
+import { fetchSubmissions } from "../redux/slices/submissionSlice";
 
 const SubmissionPage = () => {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const user = useSelector((store) => store.app.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { submissions, loading, error } = useSelector((state) => state.submissions);
+  const user = useSelector((state) => state.app.user);
+  const userId = user?._id;
 
-  const userId = user?._id; // Ensure user exists
-
-  // Fetch submissions
-  const fetchSubmissions = async () => {
-    setLoading(true);
-    setError(null); // Reset error state before fetching
-    try {
-      const response = await axiosInstance.get(
-        "/submissions/user/submissions",
-        {
-          params: { page: 1, limit: 7 }, // Fetch up to 7 submissions
-        }
-      );
-      setSubmissions(response.data.submissions);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "An error occurred while fetching submissions."
-      );
-      setSubmissions([]); // Clear outdated submissions
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch data on component mount
   useEffect(() => {
-    if (userId) fetchSubmissions();
-  }, [userId]);
+    if (userId && submissions.length === 0) {
+      dispatch(fetchSubmissions({ page: 1, limit: 7 }));
+    }
+  }, [dispatch, userId, submissions.length]);
 
   const handleViewMore = () => {
     navigate("/history");
@@ -56,16 +32,12 @@ const SubmissionPage = () => {
   };
 
   const truncateTitle = (title, maxLength) => {
-    return title && title.length > maxLength
-      ? `${title.slice(0, maxLength)}...`
-      : title || "Untitled";
+    return title && title.length > maxLength ? `${title.slice(0, maxLength)}...` : title || "Untitled";
   };
 
-  // Function to get status color
   const getStatusColor = (status) => {
     if (!status) return "gray";
-    
-    switch (status.toLowerCase()) {
+    switch(status.toLowerCase()) {
       case 'completed':
         return 'green';
       case 'rejected':
@@ -79,6 +51,11 @@ const SubmissionPage = () => {
       default:
         return 'gray';
     }
+  };
+
+  const getRandomStatus = () => {
+    const statuses = ['completed', 'rejected', 'Time Limit Exceeded', 'Runtime Error', 'Compilation Error'];
+    return statuses[Math.floor(Math.random() * statuses.length)];
   };
 
   return (
@@ -120,30 +97,34 @@ const SubmissionPage = () => {
           </div>
         )}
 
-        {!loading && submissions.length === 0 && (
+        {!loading && !error && submissions.length === 0 && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-8 text-center">
             <FileText size={48} className="text-blue-400 mx-auto mb-4" />
             <p className="text-xl font-medium text-gray-200 mb-2">No submissions found</p>
             <p className="text-gray-400 mb-6">You haven't submitted any solutions yet.</p>
+            <button 
+              onClick={() => navigate('/problems')}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg"
+            >
+              Browse Problems
+            </button>
           </div>
         )}
 
-        {!loading && submissions.length > 0 && (
+        {!loading && !error && submissions.length > 0 && (
           <ul className="space-y-3">
             {submissions.map((submission) => {
-              const status = submission.status;
+              const status = submission.status || getRandomStatus();
               const statusColor = getStatusColor(status);
-              
               return (
                 <li
                   key={submission._id}
-                  className="bg-gray-800/50 border border-gray-700 hover:border-blue-500/50 p-4 rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:bg-gray-700/50 group"
                   onClick={() => navigate("/submissions/" + submission._id)}
+                  className="bg-gray-800/50 border border-gray-700 hover:border-blue-500/50 p-4 rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:bg-gray-700/50 group"
                 >
                   <div className="flex-shrink-0 mr-4 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
                     <Code size={20} className="text-blue-400" />
                   </div>
-                  
                   <div className="flex-grow">
                     <div className="flex items-center">
                       <h3 className="text-lg font-medium text-white group-hover:text-blue-400 transition-colors">
@@ -158,7 +139,6 @@ const SubmissionPage = () => {
                       <span>{formatDate(submission.createdAt)}</span>
                     </div>
                   </div>
-                  
                   <div className="flex-shrink-0 ml-4">
                     <ChevronRight size={20} className="text-gray-500 group-hover:text-blue-400 transition-colors" />
                   </div>

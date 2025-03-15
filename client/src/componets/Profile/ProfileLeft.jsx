@@ -1,103 +1,74 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  FaUser,
-  FaGithub,
-  FaLinkedin,
-  FaBirthdayCake,
-  FaClipboardList,
-} from "react-icons/fa";
-import {
-  User,
-  Github,
-  Linkedin,
-  Cake,
-  ClipboardList,
-  Edit,
-  Upload,
-  X,
-} from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { User, Github, Linkedin, Edit, Upload, X } from "lucide-react";
 import axiosInstance from "../../utils/axiosInstance";
-import { ClipLoader } from "react-spinners";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { setImageUrl } from "../../redux/userSlice";
 
-const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
+const ProfileLeft = ({ formData, toggleEdit, isEditing, imageUrl }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [profilePic, setProfilePic] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [profilePic, setProfilePic] = useState(imageUrl || null);
+  const [loading, setLoading] = useState(false);
+  const globalLoading = useSelector((state) => state.app.isLoading);
+  const fileInputRef = useRef(null);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    setProfilePic(imageUrl);
+  }, [imageUrl]);
+
+  useEffect(() => {
+    if (selectedFile) {
+      const previewUrl = URL.createObjectURL(selectedFile);
+      setImagePreview(previewUrl);
+      return () => {
+        URL.revokeObjectURL(previewUrl);
+      };
+    } else {
+      setImagePreview(null);
+    }
+  }, [selectedFile]);
 
   const githubURL = formData.github
     ? `https://github.com/${formData.github}`
     : null;
   const linkedInURL = formData.linkedIn || null;
 
-  const fetchProfilePic = useCallback(async () => {
-    // console.log("Hello there");
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get("/user/profile/upload-avatar", {
-        responseType: "blob",
-      });
-      // console.log("this is it: ", response.data);
-      const imageUrl = URL.createObjectURL(response.data);
-      setProfilePic(imageUrl);
-    } catch (error) {
-      console.error("Error fetching profile picture:", error);
-    } finally {
-      setLoading(false);
-    }
-  });
-
-  useEffect(() => {
-    if (!profilePic) {
-      fetchProfilePic();
-    }
-  }, [setProfilePic]);
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${day}-${month}-${year}`;
-  };
-
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedFile(file);
-      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleUpdateProfilePic = async () => {
     if (!selectedFile) return;
-
-    const formData = new FormData();
-    formData.append("avatar", selectedFile);
+    const uploadData = new FormData();
+    uploadData.append("avatar", selectedFile);
 
     try {
       setLoading(true);
-      const response = await axiosInstance.post(
-        "/user/upload-avatar",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      if (response.status == 200) {
+      const response = await axiosInstance.post("/user/upload-avatar", uploadData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (response.status === 200) {
         toast.success(response.data.message);
-        setProfilePic(URL.createObjectURL(selectedFile));
+        if (response.data.profilePicUrl) {
+          setProfilePic(response.data.profilePicUrl);
+          dispatch(setImageUrl(response.data.profilePicUrl));
+        } else {
+          if (profilePic && profilePic.startsWith("blob:")) {
+            URL.revokeObjectURL(profilePic);
+          }
+          setProfilePic(URL.createObjectURL(selectedFile));
+          dispatch(setImageUrl(URL.createObjectURL(selectedFile)));
+        }
+        setSelectedFile(null);
       }
-      setLoading(false);
     } catch (error) {
-      toast.error("upload Error");
+      toast.error("Upload Error");
       console.error("Upload Error:", error);
-      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -106,32 +77,30 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
   const handleRemoveImage = async () => {
     try {
       setLoading(true);
-      toast.success("Remove successfully");
-      setSelectedFile(null);
-      setProfilePic(null);
-      setLoading(false);
-      const response = await axiosInstance.delete(
-        "/user/profile/remove-profile-pic"
-      );
+      const response = await axiosInstance.delete("/user/profile/remove-profile-pic");
       if (response.status === 200) {
+        toast.success("Profile picture removed successfully");
+        if (profilePic && profilePic.startsWith("blob:")) {
+          URL.revokeObjectURL(profilePic);
+        }
         setSelectedFile(null);
         setProfilePic(null);
-        setLoading(false);
       }
-      setLoading(false);
     } catch (error) {
       toast.error("Remove Error");
       console.error("Remove Error:", error);
+    } finally {
       setLoading(false);
     }
   };
 
+  const combinedLoading = loading || globalLoading;
+
   return (
-    <div className="sticky top-20 bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-xl shadow-2xl p-8 border border-gray-700">
+    <div className="sticky  top-20 bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-xl shadow-2xl p-8 border border-gray-700" >
       <div className="flex flex-col items-center">
-        {/* Profile Image with improved styling */}
         <div className="relative mb-6">
-          {loading ? (
+          {combinedLoading ? (
             <div className="w-40 h-40 rounded-full bg-gray-700 flex items-center justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
@@ -156,11 +125,12 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
                   </div>
                 )}
               </div>
-
               {isEditing && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <button
-                    onClick={() => document.getElementById("fileInput").click()}
+                    onClick={() =>
+                      fileInputRef.current && fileInputRef.current.click()
+                    }
                     className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-all"
                   >
                     <Edit size={20} />
@@ -171,15 +141,13 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           )}
         </div>
 
-        {/* Name with improved typography */}
         <h2 className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
           {formData.name}
         </h2>
 
-        {/* Social links with improved styling */}
         <div className="flex items-center space-x-4 mb-6">
           <a
-            href={githubURL}
+            href={githubURL || "#"}
             target="_blank"
             rel="noopener noreferrer"
             className={`transition-all p-2 rounded-full ${
@@ -192,7 +160,7 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
             <Github size={24} />
           </a>
           <a
-            href={linkedInURL}
+            href={linkedInURL || "#"}
             target="_blank"
             rel="noopener noreferrer"
             className={`transition-all p-2 rounded-full ${
@@ -208,7 +176,6 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           </a>
         </div>
 
-        {/* Edit button with improved styling */}
         <button
           onClick={toggleEdit}
           className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -220,10 +187,10 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
           {isEditing ? "Cancel Edit" : "Edit Details"}
         </button>
 
-        {/* File upload section with improved styling */}
         {isEditing && (
           <div className="mt-6 w-full space-y-4">
             <input
+              ref={fileInputRef}
               id="fileInput"
               type="file"
               accept="image/*"
@@ -233,7 +200,9 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
 
             {!selectedFile && (
               <button
-                onClick={() => document.getElementById("fileInput").click()}
+                onClick={() =>
+                  fileInputRef.current && fileInputRef.current.click()
+                }
                 className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-lg px-4 py-3 shadow-lg hover:from-indigo-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all flex items-center justify-center space-x-2"
               >
                 <Upload size={18} />
@@ -252,7 +221,6 @@ const ProfileLeft = ({ formData, toggleEdit, isEditing }) => {
                     <X size={16} />
                   </button>
                 </div>
-
                 <button
                   onClick={handleUpdateProfilePic}
                   className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg px-4 py-3 shadow-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all flex items-center justify-center space-x-2"

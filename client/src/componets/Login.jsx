@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setLoading, setUser } from "../redux/userSlice";
+import { fetchProfilePicThunk, setImageUrl, setLoading, setUser } from "../redux/userSlice";
 import axiosInstance from "../utils/axiosInstance";
 import { SEM, BRANCH } from "../../../server/utils/constants";
 import PasswordChange from "./PassWordChange";
@@ -144,7 +144,7 @@ const Login = () => {
     try {
       const url = `auth/login`;
       const res = await axiosInstance.post(url, user);
-      // console.log(res.data);
+      console.log(res.data);
       if (res.data.success) {
         const { firstTimeLogin, message } = res.data;
         if (firstTimeLogin) {
@@ -155,8 +155,10 @@ const Login = () => {
 
         const { user: loggedInUser } = res.data;
         toast.success(message || "Login successful!");
-        // localStorage.setItem("UserToken", token);
         dispatch(setUser(loggedInUser));
+        dispatch(setLoading(true));
+        dispatch(fetchProfilePicThunk());
+        dispatch(setLoading(false));
         navigate("/browse");
       } else {
         toast.error(res.data.message || "Login failed!");

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { logout, setUser } from "../redux/userSlice";
 import axiosInstance from "../utils/axiosInstance";
+import { persistor } from "../redux/store";
 import {
   Menu,
   X,
@@ -52,7 +53,7 @@ const Header = () => {
     if (authStatus === false) {
       navigate("/");
     }
-  }, [authStatus]);
+  }, [authStatus, navigate]);
 
   useEffect(() => {
     setIsAdmin(user?.role);
@@ -77,17 +78,17 @@ const Header = () => {
 
   const logoutHandler = async () => {
     try {
-      const response = await axiosInstance.get("/auth/logout");
-
-      if (response.data.success) {
-        dispatch(setUser(null));
-        dispatch(logout());
-        toast.success(response.data.message);
+      await axiosInstance.get("auth/logout");
+      localStorage.removeItem("UserToken");
+      dispatch(setUser(null));
+      dispatch(logout());
+      await persistor.purge();
+      persistor.purge().then(() => {
+        toast.success("Logged out successfully");
         navigate("/");
-      } else {
-        toast.error(response.data.message);
-      }
+      });
     } catch (error) {
+      console.error("Logout Error:", error);
       toast.error("Failed to log out. Please try again.");
     }
   };

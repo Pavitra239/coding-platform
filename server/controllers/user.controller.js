@@ -206,16 +206,18 @@ export const removeProfilePic = async (req, res) => {
       bucketName: "uploads",
     });
 
-    await new Promise((resolve, reject) => {
-      bucket.delete(new mongoose.Types.ObjectId(fileId), (err) => {
-        if (err) {
-          console.error("Error removing avatar:", err);
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    // await new Promise((resolve, reject) => {
+    //   bucket.delete(new mongoose.Types.ObjectId(fileId), (err) => {
+    //     if (err) {
+    //       console.error("Error removing avatar:", err);
+    //       reject(err);
+    //     } else {
+    //       resolve();
+    //     }
+    //   });
+    // });
+
+    await bucket.delete(new mongoose.Types.ObjectId(fileId));
 
     user.profile.avatar = null;
     await user.save();

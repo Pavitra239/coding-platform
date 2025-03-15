@@ -28,11 +28,11 @@ const History = () => {
 
   const fetchSubmissions = async (page) => {
     setLoading(true);
-    try {
+    try { 
       const response = await axiosInstance.get(
         "/submissions/user/submissions",
         {
-          params: { page, limit: 10 },
+          params: { page, limit: 9 },
         }
       );
       setSubmissions(response.data.submissions);
@@ -143,7 +143,12 @@ const History = () => {
             <p className="text-gray-400 mb-6">
               You haven't submitted any solutions yet.
             </p>
-      
+            <button
+              onClick={() => navigate("/problems")}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg"
+            >
+              Browse Problems
+            </button>
           </div>
         ) : (
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl border border-gray-700 overflow-hidden">

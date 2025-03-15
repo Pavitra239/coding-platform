@@ -80,11 +80,15 @@ export const login = async (req, res) => {
       .json({
         message: "Welcome back!",
         user: {
+          profile: user.profile,
           _id: user._id,
           username: user.username,
           id: user.id,
+          email: user.email,
           role: user.role,
-          isApproved: user.isApproved,
+          branch: user.branch,
+          semester: user.semester,
+          batch: user.batch,
         },
         success: true,
       });

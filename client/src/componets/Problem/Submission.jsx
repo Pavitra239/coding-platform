@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
 import SubmissionList from "./SubmissionList.jsx";
-import SubmissionDetails from "./SubmissionDetails";
 
 const Submission = ({ problemId, latestSubmission }) => {
   const [submissions, setSubmissions] = useState([]);
@@ -17,7 +16,7 @@ const Submission = ({ problemId, latestSubmission }) => {
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
-      setError(null); // Reset error state before fetching
+      setError(null); 
 
       const response = await axiosInstance.get("/submissions", {
         params: { problem_id: problemId },
@@ -47,7 +46,6 @@ const Submission = ({ problemId, latestSubmission }) => {
     fetchSubmissions();
   }, [userId, problemId]);
 
-  // Update selected submission if a new one is passed
   useEffect(() => {
     if (latestSubmission) {
       setSelectedSubmission(latestSubmission);
