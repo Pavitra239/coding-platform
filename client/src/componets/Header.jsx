@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import { logout, setUser } from "../redux/userSlice";
 import axiosInstance from "../utils/axiosInstance";
 import { persistor } from "../redux/store";
+import { logoutHistory } from "../redux/slices/historySlice";
+import { logoutSubmissions } from "../redux/slices/submissionSlice";
 import {
   Menu,
   X,
@@ -82,6 +84,8 @@ const Header = () => {
       localStorage.removeItem("UserToken");
       dispatch(setUser(null));
       dispatch(logout());
+      dispatch(logoutHistory());
+      dispatch(logoutSubmissions());
       await persistor.purge();
       persistor.purge().then(() => {
         toast.success("Logged out successfully");

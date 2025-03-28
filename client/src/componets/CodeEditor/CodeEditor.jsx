@@ -3,13 +3,16 @@ import axiosInstance from "../../utils/axiosInstance";
 import ScoreAndLanguageSelector from "./ScoreAndLanguageSelector";
 import CodeEditorArea from "./CodeEditorArea";
 import TestCaseResults from "./TestCaseResults";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { fetchHistory, setCurrentPage } from "../../redux/slices/historySlice";
+import { fetchSubmissions } from "../../redux/slices/submissionSlice";
 
 const CodeEditor = ({ language, setLanguage, problem, onSubmission }) => {
   const user = useSelector((state) => state.app.user);
   const [assignLoading, setAssignLoading] = useState(false); // For button-specific loading
   const userId = user._id;
+  const dispatch = useDispatch();
   const testcases = problem.testCases;
 
   // console.log(testcases[0]);
@@ -87,7 +90,7 @@ int main() {
     setResults(null);
     setError(null);
     setAssignLoading(true); // Start loading
-  
+
     try {
       const response = await axiosInstance.post("/compiler/run-code", {
         code: codeByLanguage[language],
@@ -95,10 +98,10 @@ int main() {
         allTestCases: false,
         problemId: problem._id,
       });
-  
+
       const testResults = response.data.testResults;
       // console.log(testResults)
-  
+
       // Check if any test case contains an error
       const errorTestCase = testResults.find((test) => test.error);
       if (errorTestCase) {
@@ -117,7 +120,6 @@ int main() {
       setRunLoading(false);
     }
   };
-  
 
   // const handleSubmit = async () => {
   //   setIsLoading(true);
@@ -125,7 +127,7 @@ int main() {
   //   setResults(null);
   //   setError(null);
   //   setAssignLoading(true); // Start loading
-  
+
   //   try {
   //     // Prepare data for compilation request
   //     const compilePayload = {
@@ -134,37 +136,37 @@ int main() {
   //       allTestCases: true, // Ensures backend processes all test cases
   //       problemId: problem._id,
   //     };
-  
+
   //     // Send code and test cases to the backend for compilation
   //     const compileResponse = await axiosInstance.post(
   //       "/compiler/run-code",
   //       compilePayload
   //     );
-  
+
   //     let {
   //       testResults,
   //       overallTime,
   //       averageMemory,
   //       allPassed,
   //     } = compileResponse.data;
-  
+
   //     console.log("Compilation Results:", testResults);
   //     setResults(testResults);
-  
+
   //     // Check for errors in test results
   //     const errorTestCase = testResults.find((test) => test.error);
   //     if (errorTestCase) {
   //       setError(errorTestCase.error); // Display the first error encountered
   //       console.error("Compilation Error:", errorTestCase.error);
-  //       return; 
+  //       return;
   //     }
-  
+
   //     overallTime = (overallTime * 1000).toFixed(2); // Now in ms
   //     averageMemory = (averageMemory / 1024).toFixed(2); // Now in MB
-  
+
   //     console.log(`Overall Time: ${overallTime} ms`);
   //     console.log(`Average Memory: ${averageMemory} MB`);
-  
+
   //     // Calculate metrics and prepare test case results
   //     const numberOfTestCase = testResults.length;
   //     const numberOfTestCasePass = testResults.filter((test) => test.passed)
@@ -174,18 +176,18 @@ int main() {
   //         test.passed && testcases[index]?.marks ? testcases[index].marks : 0;
   //       return { ...test, marks };
   //     });
-  
+
   //     const totalMarks = testCaseResults.reduce(
   //       (sum, test) => sum + test.marks,
   //       0
   //     );
   //     const submissionStatus = allPassed ? "completed" : "rejected";
-  
+
   //     console.log("Number of Test Cases:", numberOfTestCase);
   //     console.log("Number of Test Cases Passed:", numberOfTestCasePass);
   //     console.log("Total Marks Obtained:", totalMarks);
   //     console.log("Submission Status:", submissionStatus);
-  
+
   //     // Prepare submission payload with time in ms and memory in MB
   //     const submissionPayload = {
   //       user_id: userId,
@@ -200,16 +202,16 @@ int main() {
   //       totalMarks,
   //       testCaseResults,
   //     };
-  
+
   //     // Send the submission to the backend
   //     const submissionResponse = await axiosInstance.post(
   //       "/submissions",
   //       submissionPayload
   //     );
   //     const savedSubmission = submissionResponse.data.submission;
-  
+
   //     console.log("Submission Saved Successfully:", savedSubmission);
-  
+
   //     // Trigger callback if provided
   //     if (onSubmission) {
   //       onSubmission(savedSubmission);
@@ -227,38 +229,46 @@ int main() {
   //     setAssignLoading(false);
   //   }
   // };
-  
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setSubmitLoading(true);
     setResults(null);
     setError(null);
     setAssignLoading(true);
-  
+
     try {
       const compilePayload = {
         code: codeByLanguage[language],
         language,
-        allTestCases: true,  // Ensure all test cases are run
+        allTestCases: true, // Ensure all test cases are run
         problemId: problem._id,
       };
-  
-      const compileResponse = await axiosInstance.post("/compiler/run-code", compilePayload);
+
+      const compileResponse = await axiosInstance.post(
+        "/compiler/run-code",
+        compilePayload
+      );
       const { testResults, savedSubmission } = compileResponse.data;
-  
+
       // console.log("Compilation Results:", testResults);
       // console.log("Compilation Results:", savedSubmission);
 
       setResults(testResults);
-  
+
       if (savedSubmission) {
         // console.log("Submission Saved Successfully:", savedSubmission);
         if (onSubmission) {
           onSubmission(savedSubmission);
+          dispatch(fetchHistory({ page: 1, limit: 9 }));
+          dispatch(setCurrentPage(1));
+          dispatch(fetchSubmissions({ page: 1, limit: 7 }));
         }
       }
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred. Please try again.");
+      setError(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
       console.error("Submission Error:", error);
     } finally {
       setIsLoading(false);
@@ -266,7 +276,6 @@ int main() {
       setAssignLoading(false);
     }
   };
-  
 
   const handleSaveCode = async () => {
     try {

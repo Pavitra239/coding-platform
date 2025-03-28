@@ -1,32 +1,24 @@
+import amqplib from "amqplib";
 import axios from "axios";
-import amqp from "amqplib";
-import submission from "../models/submission.js";
-import os from 'os';
+import mongoose from "mongoose";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import path from "path";
 
-// Configuration constants
-// Use service names for Docker networking
-const JUDGE0_BASE_URL = "http://localhost:80"; // Using nginx service name
+// Adjust import paths based on your folder structure
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Configuration
+const RABBITMQ_URL = "amqp://judge0:judge0_rabbitmq_password_123@localhost:5672";
+const JUDGE0_BASE_URL = "http://localhost:80"; // Local nginx load balancer URL
 const JUDGE0_TOKEN = "CHAUHANRUTVIK22IT015";
+const SUBMISSION_QUEUE = "code_submissions";
+const RESULT_QUEUE = "submission_results";
 
-// RabbitMQ configuration with Docker service name
-const RABBITMQ_URL = "amqp://judge0:judge0_rabbitmq_password_123@localhost:5672"; // Using rabbitmq service name
-const QUEUES = {
-  NORMAL: "code_execution_queue"
-};
-
-// In-memory metrics storage
-const metrics = {
-  totalJobsProcessed: 0,
-  successfulJobs: 0,
-  failedJobs: 0,
-  averageProcessingTime: 0,
-  activeJobs: 0,
-  instanceRequestCounts: {},
-};
-
-// Utility functions
+// Helper functions
 const decodeBase64 = (base64Str) => {
-  if (!base64Str) return null;
+  if (!base64Str) return "";
   const buffer = Buffer.from(base64Str, "base64");
   return buffer.toString("utf-8");
 };
@@ -38,315 +30,389 @@ const normalizeOutput = (output) => {
   return output.replace(/\r\n/g, "\n").trim();
 };
 
-// Log server instance from response headers
-const logServerInstance = (response, requestType) => {
-  const instance = response.headers["x-server-instance"];
-  console.log(`${requestType} handled by instance: ${instance}`);
-  
-  // Track instance usage in memory
-  if (instance) {
-    metrics.instanceRequestCounts[instance] = (metrics.instanceRequestCounts[instance] || 0) + 1;
-  }
-};
+// Connect to MongoDB
+// mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/coding-platform")
+//   .then(() => console.log("Worker connected to MongoDB"))
+//   .catch(err => console.error("MongoDB connection error:", err));
 
-// Submit code to Judge0 with retry logic
-const submitToJudge0 = async (submission, userId, retryCount = 3) => {
-  const requestId = `${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+// Import submission model
+import("../models/submission.js").then(module => {
+  const Submission = module.default;
+  startWorker(Submission);
+}).catch(err => {
+  console.error("Failed to import submission model:", err);
+});
+
+async function startWorker(SubmissionModel) {
+  let connection;
+  let channel;
   
-  for (let i = 0; i < retryCount; i++) {
-    try {
-      const response = await axios.post(
-        `${JUDGE0_BASE_URL}/submissions`,
-        submission,
-        {
-          headers: {
-            Authorization: `Bearer ${JUDGE0_TOKEN}`,
-            "X-Request-ID": requestId,
-          },
-          timeout: 10000, // 10 second timeout
+  try {
+    // Connect to RabbitMQ
+    console.log("Connecting to RabbitMQ...");
+    connection = await amqplib.connect(RABBITMQ_URL);
+    console.log("Connected to RabbitMQ");
+    
+    channel = await connection.createChannel();
+    
+    // Ensure queues exist
+    await channel.assertQueue(SUBMISSION_QUEUE, { durable: true });
+    await channel.assertQueue(RESULT_QUEUE, { durable: true });
+    
+    // Process only one message at a time
+    channel.prefetch(1);
+    
+    // Listen for submissions
+    console.log(`Worker started, listening on ${SUBMISSION_QUEUE} queue`);
+    channel.consume(SUBMISSION_QUEUE, async (msg) => {
+      if (!msg) return;
+      
+      let task;
+      try {
+        // Parse message content
+        task = JSON.parse(msg.content.toString());
+        console.log(`Processing submission: ${task.submissionId}`);
+        
+        // Process the submission
+        const testResults = await processSubmission(task);
+        
+        // Save results
+        await saveResults(task, testResults, channel, SubmissionModel);
+        
+        // Acknowledge the message
+        channel.ack(msg);
+        console.log(`Successfully processed submission: ${task.submissionId}`);
+        
+      } catch (error) {
+        console.error(`Error processing submission ${task?.submissionId || 'unknown'}:`, error);
+        
+        // Log detailed error information
+        if (error.response) {
+          console.error("Response error:", {
+            status: error.response.status,
+            data: error.response.data
+          });
         }
-      );
-
-      logServerInstance(response, "Submission");
-      return response;
-    } catch (error) {
-      console.error(`Attempt ${i+1} failed:`, error.message);
-      
-      // If last retry, throw error
-      if (i === retryCount - 1) throw error;
-      
-      // Exponential backoff with jitter
-      const backoffTime = 1000 * Math.pow(2, i) + Math.random() * 1000;
-      await new Promise(resolve => setTimeout(resolve, backoffTime));
-    }
+        
+        // Send error result back if possible
+        if (task && channel) {
+          try {
+            const errorResult = {
+              submissionId: task.submissionId,
+              userId: task.userId,
+              problemId: task.problemId,
+              status: "error",
+              error: error.message,
+              allTestCases: task.allTestCases,
+              testCaseResults: []
+            };
+            
+            await channel.sendToQueue(
+              RESULT_QUEUE,
+              Buffer.from(JSON.stringify(errorResult)),
+              { persistent: true }
+            );
+            console.log(`Sent error result back for ${task.submissionId}`);
+          } catch (queueError) {
+            console.error("Failed to send error to queue:", queueError);
+          }
+        }
+        
+        // Don't requeue the message to avoid infinite processing loops
+        channel.nack(msg, false, false);
+      }
+    });
+    
+    // Handle connection errors
+    connection.on('error', (err) => {
+      console.error('RabbitMQ connection error:', err);
+      reconnect();
+    });
+    
+    connection.on('close', () => {
+      console.error('RabbitMQ connection closed unexpectedly');
+      reconnect();
+    });
+    
+  } catch (error) {
+    console.error("Worker startup error:", error);
+    reconnect();
   }
-};
+  
+  // Reconnect function
+  function reconnect() {
+    console.log("Attempting to reconnect in 5 seconds...");
+    setTimeout(() => startWorker(SubmissionModel), 5000);
+  }
+}
 
-// Fetch execution results with advanced retry logic
-const fetchResults = async (token, userId) => {
-  let result = null;
-  let retries = 0;
-  const maxRetries = 7; // Increased retries
-  const maxWaitTime = 40000; // 40 seconds maximum wait time
-  const startTime = Date.now();
-  const requestId = `${userId}-result-${Date.now()}`;
-
-  while (!result || result.status.id <= 2) { // Processing or In Queue
-    if (Date.now() - startTime > maxWaitTime) {
-      throw new Error("Execution time exceeded maximum wait time");
+async function processSubmission(task) {
+  const { submissions, selectedTestCases } = task;
+  
+  if (!submissions || !Array.isArray(submissions) || submissions.length === 0) {
+    throw new Error("Invalid submission data");
+  }
+  
+  // Submit code to Judge0
+  console.log(`Submitting ${submissions.length} test cases to Judge0`);
+  
+  const submissionPromises = submissions.map(async (submission, index) => {
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (retries < maxRetries) {
+      try {
+        console.log(`Submitting test case ${index + 1}/${submissions.length} (attempt ${retries + 1})`);
+        
+        const response = await axios.post(
+          `${JUDGE0_BASE_URL}/submissions`,
+          submission,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "X-Auth-Token": JUDGE0_TOKEN
+            },
+            timeout: 10000
+          }
+        );
+        
+        if (!response.data || !response.data.token) {
+          throw new Error("No token received from Judge0");
+        }
+        
+        console.log(`Received token for test case ${index + 1}: ${response.data.token}`);
+        return response;
+      } catch (error) {
+        console.error(`Submission failed (attempt ${retries + 1}):`, error.message);
+        
+        if (error.response) {
+          console.error("Response status:", error.response.status);
+          console.error("Response data:", error.response.data);
+        }
+        
+        retries++;
+        
+        if (retries >= maxRetries) {
+          throw error;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+      }
     }
+  });
+  
+  // Wait for all submissions to complete
+  const submissionResponses = await Promise.allSettled(submissionPromises);
+  
+  // Extract tokens from successful submissions
+  const tokens = submissionResponses
+    .filter(result => result.status === 'fulfilled')
+    .map(result => result.value.data.token);
+  
+  console.log(`Retrieved ${tokens.length}/${submissions.length} valid tokens`);
+  
+  if (tokens.length === 0) {
+    throw new Error("All submissions failed");
+  }
+  
+  // Fetch results for each token
+  console.log("Fetching results from Judge0");
+  const results = await Promise.all(tokens.map(fetchResults));
+  
+  // Process and normalize test results
+  return results.map((result, index) => {
+    const testCase = selectedTestCases[index];
+    const decodedOutput = decodeBase64(result.stdout || "");
+    const normalizedOutput = normalizeOutput(decodedOutput);
+    const expectedOutput = normalizeOutput(testCase?.outputs || "");
+    
+    return {
+      input: testCase?.inputs || "",
+      expectedOutput: testCase?.outputs || "",
+      output: decodedOutput,
+      error: result.error || result.compilationError || result.standardError,
+      passed: normalizedOutput === expectedOutput && !result.error,
+      time: result.time,
+      memory: result.memory,
+      is_hidden: testCase?.is_hidden || false,
+      marks: (normalizedOutput === expectedOutput && !result.error && testCase?.marks) ? 
+        testCase.marks : 0
+    };
+  });
+}
 
+async function fetchResults(token) {
+  let retries = 0;
+  const maxRetries = 10;
+  const maxWaitTime = 30000;
+  const startTime = Date.now();
+  
+  while (true) {
+    // Check if we've exceeded the maximum wait time
+    if (Date.now() - startTime > maxWaitTime) {
+      throw new Error("Execution timed out");
+    }
+    
     try {
+      console.log(`Fetching result for token: ${token} (attempt ${retries + 1})`);
+      
       const response = await axios.get(
         `${JUDGE0_BASE_URL}/submissions/${token}?base64_encoded=true&fields=*`,
         {
           headers: {
-            Authorization: `Bearer ${JUDGE0_TOKEN}`,
-            "X-Request-ID": requestId,
+            "X-Auth-Token": JUDGE0_TOKEN
           },
+          timeout: 5000
         }
       );
-
-      result = response.data;
-      logServerInstance(response, "Status Check");
-
-      // If still processing, wait with exponential backoff
-      if (result.status.id <= 2 && retries < maxRetries) {
+      
+      const result = response.data;
+      
+      console.log(`Status for ${token}: ${result.status?.id} (${result.status?.description})`);
+      
+      // If the code is still processing
+      if (result.status?.id <= 2) {
+        // Wait a bit longer for processing to complete
         retries++;
-        await new Promise(resolve => 
-          setTimeout(resolve, 1000 * Math.min(Math.pow(1.5, retries), 5))
-        );
+        await new Promise(resolve => setTimeout(resolve, 1000));
         continue;
       }
       
-      break;
+      // Process completed result
+      return {
+        ...result,
+        compilationError: result.compile_output ? decodeBase64(result.compile_output) : null,
+        standardError: result.stderr ? decodeBase64(result.stderr) : null,
+        error: getErrorMessage(result.status?.id, result.status?.description)
+      };
+      
     } catch (error) {
-      if (retries >= maxRetries) throw error;
+      console.error(`Error fetching result (attempt ${retries + 1}):`, error.message);
+      
       retries++;
-      await new Promise(resolve => 
-        setTimeout(resolve, 1000 * Math.min(Math.pow(1.5, retries), 5))
-      );
+      
+      if (retries >= maxRetries) {
+        throw new Error(`Failed to fetch results after ${maxRetries} attempts`);
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
+}
 
-  return {
-    ...result,
-    compilationError: result.compile_output ? decodeBase64(result.compile_output) : null,
-    standardError: result.stderr ? decodeBase64(result.stderr) : null,
-    error: getErrorDescription(result.status.id),
-  };
-};
-
-// Get more descriptive error messages based on status ID
-const getErrorDescription = (statusId) => {
-  const statusMap = {
-    3: "Accepted",
-    4: "Wrong Answer",
-    5: "Time Limit Exceeded",
-    6: "Compilation Error",
-    7: "Runtime Error (SIGSEGV)",
-    8: "Runtime Error (SIGXFSZ)",
-    9: "Runtime Error (SIGFPE)",
-    10: "Runtime Error (SIGABRT)",
-    11: "Runtime Error (NZEC)",
-    12: "Runtime Error (Other)",
-    13: "Internal Error",
-    14: "Exec Format Error"
-  };
+function getErrorMessage(statusId, description) {
+  if (!statusId || statusId <= 2) return null;
   
-  return statusId in statusMap && statusId > 4 ? statusMap[statusId] : null;
-};
+  switch (statusId) {
+    case 3: return null; // Accepted, no error
+    case 4: return "Wrong Answer";
+    case 5: return "Time Limit Exceeded";
+    case 6: return "Compilation Error";
+    case 7: return "Runtime Error (SIGSEGV)";
+    case 8: return "Runtime Error (SIGXFSZ)";
+    case 9: return "Runtime Error (SIGFPE)";
+    case 10: return "Runtime Error (SIGABRT)";
+    case 11: return "Runtime Error (NZEC)";
+    case 12: return "Runtime Error (Other)";
+    case 13: return "Internal Error";
+    case 14: return "Exec Format Error";
+    default: return description || "Unknown Error";
+  }
+}
 
-// Process a job from the queue
-const processJob = async (job) => {
-  console.log(`Received code execution job: ${JSON.stringify(job)}`);
-  const startTime = Date.now();
-  const { userId, submissions, selectedTestCases, code, language, problemId, allTestCases } = job;
+async function saveResults(task, testResults, channel, SubmissionModel) {
+  const { userId, problemId, code, language, submissionId, allTestCases } = task;
   
-  // Handle both string and ObjectId format for userId
-  const userIdStr = typeof userId === 'object' && userId.toString ? 
-    userId.toString() : userId;
-
-  console.log(`Starting job for user ${userIdStr}, problem ${problemId}`);
-  metrics.activeJobs++;
+  // Calculate metrics
+  const passedTests = testResults.filter(test => test.passed).length;
+  const totalTests = testResults.length;
+  const totalMarks = testResults.reduce((sum, test) => sum + (test.marks || 0), 0);
+  const submissionStatus = passedTests === totalTests ? "accepted" : "rejected";
+  const overallTime = testResults.reduce((sum, test) => sum + parseFloat(test.time || 0), 0) * 1000;
+  const avgMemory = testResults.length > 0 ? 
+    testResults.reduce((sum, test) => sum + parseInt(test.memory || 0), 0) / testResults.length : 0;
   
-  try {
-    // Send code to Judge0 API with load balancing
-    const submissionResponses = await Promise.all(
-      submissions.map(subm => submitToJudge0(subm, userIdStr))
-    );
-
-    const tokens = submissionResponses.map(response => response.data.token);
-
-    // Fetch execution results
-    const results = await Promise.all(tokens.map(token => fetchResults(token, userIdStr)));
-
-    // Process test results
-    const testResults = results.map((result, index) => {
-      const decodedOutput = decodeBase64(result.stdout?.trim() || "");
-      const normalizedOutput = normalizeOutput(decodedOutput);
-      const expectedOutput = normalizeOutput(selectedTestCases[index]?.outputs || "");
-
-      return {
-        input: selectedTestCases[index]?.inputs || "",
-        expectedOutput: selectedTestCases[index]?.outputs || "",
-        output: decodedOutput,
-        error: result.error || result.compilationError || result.standardError,
-        passed: normalizedOutput === expectedOutput && !result.error,
-        time: result.time,
-        memory: result.memory,
-      };
-    });
-
-    // Compute performance metrics
-    const overallTime = testResults.reduce(
-      (sum, test) => sum + parseFloat(test.time || 0), 0
-    ) * 1000; // Convert to ms
-    
-    const averageMemory = testResults.length > 0
-      ? testResults.reduce((sum, test) => sum + parseInt(test.memory || 0), 0) / testResults.length
-      : 0;
-
-    const numberOfTestCase = testResults.length;
-    const numberOfTestCasePass = testResults.filter(test => test.passed).length;
-
-    // Calculate marks for each test case
-    const testCaseResults = testResults.map((test, index) => ({
-      input: test.input,
-      expectedOutput: test.expectedOutput,
-      output: test.output,
-      error: test.error,
-      passed: test.passed,
-      time: test.time,
-      memory: test.memory,
-      is_hidden: selectedTestCases[index]?.is_hidden || false,
-      marks: test.passed && selectedTestCases[index]?.marks
-        ? selectedTestCases[index].marks
-        : 0,
-    }));
-
-    const totalMarks = testCaseResults.reduce(
-      (sum, test) => sum + test.marks, 0
-    );
-    const submissionStatus = numberOfTestCase === numberOfTestCasePass ? "completed" : "rejected";
-
-    // Save the submission only if all test cases were run
-    if (allTestCases) {
-      const submissionPayload = {
-        user_id: userId, // Use original userId format for MongoDB compatibility
+  let savedSubmission = null;
+  
+  // Save to database if it's a full submission
+  if (allTestCases && SubmissionModel) {
+    try {
+      console.log(`Saving submission to database: ${submissionId}`);
+      
+      const submissionDoc = await SubmissionModel.create({
+        user_id: userId,
         problem_id: problemId,
         code,
         language,
         status: submissionStatus,
         execution_time: overallTime.toFixed(2),
-        memory_usage: (averageMemory / 1024).toFixed(2), // Convert to MB
-        numberOfTestCase,
-        numberOfTestCasePass,
+        memory_usage: (avgMemory / 1024).toFixed(2),
+        numberOfTestCase: totalTests,
+        numberOfTestCasePass: passedTests,
         totalMarks,
-        testCaseResults, // Store full test cases data in DB
-        processed_at: new Date(),
-      };
-
-      await submission.create(submissionPayload);
-    }
-
-    // Update metrics
-    metrics.totalJobsProcessed++;
-    metrics.successfulJobs++;
-    metrics.activeJobs--;
-    const processingTime = Date.now() - startTime;
-    metrics.averageProcessingTime = 
-      (metrics.averageProcessingTime * (metrics.totalJobsProcessed - 1) + processingTime) 
-      / metrics.totalJobsProcessed;
-
-    console.log(`Job processed successfully for user: ${userIdStr} in ${processingTime}ms`);
-    return { success: true, testCaseResults, totalMarks, submissionStatus };
-  } catch (error) {
-    console.error("Error processing job:", error);
-    metrics.totalJobsProcessed++;
-    metrics.failedJobs++;
-    metrics.activeJobs--;
-    return { success: false, error: error.message };
-  }
-};
-
-// Process jobs from a specific queue
-const processQueue = async (channel, queueName, prefetchCount) => {
-  await channel.prefetch(prefetchCount);
-  console.log(`Worker subscribed to queue: ${queueName} with prefetch ${prefetchCount}`);
-  
-  channel.consume(queueName, async (msg) => {
-    if (msg !== null) {
-      try {
-        const job = JSON.parse(msg.content.toString());
-        console.log(`Received job from ${queueName} for user: ${job.userId}`);
-        await processJob(job);
-        channel.ack(msg);
-        console.log(`Job from ${queueName} for user: ${job.userId} processed successfully`);
-      } catch (error) {
-        console.error(`Error processing message from ${queueName}:`, error);
-        // Requeue with delay if it's not a permanent failure
-        if (error.retryable !== false) {
-          setTimeout(() => {
-            channel.nack(msg, false, true);
-          }, 5000);
-        } else {
-          channel.ack(msg); // Acknowledge but don't retry
+        testCaseResults,
+        metadata: {
+          submissionId,
+          processedAt: new Date()
         }
-      }
-    } else {
-      console.log(`No message received from ${queueName}`);
+      });
+      
+      savedSubmission = submissionDoc;
+      console.log(`Submission saved to database: ${submissionId}`);
+    } catch (error) {
+      console.error(`Error saving submission to database: ${error.message}`);
     }
-  });
-};
-
-// Start the worker
-const startWorker = async () => {
-  try {
-    console.log(`Starting worker on ${os.hostname()}`);
-    
-    // Connect to RabbitMQ
-    const connection = await amqp.connect(RABBITMQ_URL);
-    const channel = await connection.createChannel();
-    
-    // Setup queue
-    await channel.assertQueue(QUEUES.NORMAL, { durable: true });
-    
-    // Process queue
-    processQueue(channel, QUEUES.NORMAL, 2); // Medium concurrency
-    
-    // Reset active jobs count on startup
-    metrics.activeJobs = 0;
-    
-    console.log("Worker is running and waiting for jobs...");
-    
-    // Report metrics periodically
-    setInterval(() => {
-      console.log("=== Worker Metrics ===");
-      console.log(`Active jobs: ${metrics.activeJobs}`);
-      console.log(`Total jobs processed: ${metrics.totalJobsProcessed}`);
-      console.log(`Successful jobs: ${metrics.successfulJobs}`);
-      console.log(`Failed jobs: ${metrics.failedJobs}`);
-      console.log(`Average processing time: ${metrics.averageProcessingTime.toFixed(2)}ms`);
-      console.log("=====================");
-    }, 60000);
-    
-  } catch (error) {
-    console.error("Error starting worker:", error);
-    // Attempt to reconnect after delay
-    setTimeout(startWorker, 10000);
   }
-};
+  
+  // Create formatted result object for sending back to client
+  const formattedResult = {
+    submissionId,
+    userId,
+    problemId,
+    status: submissionStatus,
+    execution_time: overallTime.toFixed(2),
+    memory_usage: (avgMemory / 1024).toFixed(2),
+    numberOfTestCase: totalTests,
+    numberOfTestCasePass: passedTests,
+    totalMarks,
+    testResults: testResults.map(test => ({
+      input: test.is_hidden ? "******" : test.input,
+      expectedOutput: test.is_hidden ? "******" : test.expectedOutput,
+      output: test.is_hidden ? "******" : test.output,
+      error: test.error,
+      passed: test.passed,
+      time: test.time,
+      memory: test.memory,
+      marks: test.marks
+    })),
+    allTestCases: !!allTestCases,
+    allPassed: passedTests === totalTests,
+    overallTime: overallTime.toFixed(2),
+    averageMemory: (avgMemory / 1024).toFixed(2),
+    savedSubmission: allTestCases ? savedSubmission : null
+  };
+  
+  console.log(`Results: ${passedTests}/${totalTests} tests passed, total marks: ${totalMarks}`);
+  
+  // Send result to queue
+  if (channel) {
+    try {
+      console.log(`Sending results to queue: ${submissionId}`);
+      
+      await channel.sendToQueue(
+        RESULT_QUEUE,
+        Buffer.from(JSON.stringify(formattedResult)),
+        { persistent: true }
+      );
+      
+      console.log(`Results sent to queue: ${submissionId}`);
+    } catch (error) {
+      console.error(`Error sending results to queue: ${error.message}`);
+      throw error; // Re-throw to trigger message rejection
+    }
+  }
 
-startWorker();
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully...');
-  process.exit(0);
-});
+  return formattedResult;
+}

@@ -9,13 +9,13 @@ const SubmissionPage = () => {
   const navigate = useNavigate();
   const { submissions, loading, error } = useSelector((state) => state.submissions);
   const user = useSelector((state) => state.app.user);
-  const userId = user?._id;
+
 
   useEffect(() => {
-    if (userId && submissions.length === 0) {
+    if (user?._id && submissions.length === 0) {
       dispatch(fetchSubmissions({ page: 1, limit: 7 }));
     }
-  }, [dispatch, userId, submissions.length]);
+  }, [dispatch, user?._id, submissions.length]);
 
   const handleViewMore = () => {
     navigate("/history");

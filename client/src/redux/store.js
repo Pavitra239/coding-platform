@@ -4,15 +4,18 @@ import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
 import userReducer from "./userSlice";
 import submissionReducer from "./slices/submissionSlice";
+import historyReducer from "./slices/historySlice";
 
 const persistConfig = {
   key: "root",
   storage,
+  whitelist: ["app"],
 };
 
 const rootReducer = combineReducers({
   app: userReducer,
   submissions: submissionReducer,
+  history: historyReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

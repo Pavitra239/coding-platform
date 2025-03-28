@@ -47,6 +47,12 @@ const submissionSlice = createSlice({
       state.submissions.unshift(action.payload);
       state.selectedSubmission = action.payload;
     },
+    logoutSubmissions: (state) => {
+      state.submissions = [];
+      state.loading = false;
+      state.error = null;
+      state.selectedSubmission = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -69,6 +75,10 @@ const submissionSlice = createSlice({
   },
 });
 
-export const { setSelectedSubmission, clearSubmissions, addSubmission } =
-  submissionSlice.actions;
+export const {
+  setSelectedSubmission,
+  clearSubmissions,
+  addSubmission,
+  logoutSubmissions,
+} = submissionSlice.actions;
 export default submissionSlice.reducer;

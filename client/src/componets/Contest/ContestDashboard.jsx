@@ -12,7 +12,7 @@ const ContestDashboard = () => {
     page: 1,
     limit: 10,
     sortBy: 'totalMarks',
-    sortOrder: 'desc',
+    sortOrder: 'asc',
     branch: 'cspit-it',
     semester: '6',
     batch: 'a1'
@@ -49,6 +49,7 @@ const ContestDashboard = () => {
       setLoading(true);
       const queryParams = new URLSearchParams(filters);
       const response = await axiosInstance.get(`/contests/${id}/dashboard?${queryParams}`);
+      console.log(response.data)
       setDashboardData(response.data);
     } catch (error) {
       console.error("Error fetching dashboard:", error);
