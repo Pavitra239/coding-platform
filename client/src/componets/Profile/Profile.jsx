@@ -2,11 +2,14 @@ import React, { useState, useEffect, useReducer } from "react";
 import toast from "react-hot-toast";
 import ProfileLeft from "./ProfileLeft";
 import ProfileRight from "./ProfileRight";
-import SubmissionPage from "../SubmissionPage"; 
+import SubmissionPage from "../SubmissionPage";
 import { useSelector, useDispatch } from "react-redux";
 import axiosInstance from "../../utils/axiosInstance";
 import { fetchSubmissions } from "../../redux/slices/submissionSlice";
-import { startNavigation, endNavigation } from "../../redux/slices/historySlice";
+import {
+  startNavigation,
+  endNavigation,
+} from "../../redux/slices/historySlice";
 import { useLocation } from "react-router-dom";
 import { isPageCached } from "../../utils/transitionManager";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,35 +40,30 @@ const reducer = (state, action) => {
 };
 
 const Profile = () => {
-  const [loading, setLoading] = useState(true);  
-  const [isEditing, setIsEditing] = useState(false);  
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, dispatch] = useReducer(reducer, initialState);
-  const [pageTransition, setPageTransition] = useState(false);
-  const user = useSelector(state => state.app.user);
-  const imageUrl = useSelector(state => state.app.imageUrl);
+  const user = useSelector((state) => state.app.user);
+  const imageUrl = useSelector((state) => state.app.imageUrl);
   const reduxDispatch = useDispatch();
-  const submissions = useSelector(state => state.submissions.submissions);
-  const submissionsLoading = useSelector(state => state.submissions.loading);
+  const submissions = useSelector((state) => state.submissions.submissions);
+  const submissionsLoading = useSelector((state) => state.submissions.loading);
   const location = useLocation();
   const isCached = isPageCached(location.pathname);
   const [rightColumnKey, setRightColumnKey] = useState("submissions");
 
-  // Smooth page entry transition
   useEffect(() => {
-    setPageTransition(true);
     // Only signal navigation start if we're not already cached
     if (!isCached) {
       reduxDispatch(startNavigation());
     }
-    
-    return () => setPageTransition(false);
+
+    return () => {};
   }, []);
 
-  // Optimized user data loading - no need to fetch again if data exists
   useEffect(() => {
     if (user) {
       // No need to signal navigation start again
-      // Just update form data from existing Redux state      
+      // Just update form data from existing Redux state
       dispatch({
         type: "SET_FORM_DATA",
         payload: {
@@ -74,7 +72,9 @@ const Profile = () => {
           gender: user.profile?.gender || "",
           bio: user.profile?.bio || "",
           location: user.profile?.location || "",
-          birthday: user.profile?.birthday ? user.profile.birthday.slice(0, 10) : "",
+          birthday: user.profile?.birthday
+            ? user.profile.birthday.slice(0, 10)
+            : "",
           github: user.profile?.github || "",
           skills: user.profile?.skills || "",
           education: user.profile?.education || "",
@@ -82,20 +82,14 @@ const Profile = () => {
           email: user.email || "",
         },
       });
-      
-      // Use a minimal or no delay since we're just updating the UI
-      const timer = setTimeout(() => {
-        setLoading(false);
-        // Only end navigation if we started it
-        if (!isCached) {
-          reduxDispatch(endNavigation());
-        }
-      }, isCached ? 0 : 100);
-      
-      return () => clearTimeout(timer);
+
+      // Only end navigation if we started it
+      if (!isCached) {
+        reduxDispatch(endNavigation());
+      }
     }
-  }, [user, reduxDispatch, isCached]); 
-  
+  }, [user, reduxDispatch, isCached]);
+
   // Only fetch submissions if we don't have them already
   useEffect(() => {
     // Don't make API call if:
@@ -127,7 +121,7 @@ const Profile = () => {
       if (response.data.success) {
         // First update UI state to appear responsive
         toast.success("Profile updated successfully.");
-        
+
         // Then smoothly transition out of edit mode
         setRightColumnKey("submissions");
         setTimeout(() => {
@@ -151,23 +145,6 @@ const Profile = () => {
     }, 50);
   };
 
-  if (loading) {
-    return (
-      <div className="relative min-h-screen bg-gray-900 text-white">
-        <section className="pt-16 dark:bg-gray-900">
-          <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 p-4">
-            <div className="md:col-span-1">
-              <div className="animate-pulse bg-gray-800 rounded-xl h-[520px]"></div>
-            </div>
-            <div className="md:col-span-3">
-              <div className="animate-pulse bg-gray-800 rounded-xl h-[700px]"></div>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
   if (!user) {
     return (
       <div className="text-center text-gray-500 h-screen flex items-center justify-center">
@@ -177,7 +154,7 @@ const Profile = () => {
   }
 
   return (
-    <div className={`relative min-h-screen bg-gray-900 text-white transition-opacity duration-300 ease-in-out ${pageTransition ? 'opacity-100' : 'opacity-0'}`}>
+    <div className="relative min-h-screen bg-gray-900 text-white">
       <section className="pt-16 dark:bg-gray-900">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 p-4">
           <div className="md:col-span-1">
@@ -185,43 +162,32 @@ const Profile = () => {
               formData={formData}
               toggleEdit={toggleEdit}
               isEditing={isEditing}
-              imageUrl={imageUrl} 
+              imageUrl={imageUrl || "https://via.placeholder.com/150"} // Placeholder image
             />
           </div>
 
           <div className="md:col-span-3">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={rightColumnKey}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="transition-all duration-300 ease-in-out transform"
-              >
-                {isEditing ? (
-                  <ProfileRight
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    handleSubmit={handleSubmit}
-                    user={user}
-                  />
-                ) : (
-                  <div className="transition-all duration-300 ease-in-out">
-                    {submissionsLoading && submissions.length === 0 ? (
-                      <div className="flex justify-center items-center p-10 h-64">
-                        <div className="animate-pulse flex flex-col items-center">
-                          <div className="h-12 w-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin mb-4"></div>
-                          <div className="text-blue-400">Loading submissions...</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <SubmissionPage />
-                    )}
+            {isEditing ? (
+              <ProfileRight
+                formData={formData}
+                handleInputChange={handleInputChange}
+                handleSubmit={handleSubmit}
+                user={user || {}} // Provide an empty object as fallback
+              />
+            ) : (
+              <div>
+                {submissionsLoading ? (
+                  <div className="flex justify-center items-center p-10 h-64">
+                    <div className="animate-pulse flex flex-col items-center">
+                      <div className="h-12 w-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin mb-4"></div>
+                      <div className="text-blue-400">Loading submissions...</div>
+                    </div>
                   </div>
+                ) : (
+                  <SubmissionPage />
                 )}
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
       </section>

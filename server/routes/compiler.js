@@ -7,7 +7,7 @@ import { isAuthorized } from "../middlewares/auth.js";
 const router = express.Router();
 
 // Use nginx service name instead of localhost in Docker environment
-const JUDGE0_BASE_URL = "http://localhost:80";
+const JUDGE0_BASE_URL = "http://localhost:2358";
 const JUDGE0_TOKEN = "CHAUHANRUTVIK22IT015";
 
 const getLanguageId = (language) => {

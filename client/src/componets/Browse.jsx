@@ -5,6 +5,46 @@ import Header from "./Header";
 import { useAnimation } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
+// Adding the SimpleCodeBlock component
+const SimpleCodeBlock = () => {
+  const codeString = `#include <iostream>
+using namespace std;
+
+int main() {
+    // Print the classic greeting to the console
+    cout << "Hello, World!" << endl;
+    // Return success code
+    return 0;
+}`;
+
+  const getHighlightedLine = (line) => {
+    const tokens = line.split(/(\bint\b|\breturn\b|\bcout\b|\bendl\b|#include\b|<|>|"[^"]*"|\/\/.*|\{|\}|\(|\)|;)/g);
+    return tokens.map((token, i) => {
+      if (!token) return null;
+      if (/^#include\b/.test(token)) return <span key={i} className="text-blue-400">{token}</span>;
+      if (/^<.*>$/.test(token)) return <span key={i} className="text-blue-300">{token}</span>;
+      if (/^int\b/.test(token)) return <span key={i} className="text-purple-400">{token}</span>;
+      if (/^return\b/.test(token)) return <span key={i} className="text-purple-400">{token}</span>;
+      if (/^cout\b|endl\b/.test(token)) return <span key={i} className="text-green-300">{token}</span>;
+      if (/^\/\/.*/.test(token)) return <span key={i} className="text-gray-500 italic">{token}</span>;
+      if (/^"[^"]*"$/.test(token)) return <span key={i} className="text-yellow-300">{token}</span>;
+      if (/^\{|\}|\(|\)|;$/.test(token)) return <span key={i} className="text-pink-400">{token}</span>;
+      return <span key={i}>{token}</span>;
+    });
+  };
+
+  return (
+    <div className="bg-[#0d1117] text-gray-300 p-4 rounded font-mono text-sm leading-relaxed">
+      {codeString.split("\n").map((line, i) => (
+        <div key={i} className="flex items-start">
+          <span className="w-6 text-right pr-3 text-gray-500 select-none">{i + 1}</span>
+          <pre className="whitespace-pre-wrap">{getHighlightedLine(line)}</pre>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Browse = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
@@ -244,246 +284,72 @@ const Browse = () => {
 export default Browse;
 
 const HeroSection = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const controls = useAnimation();
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      const { clientX, clientY } = e;
-      const moveX = clientX / window.innerWidth - 0.5;
-      const moveY = clientY / window.innerHeight - 0.5;
-      setMousePosition({ x: moveX, y: moveY });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
-
-  useEffect(() => {
-    controls.start({
-      rotateY: mousePosition.x * 20,
-      rotateX: -mousePosition.y * 20,
-      transition: { type: "spring", stiffness: 300, damping: 30 },
-    });
-  }, [mousePosition, controls]);
-
-
-
-  // Random code snippets for background animation
-  
-
   return (
     <section className="relative min-h-screen overflow-hidden px-4 sm:px-6 lg:px-8 flex justify-center items-center">
-      {/* Enhanced background code particles with better visibility */}
-      <div className="absolute inset-0">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className={`absolute font-mono text-sm ${
-              i % 4 === 0 ? "text-blue-500" : 
-              i % 4 === 1 ? "text-purple-500" : 
-              i % 4 === 2 ? "text-green-500" : 
-              "text-yellow-500"
-            }`}
-            style={{
-              opacity: 0.2 + (i % 3) * 0.1,
-              fontSize: 12 + (i % 4) * 2
-            }}
-            initial={{ 
-              opacity: 0, 
-              y: -100, 
-              x: 50 + ((i % 7) * (window.innerWidth / 7))
-            }}
-            animate={{ 
-              opacity: [0.2, 0.4, 0.2],
-              y: window.innerHeight + 100,
-              x: ((i % 7) * (window.innerWidth / 7)) + (i % 2 === 0 ? 50 : -50)
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 15 + (i % 10),
-              delay: i * 0.5,
-              ease: "linear"
-            }}
-          >
-            {i % 5 === 0 ? "function solve() {" : 
-             i % 5 === 1 ? "if (x > threshold) {" : 
-             i % 5 === 2 ? "for(let i=0; i<n; i++) {" :
-             i % 5 === 3 ? "return result.map(x => x*2);" :
-             "} // End of code block"}
-          </motion.div>
-        ))}
-      </div>
-      
       <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row items-center">
         {/* Left Content */}
-        <div className="md:w-1/2">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center md:text-left"
-          >
-            {/* Icon Section */}
-            <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 mb-2 px-4 py-2 rounded-full bg-blue-900/50 text-blue-300 backdrop-blur-sm border border-blue-700/30"
-              >
-                <Rocket size={20} />
-                <span className="font-medium">Welcome to Codify</span>
-              </motion.div>
+        <motion.div
+          className="md:w-1/2"
+          initial={{ x: -200, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <div className="text-center md:text-left">
+            <div className="inline-flex items-center gap-2 mb-2 px-4 py-2 rounded-full bg-blue-900/50 text-blue-300 backdrop-blur-sm border border-blue-700/30">
+              <Rocket size={20} />
+              <span className="font-medium">Welcome to Codify</span>
+            </div>
 
-            {/* Updated Main Heading with Better Slogan */}
-            <motion.h1
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 mb-4 leading-tight tracking-tight"
-            >
+            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 mb-4 leading-tight tracking-tight">
               Code Without Limits <br className="hidden sm:inline" />
               <span className="relative text-white">
                 Think. Build. Dominate.
-                <motion.span
-                  className="absolute -bottom-1 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 rounded-full"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
-                />
+                <span className="absolute -bottom-1 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 rounded-full" />
               </span>
-            </motion.h1>
+            </h1>
 
-            {/* Updated Subheading */}
-            <motion.p
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-              className="text-lg text-gray-300 max-w-3xl mx-auto md:mx-0 leading-relaxed"
-            >
+            <p className="text-lg text-gray-300 max-w-3xl mx-auto md:mx-0 leading-relaxed">
               Elevate your programming journey on a platform where challenges 
               ignite innovation, competitions forge excellence, and code 
               becomes your signature in the tech world.
-            </motion.p>
+            </p>
 
-            {/* Button section - unchanged */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start"
-            >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-all duration-300"
-              >
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <button className="px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-all duration-300">
                 Start Coding
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 border border-blue-500 text-blue-400 rounded-md font-medium hover:bg-blue-900/20 transition-all duration-300"
-              >
+              </button>
+              <button className="px-6 py-3 border border-blue-500 text-blue-400 rounded-md font-medium hover:bg-blue-900/20 transition-all duration-300">
                 Explore Challenges
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="lg:w-1/2"
-          >
-            <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden">
-              <div className="bg-gray-800 px-4 py-2 flex items-center">
-                <div className="flex space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-                <div className="ml-4 text-gray-400 text-sm font-mono">challenge.js</div>
-              </div>
-              <div className="p-4 font-mono text-sm text-gray-300">
-                <TypingCodeEffect />
-              </div>
+              </button>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
 
+        {/* Right Content */}
+        <motion.div
+          className="lg:w-1/2"
+          initial={{ x: 200, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden">
+            <div className="bg-gray-800 px-4 py-2 flex items-center">
+              <div className="flex space-x-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              </div>
+              <div className="ml-4 text-gray-400 text-sm font-mono">challenge.js</div>
+            </div>
+            <div className="p-4 font-mono text-sm text-gray-300">
+              <SimpleCodeBlock />
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
 };
-
-
-
-const TypingCodeEffect = () => {
-  const codeString = `#include <iostream>
-using namespace std;
-
-int main() {
-    // Print the classic greeting to the console
-    cout << "Hello, World!" << endl;
-    // Return success code
-    return 0;
-}`;
-
-  const [displayedText, setDisplayedText] = useState("");
-  const [charIndex, setCharIndex] = useState(0);
-
-  useEffect(() => {
-    if (charIndex < codeString.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText((prev) => prev + codeString[charIndex]);
-        setCharIndex((prev) => prev + 1);
-      }, 25); // adjust typing speed here
-      return () => clearTimeout(timeout);
-    }
-  }, [charIndex]);
-
-  const getHighlightedLine = (line, lineIndex) => {
-    const tokens = line.split(/(\bint\b|\breturn\b|\bcout\b|\bendl\b|#include\b|<|>|"[^"]*"|\/\/.*|\{|\}|\(|\)|;)/g);
-    return tokens.map((token, i) => {
-      if (!token) return null;
-      if (/^#include\b/.test(token)) return <span key={i} className="text-blue-400">{token}</span>;
-      if (/^<.*>$/.test(token)) return <span key={i} className="text-blue-300">{token}</span>;
-      if (/^int\b/.test(token)) return <span key={i} className="text-purple-400">{token}</span>;
-      if (/^return\b/.test(token)) return <span key={i} className="text-purple-400">{token}</span>;
-      if (/^cout\b|endl\b/.test(token)) return <span key={i} className="text-green-300">{token}</span>;
-      if (/^\/\/.*/.test(token)) return <span key={i} className="text-gray-500 italic">{token}</span>;
-      if (/^"[^"]*"$/.test(token)) return <span key={i} className="text-yellow-300">{token}</span>;
-      if (/^\{|\}|\(|\)|;$/.test(token)) return <span key={i} className="text-pink-400">{token}</span>;
-      return <span key={i}>{token}</span>;
-    });
-  };
-
-  return (
-    <div className="bg-[#0d1117] text-gray-300 p-4 rounded font-mono text-sm leading-relaxed">
-      {displayedText.split("\n").map((line, i) => (
-        <div key={i} className="flex items-start">
-          <span className="w-6 text-right pr-3 text-gray-500 select-none">{i + 1}</span>
-          <pre className="whitespace-pre-wrap">{getHighlightedLine(line, i)}</pre>
-        </div>
-      ))}
-      {charIndex < codeString.length && (
-        <motion.span
-          className="text-blue-300"
-          animate={{ opacity: [1, 0, 1] }}
-          transition={{ repeat: Infinity, duration: 1 }}
-        >
-          │
-        </motion.span>
-      )}
-    </div>
-  );
-};
-
-
-
 
 const Footer = () => {
   return (
