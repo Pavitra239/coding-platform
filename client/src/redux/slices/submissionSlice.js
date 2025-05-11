@@ -1,25 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
+import { logout } from "../userSlice"; // Import logout action from userSlice
 
 export const fetchSubmissions = createAsyncThunk(
   "submissions/fetchSubmissions",
-  async ({ page = 1, limit = 7 }, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(
-        "/submissions/user/submissions",
-        {
-          params: { page, limit },
-        }
-      );
-      const submissions = response.data.submissions || [];
-      const sortedSubmissions = submissions.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-      return { submissions: sortedSubmissions };
+      const response = await axiosInstance.get("/submissions/user/submissions");
+      return { submissions: response.data.submissions || [] };
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message ||
-          "Failed to load submissions. Please try again."
+        error.response?.data?.message || "Failed to fetch submissions"
       );
     }
   }
@@ -71,6 +62,13 @@ const submissionSlice = createSlice({
       .addCase(fetchSubmissions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "An error occurred.";
+      })
+      // Handle user logout action from userSlice
+      .addCase(logout, (state) => {
+        state.submissions = [];
+        state.loading = false;
+        state.error = null;
+        state.selectedSubmission = null;
       });
   },
 });

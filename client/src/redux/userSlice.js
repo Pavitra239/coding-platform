@@ -33,6 +33,7 @@ const userSlice = createSlice({
     user: null,
     imageUrl: null,
     isLoading: false,
+    pageTransitioning: false,
   },
   reducers: {
     setUser: (state, action) => {
@@ -45,11 +46,18 @@ const userSlice = createSlice({
     setImageUrl: (state, action) => {
       state.imageUrl = action.payload;
     },
+    startPageTransition: (state) => {
+      state.pageTransitioning = true;
+    },
+    endPageTransition: (state) => {
+      state.pageTransitioning = false;
+    },
     logout: (state) => {
       state.user = null;
       state.authStatus = false;
       state.imageUrl = null;
       state.isLoading = false;
+      state.pageTransitioning = false;
     },    
   },
   extraReducers: (builder) => {
@@ -63,9 +71,19 @@ const userSlice = createSlice({
       })
       .addCase(fetchProfilePicThunk.rejected, (state, action) => {
         state.isLoading = false;
+        // Add error handling if needed
+        state.imageUrl = null;
       });
   },
 });
 
-export const { setUser, setLoading, setImageUrl, logout } = userSlice.actions;
+export const { 
+  setUser, 
+  setLoading, 
+  setImageUrl, 
+  logout, 
+  startPageTransition, 
+  endPageTransition 
+} = userSlice.actions;
+
 export default userSlice.reducer;

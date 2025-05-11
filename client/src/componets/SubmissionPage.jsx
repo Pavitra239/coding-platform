@@ -3,19 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Clock, Code, ChevronRight, AlertCircle, History, FileText } from 'lucide-react';
 import { fetchSubmissions } from "../redux/slices/submissionSlice";
+import { isPageCached } from "../utils/transitionManager";
 
 const SubmissionPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { submissions, loading, error } = useSelector((state) => state.submissions);
   const user = useSelector((state) => state.app.user);
-
-
+  
+  // Only fetch if we don't already have data and user exists
   useEffect(() => {
-    if (user?._id && submissions.length === 0) {
+    // Check if we need to fetch submissions
+    // Don't fetch if we have submissions or if we're already loading
+    if (user?._id && submissions.length === 0 && !loading && !isPageCached("/profile")) {
       dispatch(fetchSubmissions({ page: 1, limit: 7 }));
     }
-  }, [dispatch, user?._id, submissions.length]);
+  }, [dispatch, user?._id, submissions.length, loading]);
 
   const handleViewMore = () => {
     navigate("/history");
