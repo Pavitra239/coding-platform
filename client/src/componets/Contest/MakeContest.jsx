@@ -1,0 +1,325 @@
+import React, { useState, useEffect } from "react";
+import Header from "../Header";
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
+import toast from "react-hot-toast";
+import "../../CSS/Quiz.css";
+import { useSelector } from "react-redux";
+
+const MakeContest = () => {
+  const user = useSelector((store) => store.app.user);
+  const navigate = useNavigate();
+  const [contests, setContests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contestToDelete, setContestToDelete] = useState(null);
+  const [userRole, setUserRole] = useState(null); // State to store the user role
+  const [statusFilter, setStatusFilter] = useState(""); // State for status filter
+
+  const [sortConfig, setSortConfig] = useState({
+    key: "createdAt",
+    direction: "desc",
+  });
+
+  const handleAddContest = () => {
+    navigate("/create-contest");
+  };
+
+  const handleEditContest = (contestId) => {
+    navigate(`/create-contest/${contestId}`);
+  };
+
+  const handleDeleteContest = async () => {
+    try {
+      await axiosInstance.delete(`/contests/${contestToDelete}`);
+      toast.success("Contest deleted successfully!");
+      setShowDeleteModal(false);
+      setContestToDelete(null);
+      fetchContests();
+    } catch (error) {
+      toast.error("Error deleting contest!");
+      console.error("Error deleting contest:", error);
+    }
+  };
+
+  const handleDeleteConfirmation = (contestId) => {
+    setContestToDelete(contestId);
+    setShowDeleteModal(true);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setContestToDelete(null);
+  };
+
+  const fetchContests = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get("/contests");
+      console.log(response.data);
+
+      if (Array.isArray(response.data)) {
+        setContests(response.data);
+      } else if (Array.isArray(response.data.contests)) {
+        setContests(response.data.contests);
+      } else {
+        console.error("Expected an array but got:", response.data);
+        setContests([]);
+      }
+    } catch (error) {
+      toast.error("Error fetching contests!");
+      console.error("Error fetching contests:", error);
+      setContests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserRole = () => {
+    const role = user.role;
+    setUserRole(role);
+  };
+
+  useEffect(() => {
+    fetchContests();
+    fetchUserRole(); // Fetch the user role when component mounts
+  }, []);
+
+  const sortedContests = React.useMemo(() => {
+    let sortableContests = Array.isArray(contests) ? [...contests] : [];
+    if (sortConfig !== null) {
+      sortableContests.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableContests;
+  }, [contests, sortConfig]);
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredContests = sortedContests
+    .filter((contest) =>
+      contest.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter((contest) => {
+      if (statusFilter === "") return true;
+      return contest.status === statusFilter;
+    });
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
+  return (
+    <div className="relative min-h-screen bg-gray-900 text-white">
+      <Header />
+      <div className="mx-auto p-4">
+        {userRole !== "student" && (
+          <button
+            onClick={handleAddContest}
+            className="bg-blue-500 text-white text-lg font-semibold py-2 px-4 mt-20 rounded-lg hover:bg-blue-600 transition w-full sm:w-auto"
+          >
+            Add Contest
+          </button>
+        )}
+      </div>
+
+      <div className="p-5 pt-8">
+        <h1 className="text-2xl font-bold text-white mb-10 text-center">
+          Contest List
+        </h1>
+
+        {/* Status Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label
+              htmlFor="status-filter"
+              className="mr-2 text-lg sm:text-sm text-white"
+            >
+              Filter by Status:
+            </label>
+            <select
+              id="status-filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-gray-800 text-white py-2 px-4 rounded text-lg sm:text-sm"
+            >
+              <option value="">All</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
+            <label
+              htmlFor="search-box"
+              className="text-lg sm:text-sm text-white"
+            >
+              Search Contests:
+            </label>
+            <input
+              id="search-box"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name..."
+              className="bg-gray-800 text-white py-2 px-4 rounded text-lg sm:text-sm w-full sm:w-96"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto p-4 sm:p-6 lg:p-8">
+        <table className="w-full border-collapse border border-gray-700 text-sm sm:text-base md:text-lg text-left text-gray-500">
+          <thead className="bg-gray-900 text-gray-400">
+            <tr>
+              <th
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
+                onClick={() => handleSort("index")}
+              >
+                #
+              </th>
+              <th
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
+                onClick={() => handleSort("name")}
+              >
+                Name
+              </th>
+              <th
+                className="py-3 px-4 sm:px-6 cursor-pointer text-center"
+                onClick={() => handleSort("createdAt")}
+              >
+                Start Date
+              </th>
+              <th className="py-3 px-4 sm:px-6 text-center">Status</th>
+              {userRole !== "student" && (
+                <th className="py-3 px-4 sm:px-6 text-center">Actions</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredContests.length > 0 ? (
+              filteredContests.map((contest, index) => (
+                <tr
+                  key={contest._id}
+                  className={`${
+                    index % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
+                  }`}
+                >
+                  <td className="py-3 px-4 sm:px-6 text-center">{index + 1}</td>
+                  <td
+                    className="py-3 px-4 sm:px-6 font-bold text-white capitalize cursor-pointer hover:text-blue-500 transition duration-300 ease-in-out whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[250px]"
+                    onClick={() => navigate(`/contests/${contest._id}`)}
+                    title={contest.name}
+                  >
+                    {contest.name}
+                  </td>
+                  <td className="py-3 px-4 sm:px-6 text-gray-300 text-center">
+                    {formatDate(contest.start_time)}
+                  </td>
+                  <td
+                    className={`py-3 px-4 sm:px-6 text-center ${
+                      contest.status === "upcoming"
+                        ? "text-yellow-500"
+                        : contest.status === "ongoing"
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {contest.status}
+                  </td>
+                  {userRole !== "student" && (
+                    <td className="py-3 px-4 sm:px-6 flex justify-center items-center gap-2">
+                      <button
+                        onClick={() => handleEditContest(contest._id)}
+                        className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteConfirmation(contest._id)}
+                        className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="5"
+                  className="py-3 px-4 sm:px-6 text-center text-gray-300"
+                >
+                  No contests found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {loading && (
+        <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+            <p className="mt-4 text-blue-500 text-lg font-medium">
+              Loading, please wait...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-gray-800 p-8 rounded-lg">
+            <h3 className="text-white text-xl font-bold mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-300 mb-4">
+              Are you sure you want to delete this contest? This action cannot
+              be undone.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={cancelDelete}
+                className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition mr-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteContest}
+                className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MakeContest;

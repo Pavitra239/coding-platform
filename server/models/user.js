@@ -1,31 +1,77 @@
-import mongoose, { mongo } from 'mongoose';
-import { ROLES } from '../utils/constants.js';
-import { hash, compare } from "bcrypt";
+import mongoose, { mongo } from "mongoose";
+import { ROLES, SEM, BRANCH } from "../utils/constants.js";
+import bcrypt from "bcrypt";
 const { Schema } = mongoose;
+import { v4 as uuidv4 } from 'uuid';
 
 const userSchema = new Schema(
   {
     username: {
       type: String,
-      required: [true, 'username is required'],
+      required: [true, "username is required"],
+    },
+    id: {
+      type: String,
+      unique: true,
+      default: function () {
+        return uuidv4();
+      },
     },
     email: {
       type: String,
-      required: [true, 'email is required'],
+      trim: true,
+      lowercase: true,
+      required: function () {
+        return this.role === ROLES.FACULTY;
+      },
+      match: [/\S+@\S+\.\S+/, 'Please enter a valid email address']
+    },
+    mobileNo: {
+      type: String,
+      required: [true, "mobile no is required"],
     },
     password: {
       type: String,
-      required: [true, 'password is required'],
     },
     role: {
       type: String,
       enum: Object.values(ROLES),
       default: ROLES.STUDENT,
     },
+    branch: {
+      type: String,
+      enum: Object.values(BRANCH),
+      default: BRANCH.CSPIT_IT,
+    },
+    semester: {
+      type: String,
+      enum: Object.values(SEM),
+      default: SEM.ONE,
+    },
+    batch: {
+      type: String,
+      required: [true, 'batch is required'],
+    },
+    subject: {
+      type: String,
+      require: [true, 'subject is required'],
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
+    firstTimeLogin: {
+      type: Boolean,
+      default: true,
+    },
+    facultyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
+    },
     profile: {
       name: {
         type: String,
-        required: [true, 'name is required'],
       },
       bio: {
         type: String,
@@ -33,27 +79,60 @@ const userSchema = new Schema(
       avatar: {
         type: String,
       },
+      github: {
+        type: String,
+      },
+      linkedIn: {
+        type: String,
+      },
+      birthday: {
+        type: String,
+      },
+      gender: {
+        type: String,
+      },
+      skills: {
+        type: String,
+      },
+      education: {
+        type: String,
+      },
+      location: {
+        type: String,
+      },
     },
     submissions: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Submission',
+        ref: "Submission",
       },
     ],
   },
-  {}
+  { timestamps: true }
 );
 
-// export default mongoose.model('User', userSchema);
+userSchema.index(
+  { email: 1, role: 1 },
+  { unique: true, partialFilterExpression: { email: { $exists: true } } }
+);
 
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
 
-userSchema.pre("save", async function () {
-  this.password = await hash(this.password, 10);
+  try {
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-userSchema.methods.comparePassword = async function (password) {
-  const isValid = await compare(password, this.password);
-  return isValid;
+userSchema.methods.comparePassword = async function (password, DBpassword) {
+  console.log(password, DBpassword);
+  const isMatch = await bcrypt.compare(password, DBpassword);
+  return isMatch;
 };
 
 export default mongoose.model("User", userSchema);

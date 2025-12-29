@@ -1,0 +1,241 @@
+import React, { useState, useEffect, useRef } from "react";
+import axiosInstance from "../../utils/axiosInstance";
+import ScoreAndLanguageSelector from "./ScoreAndLanguageSelector";
+import CodeEditorArea from "./CodeEditorArea";
+import TestCaseResults from "./TestCaseResults";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+
+const CodeEditor = ({ language, setLanguage, problem, onSubmission  }) => {
+  const user = useSelector((state) => state.app.user);
+  const userId = user._id;
+  const testcases = problem.testCases;
+
+  // console.log(testcases[0]);
+
+  const [codeByLanguage, setCodeByLanguage] = useState({
+    java: `import java.util.*;
+import java.lang.*;
+import java.io.*;
+
+class Solution {
+    public static void main(String[] args) throws java.lang.Exception {
+        // Your code goes here
+        System.out.println("Hello, World!");
+    }
+}`,
+    python: `print("Hello, World!")`,
+    cpp: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // Your code goes here
+    cout << "Hello, World!" << endl;
+    return 0;
+}`,
+  });
+
+  const [results, setResults] = useState(null);
+  const [activeTestCaseIndex, setActiveTestCaseIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [runLoading, setRunLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const previousLanguageRef = useRef(language);
+  const [theme, setTheme] = useState("vs-dark"); // Default theme
+
+  useEffect(() => {
+    const fetchSavedCode = async () => {
+      try {
+        const response = await axiosInstance.get("/compile/getCode", {
+          params: { userId, problemId: problem._id },
+        });
+        if (response.data.success) {
+          setCodeByLanguage(response.data.code);
+        }
+      } catch (error) {
+        console.error("Error fetching saved code:", error);
+      }
+    };
+
+    fetchSavedCode();
+  }, [userId, problem._id]);
+
+  useEffect(() => {
+    previousLanguageRef.current = language;
+  }, [language]);
+
+  const handleLanguageChange = (newLanguage) => {
+    setLanguage(newLanguage);
+  };
+
+  const handleEditorChange = (value) => {
+    setCodeByLanguage((prev) => ({
+      ...prev,
+      [language]: value,
+    }));
+  };
+
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme); // Update theme state
+  };
+
+  const handleRun = async () => {
+    setIsLoading(true);
+    setRunLoading(true);
+    setResults(null);
+    setError(null);
+    try {
+      const response = await axiosInstance.post("/compile", {
+        code: codeByLanguage[language],
+        language,
+        testCases : testcases,
+        allTestcase : false
+      });
+      setResults(response.data.testResults);
+      console.log("Submission response:", response.data.testResults);
+    } catch (error) {
+      setError(
+        error.response?.data?.details || "Failed to run code. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+      setRunLoading(false);
+    }
+  };
+
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setSubmitLoading(true);
+    setResults(null);
+    setError(null);
+
+    try {
+        // Send the code, language, and test cases to the backend for compilation
+        const response = await axiosInstance.post("/compile", {
+            code: codeByLanguage[language],
+            language,
+            testCases: testcases,
+            allTestcase: true
+        });
+
+        // Set the results for the frontend
+        setResults(response.data.testResults);
+        console.log("Submission response:", response.data.testResults);
+
+        // Collect overall performance data
+        const totalExecutionTime = response.data.overallTime;
+        const averageMemoryUsage = response.data.averageMemory;
+
+        console.log("Total Execution Time:", totalExecutionTime);
+        console.log("Average Memory Usage:", averageMemoryUsage);
+
+        // Check if all test cases passed
+        const allTestCasesPassed = response.data.testResults.every(test => test.passed);
+
+        // Set submission status based on whether all test cases passed
+        const status = allTestCasesPassed ? "completed" : "rejected";
+        console.log("Submission Status:", status);
+
+        // Calculate number of test cases and number of passed test cases
+        const numberOfTestCase = response.data.testResults.length;
+        const numberOfTestCasePass = response.data.testResults.filter(test => test.passed).length;
+
+        console.log("Number of Test Cases:", numberOfTestCase);
+        console.log("Number of Test Cases Passed:", numberOfTestCasePass);
+
+        console.log("helllo")
+
+        // Prepare the test case results to send along with the submission
+        const testCaseResults = response.data.testResults.map(test => ({
+            inputs: test.inputs,
+            expectedOutputs: test.expectedOutputs,
+            output: test.output,
+            passed: test.passed,
+            time: test.time,
+            memory: test.memory
+        }));
+
+        // Send the submission to the backend
+        const rk = await axiosInstance.post("/submissions", {
+            user_id: userId,               // assuming you have the user_id available
+            problem_id: problem._id,       // assuming you have the problem_id available
+            code: codeByLanguage[language],
+            language,
+            execution_time: totalExecutionTime,
+            memory_usage: averageMemoryUsage,
+            status: status,                // Set the status to either "completed" or "rejected"
+            numberOfTestCase,              // Total number of test cases
+            numberOfTestCasePass,          // Number of passed test cases
+            testCaseResults: testCaseResults // Pass test case results as well
+        });
+
+
+        console.log("Submission response:", rk.data.submission);
+        if (onSubmission) {
+            onSubmission(rk.data.submission);
+        }
+
+    } catch (error) {
+        setError(
+            error.response?.data?.details ||
+            "Failed to submit code. Please try again."
+        );
+    } finally {
+        setIsLoading(false);
+        setSubmitLoading(false);
+    }
+};
+
+
+
+  const handleSaveCode = async () => {
+    try {
+      await axiosInstance.post("/compile/saveCode", {
+        userId,
+        problemId: problem._id,
+        codeByLanguage,
+      });
+      toast.success("Code saved successfully!");
+    } catch (error) {
+      console.error("Error saving code:", error);
+      toast.error("Failed to save code. Please try again.");
+    }
+  };
+
+  return (
+    <div className="code-editor bg-gray-900 p-6 shadow-lg">
+      <ScoreAndLanguageSelector
+        language={language}
+        handleLanguageChange={handleLanguageChange}
+        score={problem.score}
+      />
+      <CodeEditorArea
+        language={language}
+        code={codeByLanguage[language] || ""}
+        handleEditorChange={handleEditorChange}
+        theme={theme} // Pass the theme to CodeEditorArea
+        handleThemeChange={handleThemeChange} // Pass the theme change handler
+      />
+
+      <TestCaseResults
+        results={results}
+        activeTestCaseIndex={activeTestCaseIndex}
+        setActiveTestCaseIndex={setActiveTestCaseIndex}
+        isLoading={isLoading}
+        runLoading={runLoading}
+        submitLoading={submitLoading}
+        handleRun={handleRun}
+        handleSubmit={handleSubmit}
+        handleSaveCode={handleSaveCode}
+        error={error}
+      />
+
+    </div>
+
+    
+  );
+};
+
+export default CodeEditor;

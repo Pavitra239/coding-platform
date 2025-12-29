@@ -20,24 +20,98 @@ export const getUser = async (req, res) => {
 
 // Create a new user (Admin only)
 export const createUser = async (req, res) => {
-  const user = await User.create(req.body);  // Create user with provided details
-  const token = await createToken({ id: user._id, role: user.role });  // Generate token for the new user
-  res.status(StatusCodes.CREATED).json({ status: "success", data: user, token });  // Respond with user data and token
+  const user = await User.create(req.body); // Create user with provided details
+  const token = await createToken({ id: user._id, role: user.role }); // Generate token for the new user
+  res
+    .status(StatusCodes.CREATED)
+    .json({ status: "success", data: user, token }); // Respond with user data and token
 };
 
-
+import jwt from "jsonwebtoken";
 
 // Edit a user (Admin only)
-export const editUser = async (req, res) => {
-  const { username, email, role } = req.body;
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    { username, email, role },
-    { new: true, runValidators: true }
-  );
-  if (!user) throw new NotFoundError("User not found");
+// Edit a user (Admin only)
+export const updateUser = async (req, res) => {
+  try {
+    const {
+      fullName,
+      gender,
+      location,
+      birthday,
+      github,
+      skills,
+      education,
+      linkedIn,
+      name,
+      bio,
+      email
+    } = req.body;
 
-  res.status(StatusCodes.OK).json({ status: "success", msg: "User updated", data: user });
+    console.log(req.body);
+
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized", success: false });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, "ChauhanRutvik");
+    } catch (err) {
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired token", success: false });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
+
+    // Ensure fullName and name are not empty strings
+    if (!fullName?.trim() || !name?.trim()) {
+      return res.status(400).json({
+        message: "Username and profile name cannot be empty.",
+        success: false,
+      });
+    }
+
+    // Update only the allowed fields
+    user.username = fullName;
+    user.profile.name = name;
+    user.email = email;
+    user.profile = Object.assign(user.profile, {
+      bio: bio,
+      gender: gender,
+      location: location,
+      birthday: birthday,
+      github: github,
+      skills: skills,
+      education: education,
+      linkedIn: linkedIn,
+    });
+
+    console.log("--> ",user);
+
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        username: user.username,
+        profile: user.profile,
+        email: user.email,
+      },
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      success: false,
+    });
+  }
 };
 
 // Delete a user (Admin only)

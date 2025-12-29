@@ -1,8 +1,5 @@
 import User from "../models/user.js";
-import {
-  ForbiddenError,
-  UnauthorizedError,
-} from "../utils/errors.js";
+import { ForbiddenError, UnauthorizedError } from "../utils/errors.js";
 import { verifyToken } from "../utils/jwt.js";
 
 export const isAuthorized = async (req, res, next) => {
@@ -18,9 +15,8 @@ export const isAuthorized = async (req, res, next) => {
   next();
 };
 
-
 export const isAdmin = (req, res, next) => {
-  console.log(req.user);
+  console.log('->', req.user);
   if (req.user && req.user.isAdmin === "admin") {
     // Allow access if the user is an admin
     return next();
@@ -29,6 +25,12 @@ export const isAdmin = (req, res, next) => {
   throw new ForbiddenError("You are not allowed to access this route");
 };
 
-
-
-
+export const isFaculty = (req, res, next) => {
+  console.log('=+-->',req.user);
+  if (req.user && req.user.isAdmin === "faculty") {
+    // Allow access if the user is an faculty
+    return next();
+  }
+  // Deny access if the user is not an faculty
+  throw new ForbiddenError("You are not allowed to access this route");
+};

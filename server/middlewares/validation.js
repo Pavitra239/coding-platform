@@ -29,33 +29,11 @@ const withValidationResult = (validateValues) => {
   ];
 };
 
-  export const registerInputValidator = withValidationResult([
-    body('username')
-      .isString()
-      .notEmpty()
-      .withMessage('username is required'),
-    body('email')
-      .notEmpty()
-      .withMessage('email is required')
-      .isEmail()
-      .withMessage('invalid email')
-      .custom(async (value) => {
-        const user = await User.findOne({ email: value });
-        if (user) throw new BadRequestError('user already exists');
-      }),
-    body('password')
-      .isString()
-      .notEmpty()
-      .withMessage('password is required')
-      .isLength({ min: 8 })
-      .withMessage('password should contain at least 8 characters'),
-    body('profile.name')
-      .isString()
-      .notEmpty()
-      .withMessage('name is required'),
-  ]);
-
-export const loginInputValidator = withValidationResult([
+export const registerInputValidator = withValidationResult([
+  body('username')
+    .isString()
+    .notEmpty()
+    .withMessage('username is required'),
   body('email')
     .notEmpty()
     .withMessage('email is required')
@@ -63,7 +41,7 @@ export const loginInputValidator = withValidationResult([
     .withMessage('invalid email')
     .custom(async (value) => {
       const user = await User.findOne({ email: value });
-      if (!user) throw new BadRequestError('user not found');
+      if (user) throw new BadRequestError('user already exists');
     }),
   body('password')
     .isString()
@@ -71,7 +49,27 @@ export const loginInputValidator = withValidationResult([
     .withMessage('password is required')
     .isLength({ min: 8 })
     .withMessage('password should contain at least 8 characters'),
+  body('profile.name')
+    .isString()
+    .notEmpty()
+    .withMessage('name is required'),
 ]);
+
+export const loginInputValidator = withValidationResult([
+  body('id')
+    .notEmpty()
+    .withMessage('ID is required')
+    .isAlphanumeric()
+    .withMessage('ID must be alphanumeric'),
+  body('password')
+    .isString()
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password should contain at least 6 characters'),
+]);
+
+
 
 
 export const idValidator = withValidationResult([
